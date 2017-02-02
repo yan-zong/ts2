@@ -115,7 +115,7 @@ network tsieee802154masterrelay extends MyBaseNetwork
 {
     parameters:
         int numHosts; // number of hosts in the network
-        int numSlaveMaster; // number of slave_master in the network
+        int numRelay; // number of slave_master in the network
 		int numSlave; // number of slave in the network
 		int numMaster; // number of master in the network
 		cmType = default("org.mixim.base.connectionManager.ConnectionManager");	// connection manager to use
@@ -124,7 +124,7 @@ network tsieee802154masterrelay extends MyBaseNetwork
         
     submodules:
 
-        mnode: MasterCC2420 {
+        mnode: MasterNode {
             parameters:
                 numHosts = numMaster;
                 @display("p=147,100;b=42,42,rect,yellow;i=device/wifilaptop");
@@ -132,9 +132,9 @@ network tsieee802154masterrelay extends MyBaseNetwork
         }
 
 
-        relay[numSlaveMaster]: RelayNode {
+        relay[numRelay]: RelayNode {
             parameters:
-                numHosts = numSlaveMaster;
+                numHosts = numRelay;
                 @display("p=139,82;b=42,42,rect,yellow;i=device/wifilaptop");
 
         }

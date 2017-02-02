@@ -123,14 +123,14 @@ network tsieee802154masterslave extends MyBaseNetwork
         @display("bgb=$playgroundSizeX,$playgroundSizeY,white,,;bgp=10,50");
     submodules:
         // node[numHosts]: HostCC2420 {
-        mnode: MasterCC2420 {
+        mnode: MasterNode {
             parameters:
                 numHosts = numMaster;
                 @display("p=147,100;b=42,42,rect,yellow;i=device/wifilaptop");
 
         }
         
-        snode[numSlave]: SlaveCC2420 {
+        snode[numSlave]: SlaveNode {
             parameters:
                 numHosts = numSlave;
                 @display("p=147,100;b=42,42,rect,yellow;i=device/wifilaptop");

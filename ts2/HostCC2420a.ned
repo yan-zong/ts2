@@ -43,7 +43,7 @@ module HostCC2420a
         // string arpType = default("BaseArp");                 //type of address resolution module
         string arpType = default("ArpHost");
         string nicType;
-        string ptpCoreType;
+        string CoreType;
         @display("bgb=276,311,white;i=device/palm;b=40,40,rect");
         @node();
 
@@ -67,7 +67,7 @@ module HostCC2420a
             parameters:
                 @display("p=61,184;i=block/layer");
         }
-        ptpcore: <ptpCoreType> like IPtpCore {
+        core: <CoreType> like IPtpCore {
             @display("p=127,102;i=block/layer");
         }
 
@@ -86,11 +86,11 @@ module HostCC2420a
         // netw <-> appl & ptp
         //# finaly we connect the highest existing layer of transport, session, or presentation to
         //# the application layer if specified
-        netwl.upperLayerOut --> ptpcore.lowerGateIn;
-        ptpcore.upperGateOut --> appl.lowerLayerIn;
+        netwl.upperLayerOut --> core.lowerGateIn;
+        core.upperGateOut --> appl.lowerLayerIn;
 
-        netwl.upperLayerIn <-- ptpcore.lowerGateOut;
-        ptpcore.upperGateIn <-- appl.lowerLayerOut;
+        netwl.upperLayerIn <-- core.lowerGateOut;
+        core.upperGateIn <-- appl.lowerLayerOut;
 
         netwl.upperControlOut --> { @display("ls=red;m=m,70,0,70,0"); } --> appl.lowerControlIn;
         netwl.upperControlIn <-- { @display("ls=red;m=m,70,0,70,0"); } <-- appl.lowerControlOut;
