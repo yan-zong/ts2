@@ -107,7 +107,7 @@ import org.mixim.examples.ieee802154Narrow.WorldUtilityStats;
 //			  These bars should increase exponential 2, 4, 8, 16, 32, ...
 //
 
-network tsieee802154 extends MyBaseNetwork
+network tsieee802154relay extends MyBaseNetwork
 {
     parameters:
         int numHosts; // number of hosts in the network

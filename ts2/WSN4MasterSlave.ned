@@ -110,35 +110,34 @@ import org.mixim.examples.ieee802154Narrow.WorldUtilityStats;
 //			  These bars should increase exponential 2, 4, 8, 16, 32, ...
 //
 
-network MyBaseNetwork
+network tsieee802154masterslave extends MyBaseNetwork
 {
     parameters:
-        double playgroundSizeX @unit(m); // x size of the area the nodes are in (in meters)
-        double playgroundSizeY @unit(m); // y size of the area the nodes are in (in meters)
-        double playgroundSizeZ @unit(m); // z size of the area the nodes are in (in meters)
-        **.mobility.constraintAreaMinX = default(0m);
-        **.mobility.constraintAreaMinY = default(0m);
-        **.mobility.constraintAreaMinZ = default(0m);
-        **.mobility.constraintAreaMaxX = default(playgroundSizeX);
-        **.mobility.constraintAreaMaxY = default(playgroundSizeY);
-        **.mobility.constraintAreaMaxZ = default(playgroundSizeZ);
-        string cmType = default("org.mixim.base.connectionManager.ConnectionManager"); // connection manager to use
-        string wuType = default("org.mixim.base.modules.BaseWorldUtility");            // world utility to use
+        int numHosts; // total number of hosts in the network, 
+                      // ?? only for  WorldUtilityStats.cc & StaticGridMobility.cc ??
+        int numMaster; // total number of hosts in the network
+        int numSlave; // total number of hosts in the network
+        
+        wuType =default("org.mixim.examples.ieee802154Narrow.WorldUtilityStats"); // world untility to use
 
-		@display("bgb=$playgroundSizeX,$playgroundSizeY,white;bgp=0,0");
-
+        @display("bgb=$playgroundSizeX,$playgroundSizeY,white,,;bgp=10,50");
     submodules:
-        connectionManager: <cmType> like IConnectionManager {
+        // node[numHosts]: HostCC2420 {
+        mnode: MasterCC2420 {
             parameters:
-                @display("p=201,0;i=abstract/multicast;is=s");
-        }
-        world: <wuType> like IWorldUtility {
-            parameters:
-                playgroundSizeX = playgroundSizeX;
-                playgroundSizeY = playgroundSizeY;
-                playgroundSizeZ = playgroundSizeZ;
-                @display("p=280,0;i=misc/globe;is=s");
-        }
-    connections allowunconnected:
-}
+                numHosts = numMaster;
+                @display("p=147,100;b=42,42,rect,yellow;i=device/wifilaptop");
 
+        }
+        
+        snode[numSlave]: SlaveCC2420 {
+            parameters:
+                numHosts = numSlave;
+                @display("p=147,100;b=42,42,rect,yellow;i=device/wifilaptop");
+
+        }
+        
+    connections allowunconnected:
+                         // all connections and gates are to be generated dynamically
+
+}
