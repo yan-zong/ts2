@@ -1,27 +1,23 @@
 //***************************************************************************
 // * File:        This file is part of TS2.
-// * Created on:  29 Jan 2014
-// * Author:      Yiwen Huang, Xuweu Dai  (x.dai at ieee.org)
+// * Created on:  07 Dov 2016
+// * Author:      Yan Zong, Xuweu Dai
 // *
-// * Copyright:   (C) 2014 Southwest University, Chongqing, China.
+// * Copyright:   (C) 2016 Northumbria University, UK.
 // *
-// *              TS2 is free software; you can redistribute it  and/or modify
-// *              it under the terms of the GNU General Public License as published
-// *              by the Free Software Foundation; either  either version 3 of
-// *              the License, or (at your option) any later version.
+// *              TS2 is free software; you can redistribute it and/or modify it
+// *              under the terms of the GNU General Public License as published
+// *              by the Free Software Foundation; either version 3 of the
+// *              License, or (at your option) any later version.
 // *
-// *              TS2 is distributed in the hope that it will be useful,
-// *                  but WITHOUT ANY WARRANTY; without even the implied warranty of
-// *                  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// *                  GNU General Public License for more details.
+// *              TS2 is distributed in the hope that it will be useful, but
+// *              WITHOUT ANY WARRANTY; without even the implied warranty of
+// *              MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// *              GNU General Public License for more details.
 // *
-// * Credit:      Yiwen Huang, Taihua Li
-// * Funding:     This work was partially financed by the National Science Foundation China
-// %              _
-// %  \/\ /\ /   /  * _  '
-// % _/\ \/\/ __/__.'(_|_|_
-// **************************************************************************/
-
+// * Funding:     This work was financed by the Northumbria University Faculty
+//                Funded and RDF funded studentship, UK
+// ****************************************************************************
 
 #ifndef CLOCK2_H_
 #define CLOCK2_H_
@@ -39,9 +35,9 @@
 
 class Clock2:public cSimpleModule{
 public:
-    double getTimestamp(); // now getTimestamp() is public
-    void adjtimex(double value, int type); // now it public func
-    void adj_offset_drift(); // now it public func
+    double getTimestamp();
+    void adjtimex(double value, int type);
+    void adj_offset_drift();
     void setT123(double t1, double t2, double t3)
     {
         Tm=t1;
@@ -57,13 +53,9 @@ protected:
 private:
     double Phyclockupdate();
     void   recordResult();
-    // double getTimestamp(); // now getTimestamp() is public
     void preprocess_offset();
-   //  void adjtimex(double value, int type); // now it public func
-   // void adj_offset_drift(); // now it public func
     void movingfilter();
     void kalmanfilter();
-    //void adjtimex(double value[2]);
     double lastupdatetime;
     double phyclock;
     double softclock;
@@ -83,25 +75,25 @@ private:
     double Tcamp;
     double Tsync;
     double t_previous;
-    double drift_previous; //定义这个变量是为了计算drift10-drift0的值
+    double drift_previous;  // the value of drift10-drift0
     double offset_previous;
-    double delta_drift;  //计算drift10-drift0的值
+    double delta_drift; // the value of drift10-drift0
     double delta_offset;
-    double offset_adj_value;//offset的校正值
-    double offset_adj_previous;//前一次同步时offset的校正值
+    double offset_adj_value;    // the value of adjustment for offset
+    double offset_adj_previous; // the previous value of adjustment for offset
     double drift_adj_value;
-    double sim_time_limit;  //仿真时间
+    double sim_time_limit;  // the time of simulation
     int i;
-    int j;//去掉前10个同步校正值
+    int j;  //remove 10 previous value of adjustment for offset
     int k;
     double Tm;
     double Tm_previous;
 
-    /*moving Filter*/
+    // moving filter
     double alpha;
     double beta;
 
-    /*kalman filter parameter*/
+    // kalman filter parameter
     double A[2][2];
     double B[2][2];
     double H[2][2];
@@ -121,19 +113,19 @@ private:
     cOutVector noise3Vec;
     cOutVector driftVec;
     cOutVector offsetVec;
-    cOutVector update_numberVec;  // 记录物理时钟更新的次数
-    cOutVector delta_driftVec; // 记录drift10-drift0的值
+    cOutVector update_numberVec;    // the time of physical clock update
+    cOutVector delta_driftVec;  // the value of drift10-drift0
     cOutVector delta_offsetVec;
-    cOutVector drift_adj_valueVec ;//记录滤波后的校正值
+    cOutVector drift_adj_valueVec;  //记录滤波后的校正值
     cOutVector offset_adj_valueVec;
-    cOutVector drift_valueVec;    //同步校正offset时，记录offset真实值
-    cOutVector offset_valueVec;   //同步校正drift时，记录drift真实值
-    cOutVector error_driftVec;   // 记录drift同步误差的矢量类
-    cOutVector error_offsetVec; // 记录offset同步误差的矢量类
-    cStdDev    driftStd;           //为计算drift的平均值和标准差
+    cOutVector drift_valueVec;    // the real value of adjusted offset
+    cOutVector offset_valueVec;   // the real value of adjusted drift
+    cOutVector error_driftVec;   // the vector for synchronised error of drift
+    cOutVector error_offsetVec; // the vector for synchronised error of offset
+    cStdDev    driftStd;           // the average and standard derivation of drift
     cStdDev    offsetStd;
-    cStdDev    error_sync_drift;  // 为计算drift同步误差平均值和标准差
-    cStdDev    error_sync_offset;     // 为计算offset同步误差平均值和标准差
+    cStdDev    error_sync_drift;  // the average and standard derivation for synchronised error of drift
+    cStdDev    error_sync_offset;   // the average and standard derivation for synchronised error of offset
 };
 
 

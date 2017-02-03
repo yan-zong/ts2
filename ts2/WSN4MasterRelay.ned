@@ -114,9 +114,9 @@ import org.mixim.examples.ieee802154Narrow.WorldUtilityStats;
 network tsieee802154masterrelay extends MyBaseNetwork
 {
     parameters:
-        int numHosts; // number of hosts in the network
-        int numRelay; // number of slave_master in the network
-		int numSlave; // number of slave in the network
+        int numHosts = default(0); // number of hosts in the network, this parameter is useless in the network
+        int numRelay; // number of relay in the network
+		// int numSlave; // number of slave in the network
 		int numMaster; // number of master in the network
 		cmType = default("org.mixim.base.connectionManager.ConnectionManager");	// connection manager to use
         wuType = default("org.mixim.examples.ieee802154Narrow.WorldUtilityStats"); // world untility to use
