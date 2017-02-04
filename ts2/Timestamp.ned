@@ -22,25 +22,19 @@
 
 package ts2;
 
-simple MasterCore  like ICore
+simple Timestamp
 {
-    parameters:
-       @class(PtpMaster);
-    	double Tsync = default(1);
-        int masterAddrOffset;
-            
-    gates:
-        input upperGateIn; // from net layer
-        output upperGateOut; // to net layer
-    	// input upperControlIn; // control from net layer
-    	// output upperControlOut; // control to net layer
-        
-        input lowerGateIn; // from mac
-        output lowerGateOut; // to mac
-    	// input lowerControlIn; // control from mac
-    	// output lowerControlOut; // control to mac
-        
-        output outclock;
-        input inclock;
-        
-}   
+       parameters:
+       	@class(Timestamp);
+        bool useGlobalRefClock = default(true); 
+           // true, accurate clock that uses the simTime() as the clock source (,
+           // false, inaccurate clock that uses the clock module in the node as the clock source
+           
+    	gates:
+        	input upperGateIn; // from mac layer
+        	output upperGateOut; // to mac layer
+        	
+        	input lowerGateIn; // from phy layer
+        	output lowerGateOut; // to phy layer
+    
+}

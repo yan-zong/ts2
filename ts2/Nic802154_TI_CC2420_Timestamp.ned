@@ -1,22 +1,23 @@
 //***************************************************************************
-// * file:        Nic_CC2420_TmStmp.ned
+// * File:        This file is part of TS2.
+// * Created on:  07 Dov 2016
+// * Author:      Yan Zong, Xuweu Dai
 // *
-// * author:      Xuweu Dai
+// * Copyright:   (C) 2016 Northumbria University, UK.
 // *
-// * copyright:   (C) 2014 Southwest University, Chongqing, China.
+// *              TS2 is free software; you can redistribute it and/or modify it
+// *              under the terms of the GNU General Public License as published
+// *              by the Free Software Foundation; either version 3 of the
+// *              License, or (at your option) any later version.
 // *
-// *              This program is free software; you can redistribute it
-// *              and/or modify it under the terms of the GNU General Public
-// *              License as published by the Free Software Foundation; either
-// *              version 2 of the License, or (at your option) any later
-// *              version.
-// *              For further information see file COPYING
-// *              in the top level directory
+// *              TS2 is distributed in the hope that it will be useful, but
+// *              WITHOUT ANY WARRANTY; without even the implied warranty of
+// *              MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// *              GNU General Public License for more details.
 // *
-// * Credit:      Yiwen Huang, Taihua Li
-// * Funding: This work was partially financed by the National Science Foundation China under the  
-// * grant ""  
-// **************************************************************************/
+// * Funding:     This work was financed by the Northumbria University Faculty
+//                Funded and RDF funded studentship, UK
+// ****************************************************************************
 
 package ts2;
 
@@ -28,17 +29,18 @@ import org.mixim.base.modules.IWirelessMac;
 import org.mixim.modules.nic.IWirelessNicUpperCtrl;
 
 
+// ****************************************************************************
+// This NIC implements a Texas Instruments CC 2420 802.15.4 network interface 
+// card using the CSMA protocol as specified in IEEE 802.15.4-2006.
+// The additional module Timestamp.ned is for set the hardware time stamp to 
+// PtpPkt.msg.
 //
-// This NIC implements a Texas Instruments CC 2420 802.15.4 network interface card
-// using the CSMA protocol as specified in IEEE 802.15.4-2006.
-// The additional module PtpTimeStmp.ned is for set the hardware time stamp to PtpPkt.msg.
-//
-//Note: To be able to use this Nic in your simulation you have to copy and keep the file 
-//"Nic802154_TI_CC2420_Decider.xml" at the same directory as Nic_CC2420_TmStmp.ned
-// @author Xuewu Dai
-//
+// Note: To be able to use this NIC in your simulation you have to copy and  
+// keep the file "Nic802154_TI_CC2420_Decider.xml" at the same directory as 
+// NIC.ned
+// ****************************************************************************
 
-module Nic_CC2420_TmStmp like IWirelessNicUpperCtrl
+module Nic802154_TI_CC2420_Timestamp like IWirelessNicUpperCtrl
 {
     parameters:
         string connectionManagerName = default("");   //name of the ConnectionManager module, used for multi channel connection
@@ -94,7 +96,7 @@ module Nic_CC2420_TmStmp like IWirelessNicUpperCtrl
         mac: <macType> like IWirelessMac {
             @display("p=74,46;i=block/layer;is=l");
         }
-        tsstmp: PtpTimeStmp {
+        timestamp: Timestamp {
 
             @display("p=29,101;b=,,oval,red;i=device/clock;is=s;tt=Time Stamp ");
         }
@@ -110,11 +112,11 @@ module Nic_CC2420_TmStmp like IWirelessNicUpperCtrl
         mac.upperControlIn <-- { @display("ls=red;m=m,85,0,85,0"); } <-- upperControlIn;
 
 
-        phy.upperLayerOut --> { @display("ls=black;m=m,25,50,25,0"); } --> tsstmp.lowerGateIn;
-        tsstmp.upperGateOut-->{ @display("ls=black;m=m,25,50,25,0"); } --> mac.lowerLayerIn;
+        phy.upperLayerOut --> { @display("ls=black;m=m,25,50,25,0"); } --> timestamp.lowerGateIn;
+        timestamp.upperGateOut-->{ @display("ls=black;m=m,25,50,25,0"); } --> mac.lowerLayerIn;
 
-        phy.upperLayerIn <-- { @display("ls=black;m=m,15,50,15,0"); } <-- tsstmp.lowerGateOut;
-        tsstmp.upperGateIn <-- { @display("ls=black;m=m,15,50,15,0"); } <-- mac.lowerLayerOut;
+        phy.upperLayerIn <-- { @display("ls=black;m=m,15,50,15,0"); } <-- timestamp.lowerGateOut;
+        timestamp.upperGateIn <-- { @display("ls=black;m=m,15,50,15,0"); } <-- mac.lowerLayerOut;
 
         phy.upperControlOut --> { @display("ls=red;m=m,75,50,75,0"); } --> mac.lowerControlIn;
         phy.upperControlIn <-- { @display("ls=red;m=m,85,0,85,0"); } <-- mac.lowerControlOut;
