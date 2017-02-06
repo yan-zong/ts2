@@ -21,7 +21,6 @@
 
 bool isPtpPkt = FALSE;
 
-
 class RelayBuffer:public cSimpleModule{
 protected:
     virtual void initialize();

@@ -22,9 +22,6 @@
 #ifndef PTPM2_H_
 #define PTPM2_H_
 
-//****************************************************************************
-// * Brief:       This module provides the M2 operation of S1M2
-//****************************************************************************
 
 #include <string.h>
 #include <omnetpp.h>
@@ -36,15 +33,13 @@
 class RelayMaster : public cSimpleModule
 {
 public:
-    void startSync();   // Yan: start M2S2 time synchronisation
+    void startSync();   // start second-hop time synchronisation
 
 private:
     const char *name;
-    // int address;
     int RelayIndex;
-    int myAddress;      // the variable is used in the multi-hop network
-    int mySlaveAddress; // the variable is used in the multi-hop network
-    // int SlaveAddr;      // the variable is also used in the multi-hop network
+    int myAddress;      // used in the multi-hop network
+    int mySlaveAddress; // used in the multi-hop network
     double Tsync;
     double nbReceivedDelayRequests;  // count the total number of received DelayRequest
     double nbSentSyncs;  // count the total number of sent Sync
@@ -53,16 +48,10 @@ private:
     double RandomTime;  // random value generator
 
 protected:
-    /** @brief gate id
-     *  only data gates are used*/
-    /*@{*/
-    // int upperGateIn;
-    // int upperGateOut;
     int lowerGateIn;
     int lowerGateOut;
-    /*@}*/
 
-    Clock2 *pClock; // Yan Zong: pointer to clock module
+    Clock2 *pClock; // pointer to clock module
 
 
 protected:

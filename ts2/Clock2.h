@@ -40,7 +40,7 @@ public:
     void adj_offset_drift();
     void setT123(double t1, double t2, double t3)
     {
-        Tm=t1;
+        Tm = t1;
     }
 
 protected:

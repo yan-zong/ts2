@@ -29,10 +29,8 @@
 #include "NetwControlInfo.h"
 #include "SimpleAddress.h"
 #include "Clock2.h"
-#include "RelayMaster.h"
 
-
-class RelaySlave: public cSimpleModule{
+class Slave: public cSimpleModule{
 protected:
 	virtual void initialize();
 	virtual void handleMessage(cMessage *msg);
@@ -51,32 +49,31 @@ private:
 
 
 	const char *name;
-	int myAddress;          // used in the multi-hop network
-	int myMasterAddress;    // used in the multi-hop network
+	int address;
+	int master;
     LAddress::L3Type masterL3Addr;
     LAddress::L3Type myL3Addr;
 
     cModule *myMasterNode; // default value (at stage 1) is myself (this)
-    RelayMaster *pRelayMaster; // a pointer to the Relay Master module in my nodes (a boundary clock)
     Clock2 *pClock; // pointer to my clock module
 
     // variable for time synchronization
 	double Tcamp;   // Time delay between t2 and t3
 	//double Tsync;       //比较为Tsync和10Tcamp
-	double ts2; // Timestamp T2 stamped on receiving SYNC packet by slave
+	double ts2;	// Timestamp T2 stamped on receiving SYNC packet by slave
 	double ts1;	// Timestamp T1 stamped on transmission SYNC packet by master
 	double ts3;	// Timestamp T3 stamped on transmission DREQ packet by slave
 	double ts4;	// Timestamp T4 stamped on receiving DRES packet by master
-	double dprop;   // propagation delay
-	double dms; // master-to-slave delay for SYNC packet, dms = ts2-ts1
+	double dprop;   //propogation delay
+	double dms; //master-to-slave delay for SYNC packet, dms = ts2-ts1
 	            // t2-t1, propagation delay, uniform(0,a),a=t2-t1
-	double dsm; // slave-to-master delay for DREQ packet, dsm=t4-t3
-	double offset;  // slave's clock Offset (the difference between slave and master clocks)
-	double drift;   // slave's clock drift (the frequency difference between slave and master clocks)
+	double dsm; //slave-to-master delay for DREQ packet, dsm=t4-t3
+	double offset;  //slave's clock Offset (the difference between slave and master clocks)
+	double drift;   //slave's clock drift (the frequency difference between slave and master clocks)
 	double offset_previous; //前一时刻同步周期offset的观测值
 
 	// Parameters for clock correction
-	double Ts;
+	double Ts;  //
 	double Ts_correct;
 	double Ts_previous;
 	double Tm;
@@ -92,17 +89,9 @@ private:
 	double rate;
 	double T;
 	double Tr;
-
-	// the variable for calculating the packet drop in multi-hop network
-	double nbSentDelayRequests;  // count the total number of sent DelayRequest
-	double nbReceivedSyncsFromMaster;  // count the total number of received Sync from Master
-	double nbReceivedDelayResponsesFromMaster;  // count the total number of received DelayResponse from Master
-	double nbReceivedSyncsFromRelay;  // count the total number of received Sync from Relay
-	double nbReceivedDelayResponsesFromRelay;  // count the total number of received DelayResponse from Relay
-
 	/*滑动 filter*/
-   // double alpha;
-    //double  beta;
+	// double alpha;
+    // double  beta;
 
 	// Vectors recording simulation results for performance analysis
 	cOutVector dpropVec;

@@ -268,15 +268,15 @@ void Clock2::recordResult(){
 
 double Clock2::getTimestamp(){
     //TODO:Modify
-    ev<<"getTimestamp:"<<endl;
-    ev<<"simTime="<<SIMTIME_DBL(simTime())<<" lastupdatetime="<<lastupdatetime<<endl;
+    ev<<"getTimestamp: "<<endl;
+    ev<<"simTime = "<< SIMTIME_DBL(simTime()) <<" lastupdatetime = "<< lastupdatetime <<endl;
     double clock = offset + drift*(SIMTIME_DBL(simTime())-lastupdatetime) + SIMTIME_DBL(simTime());
-    ev<<"clock= "<<clock<<endl;
+    ev<<"clock = "<< clock <<endl;
     noise3 = normal(u3,sigma3);
-    ev<<"noise3= "<<noise3<<endl;
+    ev<<"noise3 = "<< noise3 <<endl;
     noise3Vec.record(noise3);
-    softclock = clock ;//+ noise3;
-    ev<<"softclock= "<<softclock<<endl;
+    softclock = clock; // + noise3;
+    ev<<"softclock = "<< softclock <<endl;
     softclockVec.record(softclock);
     //ev.printf("phyclock_float=%8f",phyclock_float);
     return softclock;
@@ -284,47 +284,46 @@ double Clock2::getTimestamp(){
 
 
 void Clock2::adjtimex(double value, int type){
-    switch(type){
-    case 0: //offset
-        /*noise3 = normal(0,sigma3);
-        ev<<"noise3= "<<noise3<<endl;
-        noise3Vec.record(noise3);
-        offset_adj_value = value + noise3;*/
-        offset_adj_value = value;
-        ev<<"offset_value= "<<value<<endl;
-        ev<<"offset_adj_value = "<<offset_adj_value<<endl;
-
-        break;
-    case 1: //drift
-        ev<<"clock_Tm_previous= "<<Tm_previous<<endl;
-        ev<<"clock_Tm - clock_Tm_previous= "<<Tm - Tm_previous<<endl;
-        drift_adj_value = value+ offset_adj_previous/(Tm - Tm_previous);
-        //drift_adj_value = offset_adj_value/Tsync;
-        ev<<"drift_value= "<<value<<endl;
-        ev<<"drift_adj_value = "<<drift_adj_value<<endl;
-        break;
+    switch(type)
+    {
+        case 0: // offset
+            /*noise3 = normal(0,sigma3);
+            ev<<"noise3= "<<noise3<<endl;
+            noise3Vec.record(noise3);
+            offset_adj_value = value + noise3;*/
+            offset_adj_value = value;
+            ev<<" offset_value = "<< value <<endl;
+            ev<<" offset_adj_value = "<<offset_adj_value<<endl;
+            break;
+        case 1: // drift
+            ev<<" clock_Tm_previous = "<< Tm_previous <<endl;
+            ev<<" clock_Tm - clock_Tm_previous = "<< Tm - Tm_previous <<endl;
+            drift_adj_value = value + offset_adj_previous/(Tm - Tm_previous);
+            //drift_adj_value = offset_adj_value/Tsync;
+            ev<<" drift_value= "<< value <<endl;
+            ev<<" drift_adj_value = "<< drift_adj_value <<endl;
+            break;
     }
-
 }
 void Clock2::adj_offset_drift(){
                 ev << "---------------------------------" << endl;
-                ev << "CLOCK : AGGIORNAMENTO OFFSET" << endl;
-                ev<<"simTime="<<SIMTIME_DBL(simTime())<<" lastupdatetime="<<lastupdatetime<<endl;
+                ev << "Clock: Update clock offset " << endl;
+                ev<<" simTime = "<< SIMTIME_DBL(simTime()) <<" lastupdatetime = "<< lastupdatetime <<endl;
 
-                ev << "CLOCK : offset- = " << offset<<endl;
+                ev << "Clock: offset- = " << offset <<endl;
                 offset_valueVec.record(offset);
-                ev<<"drift- ="<<drift<<endl;
+                ev<<" drift- = "<< drift <<endl;
                 drift_valueVec.record(drift);
-                //TODO:/*moving filter*/
-                //movingfilter();
-                //TODO:/*kalma filter*/
-             //   kalmanfilter();
-                //TODO:更新drift估计公式中的变量，因为时钟更新时加了伺服
-                Tm_previous=Tm;
-                ev<<"clock_Tm_previous= "<<Tm_previous<<endl;
+                // TODO:/*moving filter*/
+                // movingfilter();
+                // TODO:/*kalma filter*/
+                // kalmanfilter();
+                // TODO:更新drift估计公式中的变量，因为时钟更新时加了伺服
+                Tm_previous = Tm;
+                ev<<" clock_Tm_previous = "<< Tm_previous <<endl;
                 offset_adj_previous = offset_adj_value;
-                ev<<"offset_adj_value = "<<offset_adj_value<<endl;
-                ev<<"drift_adj_value = "<<drift_adj_value<<endl;
+                ev<<" offset_adj_value = "<< offset_adj_value <<endl;
+                ev<<" drift_adj_value = "<< drift_adj_value <<endl;
                 drift_adj_valueVec.record(drift_adj_value);
                 offset_adj_valueVec.record(offset_adj_value);
                 offset = offset - offset_adj_value;

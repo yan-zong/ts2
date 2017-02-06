@@ -1,37 +1,34 @@
 //***************************************************************************
 // * File:        This file is part of TS2.
-// * Created on:  29 Jan 2014
-// * Author:      Xuweu Dai  (x.dai at ieee.org)
+// * Created on:  07 Dov 2016
+// * Author:      Yan Zong, Xuweu Dai
 // *
-// * Copyright:   (C) 2014 Southwest University, Chongqing, China.
+// * Copyright:   (C) 2016 Northumbria University, UK.
 // *
-// *              TS2 is free software; you can redistribute it  and/or modify
-// *              it under the terms of the GNU General Public License as published
-// *              by the Free Software Foundation; either  either version 3 of
-// *              the License, or (at your option) any later version.
+// *              TS2 is free software; you can redistribute it and/or modify it
+// *              under the terms of the GNU General Public License as published
+// *              by the Free Software Foundation; either version 3 of the
+// *              License, or (at your option) any later version.
 // *
-// *              TS2 is distributed in the hope that it will be useful,
-// *              but WITHOUT ANY WARRANTY; without even the implied warranty of
-// *              MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// *              TS2 is distributed in the hope that it will be useful, but
+// *              WITHOUT ANY WARRANTY; without even the implied warranty of
+// *              MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // *              GNU General Public License for more details.
 // *
-// * Credit:      Yiwen Huang, Taihua Li
-// * Funding:     This work was partially financed by the National Science Foundation China
-// %              _
-// %  \/\ /\ /   /  * _  '
-// % _/\ \/\/ __/__.'(_|_|_
-// **************************************************************************/
+// * Funding:     This work was financed by the Northumbria University Faculty
+//                Funded and RDF funded studentship, UK
+// ****************************************************************************
 
 
-#include "Node.h"
-
+#include "Slave.h"
 #include <assert.h>
 #include "NetwControlInfo.h"
 #include "SimpleAddress.h"
 #include "Constant.h"
-Define_Module(Node);
+Define_Module(Slave);
 
-void Node::initialize(){
+void Slave::initialize()
+{
 
 	dpropVec.setName("prop");
 	dmsVec.setName("dms");
@@ -41,72 +38,63 @@ void Node::initialize(){
 	delayVec.setName("delay");
 	delta_t41Vec.setName("delta_t41");
 	TrVec.setName("Tr");
-	/* Inizializzazione variabili di stato. */
+
 	Tcamp  = par("Tcamp");
-	//alpha = par("alpha");
-	//beta = par("beta");
-	//Tsync = par("Tsync");
+	// alpha = par("alpha");
+	// beta = par("beta");
+	// Tsync = par("Tsync");
 	ts2 = ts1 =	ts3 =	ts4 = 0;
 	dprop  = dms = dsm  = 0;
 	drift = 0;
 	if(ev.isGUI()){updateDisplay();}
-	/* Lettura dei parametri di ingresso. */
-	//Tsync = par("Tsync");
-	//Tcamp  = par("Tcamp");
-	/*Parametri servo clock*/
+
+	// parameter for servo clock
 	Ts = Ts_correct = Tm = Tm_previous = Ts_previous = 0;
 	offset_previous=0;
 
-	/* Intilaize the pointer to the clock module */
+	// Initialise the pointer to the clock module
 	pClock = (Clock2 *)getParentModule()->getParentModule()->getSubmodule("clock");
 	if (pClock==NULL)
 	    error("No clock module is found in the module");
-	/* Initialize the addresses of slave & master */
-	name = "slave";
-	 // set the master address, using the same IP, MAC address as ArpHost.
-	 //  see the omnetpp.ini,
-	 // ################ ArpHost module parameters ####################
-	 //    *.mnode*.arp.offset = 100
-	 //    *.snode*.ptpcore.node.slaveAddrOffset=100
+
 	 if (hasPar("slaveAddrOffset"))
-	     address = findHost()->getIndex()+(int)par("slaveAddrOffset"); // ->getId(); for compatible with MiXiM, see BaseAppLayer.cc
+	     address = findHost() -> getIndex() + (int)par("slaveAddrOffset"); // ->getId(); for compatible with MiXiM, see BaseAppLayer.cc
 	 else
-	     address = findHost()->getIndex();
+	     address = findHost() -> getIndex();
      ev<<"slave node: my address is "<<address<<endl;
 
-	/* Find the master node and its address. */
+	// find the master node and its address
 	cModule *masterModule = findHost()->getParentModule();
-	ev<<"findHost()->getParentModule returns: "<<masterModule->getName()<<endl;
-	masterModule=masterModule->getSubmodule("mnode");
+	masterModule = masterModule->getSubmodule("mnode");
 	if (masterModule==NULL)
 	{
-	    master=0;
+	    master = 0;
 	    ev<<"WARNING: No master node named mnode is found. Using 0 as my master address\n";
 	}
-	master = masterModule->getIndex(); // master = masterModule->getId();
-	myMasterNode=masterModule;
+	master = masterModule -> getIndex();
+	myMasterNode = masterModule;
+	ev<<" my master's default address is "<< master <<endl;
 
-	ev<<"      my master's default address is "<<master<<endl;
-
-	/* Register with a master */
+	// Register with a master
 	PtpPkt * temp = new PtpPkt("REGISTER");
-    // we use the host modules findHost() as a appl address
-    temp->setSource(address);
-    temp->setDestination(PTP_BROADCAST_ADDR); //PTP_BROADCAST_ADDR = -1
-    temp->setPtpType(REG);
-    temp->setDestAddr(LAddress::L3BROADCAST);
-    temp->setSrcAddr(address);
-    temp->setByteLength(0);
+	temp -> setPtpType(REG);
+	temp -> setByteLength(0);
+
+    temp -> setSource(address);
+    temp -> setDestination(PTP_BROADCAST_ADDR);
+
+    temp -> setDestAddr(LAddress::L3BROADCAST);
+    temp -> setSrcAddr(address);
+
     // set the control info to tell the network layer the layer 3
-    // address;
     NetwControlInfo::setControlInfo(temp, LAddress::L3BROADCAST );
     send(temp,"out");
-	ev << "SLAVE node " << getId() << " : initialization finished. Send PtpPkt(\"REGISTER\")\n";
-	//recordResult();
+
+	ev << "Slave node : initialization finished\n";
 }
 
 // dxw: it seems the msg is always deleted at the end of handlMessage()
-void Node::handleMessage(cMessage *msg){
+void Slave::handleMessage(cMessage *msg){
 	ev<<"Node::handleMessage invoked\n";
     if(msg->isSelfMessage()){handleSelfMessage(msg);} //dxw->hyw: has msg been deleted inhandleSelfMessage()?
 	if(msg->arrivedOn("inclock")){
@@ -118,9 +106,9 @@ void Node::handleMessage(cMessage *msg){
 	{   // check PtpPkt type
         if (dynamic_cast<PtpPkt *>(msg) != NULL)
         {  EV<<"Received a PtpPkt packet. ";
-             if(((PtpPkt*)msg)->getSource()!=address &
-                     (((PtpPkt*)msg)->getDestination()==address |
-                             ((PtpPkt*)msg)->getDestination()==PTP_BROADCAST_ADDR)) //PTP_BROADCAST_ADDR = -1
+             if((((PtpPkt*)msg)->getSource() != address) &
+                     ((((PtpPkt*)msg)->getDestination() == address) |
+                             (((PtpPkt*)msg)->getDestination() == PTP_BROADCAST_ADDR))) //PTP_BROADCAST_ADDR = -1
              {        EV<<"the PtpPkt is for me, process it\n";
                handleMasterMessage(msg);
              }
@@ -141,14 +129,14 @@ void Node::handleMessage(cMessage *msg){
 }
 
 //ToDo Modify handleSelfMessage()
-void Node::handleSelfMessage(cMessage *msg){
+void Slave::handleSelfMessage(cMessage *msg){
 
 	           ProduceT3packet();
 
 }
-void Node::handleOtherPacket(cMessage *msg){}
+void Slave::handleOtherPacket(cMessage *msg){}
 
-void Node::handleEventMessage(cMessage *msg){
+void Slave::handleEventMessage(cMessage *msg){
 	if(((Event *)msg)->getEventType()==CICLICO){
 		Packet *pck = new Packet("CICLICO");
 		pck->setPckType(OTHER);
@@ -163,11 +151,11 @@ void Node::handleEventMessage(cMessage *msg){
 }
 
 
-void Node::handleClockMessage(cMessage *msg){
+void Slave::handleClockMessage(cMessage *msg){
     error("Now node does not exchange packet with clock. Used to acquire time stamps by packet exchange. Now we use function calls.");
    }
 
-void Node::handleMasterMessage(cMessage *msg){
+void Slave::handleMasterMessage(cMessage *msg){
     switch(((PtpPkt *)msg)->getPtpType()){
 		case SYNC:
 		{	//ts1 = ((PtpPkt *)msg)->getData();
@@ -243,7 +231,7 @@ void Node::handleMasterMessage(cMessage *msg){
 	ev<<"offset_previous = "<<offset_previous<<endl;
 }*/
 
-void Node::ProduceT3packet(){
+void Slave::ProduceT3packet(){
 
  /*   //dxw: skip the Packet exchange with Clock for timestamping
     Packet *pck = new Packet("DREQ_TIME_REQ");
@@ -276,7 +264,7 @@ void Node::ProduceT3packet(){
 
 }
 
-void Node::recordResult(){
+void Slave::recordResult(){
 	dsmVec.record(dsm);
 	dpropVec.record(dprop);
 	dmsVec.record(dms);
@@ -286,9 +274,9 @@ void Node::recordResult(){
 	TrVec.record(Tr);
 
 }
-void Node::finish(){}
+void Slave::finish(){}
 
-void Node::updateDisplay(){
+void Slave::updateDisplay(){
 	char buf[100];
 	sprintf(buf, "dms [ms]: %3.2f \ndsm [ms]: %3.2f \ndpr [ms]: %3.2f \noffset [ms]: %3.2f\n ",
 		dms*1000,dsm*1000,dprop*1000,offset*1000);
@@ -300,7 +288,7 @@ SERVO CLOCK IMPLEMENTATION.
 This function must be overwritten by the user.
 -------------------------------------------------------------------------------*/
 
-void Node::servo_clock(){
+void Slave::servo_clock(){
 	dms = ts2 - ts1;
 	dsm = ts4 - ts3;
 	ev<<"dms="<<dms<<"dsm="<<dsm<<endl;
@@ -367,7 +355,7 @@ void Node::servo_clock(){
 }
 
 
-cModule *Node::findHost(void)
+cModule *Slave::findHost(void)
 {
     cModule *parent = getParentModule();
     cModule *node = this;

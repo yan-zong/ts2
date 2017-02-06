@@ -34,30 +34,29 @@ void RelayMaster::initialize()
         lowerGateIn  = findGate("lowerGateIn");
         lowerGateOut = findGate("lowerGateOut");
 
-        // ---------------------------------------------------------------------------
+        // ****************************************************************************
         // Variable Initialisation.
-        // ---------------------------------------------------------------------------
+        // ****************************************************************************
         Tsync = par("Tsync");
         name = "master";
         nbReceivedDelayRequests = 0;
         nbSentSyncs = 0;
         nbSentDelayResponses = 0;
 
-        // ---------------------------------------------------------------------------
+        // ****************************************************************************
         // ArpHost Module Parameters
         // parameter 'masterAddrOffset' is used to set the address of the master
         // set the master address, using the same IP, MAC address as ArpHost (see the *.ini file)
-        // ---------------------------------------------------------------------------
-        // RelayMaster[0] address: 2000; RelayMaster[1] address: 3000 ...
+        // ****************************************************************************
+        // RelayMaster[0] address: 2000; RelayMaster[1] address: 2001 ...
         if (hasPar("masterAddrOffset"))
-            // address = (findHost()->getIndex()) + (int)par("masterAddrOffset"); // ->getId(); for compatible with MiXiM, see BaseAppLayer.cc
             myAddress = (findHost()->getIndex()) + (int)par("masterAddrOffset"); // ->getId(); for compatible with MiXiM, see BaseAppLayer.cc
         else
             error("No parameter masterAddrOffset is found");
 
         ev << "Relay Master address is "<< myAddress <<endl;
 
-        // Initialise the pointer to the clock module */
+        // Initialise the pointer to the clock module
         pClock = (Clock2 *)getParentModule()->getParentModule()->getSubmodule("clock");
         if (pClock == NULL)
         {
@@ -72,11 +71,9 @@ void RelayMaster::initialize()
         RelayModule = RelayModule->getSubmodule("smnode", (findHost()->getIndex()));
         RelayIndex = findHost()->getIndex();
         ev<<"Relay Master: RelayModule Index is "<< RelayIndex <<endl;
-        // SlaveAddr = 2000 + (((RelayModule->getIndex()) - 1) * 1000); ToDo
 
         // Schedule the time-synchronisation of relay
         // ToDo: add a random value function to improve the efficiency of packet exchange
-        // RandomTime = intuniform(0,1,0);
         RandomTime = uniform(0,1,0);
 
         if (hasPar("RandomValue"))
@@ -88,21 +85,19 @@ void RelayMaster::initialize()
             error("No Parameter RandomValue is found in the *.ini file");
         }
 
-        scheduleAt(simTime()+Tsync+ScheduleRandomTime, new cMessage("MStimer"));
-
-        // scheduleAt(simTime()+Tsync, new cMessage("MStimer"));
+        scheduleAt(simTime() + Tsync + ScheduleRandomTime, new cMessage("MStimer"));
         ev<<"Relay Master: debug: simTime() = "<< simTime() <<endl;
         ev<<"Relay Master: debug: Tsync = "<< Tsync <<endl;
         ev<<"Relay Master: debug: simTime() + Tsync = "<< simTime() + Tsync <<endl;
 
-        // ---------------------------------------------------------------------------
+        // ****************************************************************************
         // Register slave
-        // ---------------------------------------------------------------------------
+        // ****************************************************************************
         PtpPkt * temp = new PtpPkt("REGISTER");
         temp->setPtpType(REG);
 
         // use the host modules findHost() as a application address
-        temp->setDestination(PTP_BROADCAST_ADDR);   //PTP_BROADCAST_ADDR = -1
+        temp->setDestination(PTP_BROADCAST_ADDR);
         temp->setSource(myAddress);
 
         // set SrcAddr, DestAddr with LAddress::L3Type values for MiXiM
@@ -116,21 +111,9 @@ void RelayMaster::initialize()
 
         EV << "Relay Master broadcasts REGISTER packet" << endl;
         send(temp,"lowerGateOut");
-        ev << "debug: packet->getdestination() = " <<temp->getDestination()<<".\n";
+        ev << "debug: packet->getdestination() = " << temp -> getDestination() <<".\n";
   }
 
-
-/**
- * The basic handle message function.
- *
- * Depending on the gate a message arrives handleMessage just calls
- * different handle*Msg functions to further process the message.
- *
- * You should not make any changes in this function but implement all
- * your functionality into the handle*Msg functions called from here.
- *
- * @sa handleUpperMsg, handleLowerMsg, handleSelfMsg
- **/
 void RelayMaster::handleMessage(cMessage* msg)
 {
     int whichGate;
@@ -142,7 +125,7 @@ void RelayMaster::handleMessage(cMessage* msg)
     }
 
     // no self-message,check where it comes from
-    whichGate = msg->getArrivalGateId();
+    whichGate = msg -> getArrivalGateId();
     if (whichGate == lowerGateIn)
     {
         // check PtpPkt type
@@ -152,8 +135,8 @@ void RelayMaster::handleMessage(cMessage* msg)
         {
             EV << "this ia a PtpPkt packet, Relay Master now is processing it " <<endl;
             PtpPkt *pck = static_cast<PtpPkt *>(msg);
-            if(pck->getSource()!=myAddress &
-                    (pck->getDestination()==myAddress | pck->getDestination()==PTP_BROADCAST_ADDR))
+            if((pck->getSource() != myAddress) &
+                    ((pck->getDestination() == myAddress) | (pck->getDestination() == PTP_BROADCAST_ADDR)))
              {
                 EV << "the PtpPkt packet is for me, process it\n";
                  handleSlaveMessage(pck);   // handelSlaveMessage() does not delete msg
@@ -191,30 +174,27 @@ void RelayMaster::handleMessage(cMessage* msg)
     }
 }
 
-// ****************************************************************************
-//                      Private member function
-// ****************************************************************************
 void RelayMaster::handleSelfMessage(cMessage *msg)
 {
     EV << "Relay Master Timer fired New 'SYNC' Packet\n";
 
     PtpPkt *pck = new PtpPkt("SYNC");
-    pck->setPtpType(SYNC);
-    pck->setByteLength(SYNC_BYTE);
+    pck -> setPtpType(SYNC);
+    pck -> setByteLength(SYNC_BYTE);
 
-    pck->setTimestamp(simTime());
+    pck -> setTimestamp(simTime());
 
-    pck->setSource(myAddress);
-    pck->setDestination(PTP_BROADCAST_ADDR);    // PTP_BROADCAST_ADDR = -1
+    pck -> setSource(myAddress);
+    pck -> setDestination(PTP_BROADCAST_ADDR);
 
     // ToDo: the time-stamping of the master in the relay node, need to be time-stamped by the
     // inaccurate clock, i.e., the clock module of the relay node
-    pck->setData(SIMTIME_DBL(simTime()));
-    pck->setTsTx(SIMTIME_DBL(simTime())); // set transmission time stamp ts1 on SYNC
+    pck -> setData(SIMTIME_DBL(simTime()));
+    pck -> setTsTx(SIMTIME_DBL(simTime())); // set transmission time stamp ts1 on SYNC
 
     // set SrcAddr, DestAddr with LAddress::L3Type values for MiXiM
-    pck->setSrcAddr( LAddress::L3Type(myAddress));
-    pck->setDestAddr(LAddress::L3BROADCAST);
+    pck -> setSrcAddr( LAddress::L3Type(myAddress));
+    pck -> setDestAddr(LAddress::L3BROADCAST);
 
     // set the control info to tell the network layer (layer 3) address
     NetwControlInfo::setControlInfo(pck, LAddress::L3BROADCAST );
@@ -224,7 +204,6 @@ void RelayMaster::handleSelfMessage(cMessage *msg)
 
     nbSentSyncs = nbSentSyncs + 1;  // count the total number of the sent SYNC packet
 
-    // ToDo: double check whether need scheduleAt (Done by Yan Zong)
     scheduleAt(simTime()+Tsync, new cMessage("MStimer"));   // schedule the next time-synchronisation.
 }
 
@@ -245,33 +224,24 @@ void RelayMaster::handleSlaveMessage(PtpPkt *msg)
         {
             ev << "Relay Master: the received REGISTER packet is from the Relay node, generate the REPLY_REGISTER packet\n";
 
-            // ToDo: the destination address should be the relay node address, configure by using the
-            // register, rather than the assignment (Done by Yan Zong)
-
             PtpPkt *rplPkt= static_cast<PtpPkt *>((PtpPkt *)msg->dup());
-            rplPkt->setName("REPLY_REGISGER");
-            rplPkt->setByteLength(0);
-            rplPkt->setPtpType(REGREPLY);
+            rplPkt -> setName("REPLY_REGISGER");
+            rplPkt -> setByteLength(0);
+            rplPkt -> setPtpType(REGREPLY);
 
-            rplPkt->setSource(myAddress);
-            rplPkt->setDestination(mySlaveAddress);
-            // rplPkt->setDestination(((PtpPkt *)msg)->getSource());
+            rplPkt -> setSource(myAddress);
+            rplPkt -> setDestination(mySlaveAddress);
 
             // set SrcAddr, DestAddr with LAddress::L3Type values for MiXiM
-            rplPkt->setSrcAddr(LAddress::L3Type(myAddress));
-            rplPkt->setDestAddr(LAddress::L3Type(mySlaveAddress));
-
-            // rplPkt->setSrcAddr(LAddress::L3Type(rplPkt->getSource()));
-            // rplPkt->setDestAddr(LAddress::L3Type(rplPkt->getDestination()));
+            rplPkt -> setSrcAddr(LAddress::L3Type(myAddress));
+            rplPkt -> setDestAddr(LAddress::L3Type(mySlaveAddress));
 
             // set the control info to tell the network layer (layer 3) address
             NetwControlInfo::setControlInfo(rplPkt, LAddress::L3Type(mySlaveAddress));
-            // NetwControlInfo::setControlInfo(rplPkt, LAddress::L3Type(rplPkt->getDestination()));
 
             EV << "Relay Master transmits REPLY_REGISGE Rpacket" << endl;
             send(rplPkt, "lowerGateOut");
             break;
-
         }
         else
         {
@@ -300,28 +270,20 @@ void RelayMaster::handleSlaveMessage(PtpPkt *msg)
         {
             ev << "Relay Master: the received DREQ packet is from the Relay node, generate the DRES packet\n";
 
-            // ToDo: the destination address should be the relay node address, configure by using the
-            // register, rather than the assignment (Done By Yan Zong)
-
             PtpPkt *pck = new PtpPkt("DRES");
-            pck->setByteLength(DRES_BYTE);
+            pck -> setByteLength(DRES_BYTE);
 
-            pck->setDestination(mySlaveAddress);
-            pck->setSource(myAddress);
-
-            // pck->setDestination(((PtpPkt *)msg)->getSource());
-            // pck->setSource(address);
+            pck -> setDestination(mySlaveAddress);
+            pck -> setSource(myAddress);
 
             pck->setPtpType(DRES);
             pck->setData(SIMTIME_DBL(simTime()));
 
             // set SrcAddr, DestAddr with LAddress::L3Type values for MiXiM
             pck->setSrcAddr(LAddress::L3Type(myAddress));
-            // pck->setDestAddr(LAddress::L3Type(pck->getDestination()));
             pck->setDestAddr(LAddress::L3Type(mySlaveAddress));
 
             // set the control info to tell the network layer (layer 3) address
-            // NetwControlInfo::setControlInfo(pck, LAddress::L3Type(pck->getDestination()));
             NetwControlInfo::setControlInfo(pck, LAddress::L3Type(mySlaveAddress));
 
             EV << "Relay Master transmits DRES packet" << endl;
@@ -377,9 +339,6 @@ cModule *RelayMaster::findHost(void)
     return node;
 }
 
-// ****************************************************************************
-//                      Public member function
-// ****************************************************************************
 void RelayMaster::startSync()
 {
     Enter_Method_Silent(); // see simuutil.h for detail
@@ -387,20 +346,20 @@ void RelayMaster::startSync()
     EV << "Relay Master Timer fired New 'SYNC' Packet for slave of the second-hop\n";
 
     PtpPkt *pck = new PtpPkt("SYNC");
-    pck->setPtpType(SYNC);
-    pck->setByteLength(SYNC_BYTE);
+    pck -> setPtpType(SYNC);
+    pck -> setByteLength(SYNC_BYTE);
 
-    pck->setTimestamp(simTime());   // time stamp
+    pck -> setTimestamp(simTime());
 
-    pck->setSource(myAddress);
-    pck->setDestination(PTP_BROADCAST_ADDR);
+    pck -> setSource(myAddress);
+    pck -> setDestination(PTP_BROADCAST_ADDR);
 
-    pck->setData(SIMTIME_DBL(simTime()));
-    pck->setTsTx(SIMTIME_DBL(simTime())); // set transmission time stamp ts1 on SYNC
+    pck -> setData(SIMTIME_DBL(simTime()));
+    pck -> setTsTx(SIMTIME_DBL(simTime())); // set transmission time stamp ts1 on SYNC
 
     // set SrcAddr, DestAddr with LAddress::L3Type values for MiXiM
-    pck->setSrcAddr( LAddress::L3Type(myAddress));
-    pck->setDestAddr(LAddress::L3BROADCAST);
+    pck -> setSrcAddr( LAddress::L3Type(myAddress));
+    pck -> setDestAddr(LAddress::L3BROADCAST);
 
     // set the control info to tell the network layer (layer 3) address
     NetwControlInfo::setControlInfo(pck, LAddress::L3BROADCAST );
@@ -409,6 +368,5 @@ void RelayMaster::startSync()
     send(pck,"lowerGateOut");
 
     nbSentSyncs = nbSentSyncs + 1;  // count the total number of the sent SYNC packet
-
 }
 
