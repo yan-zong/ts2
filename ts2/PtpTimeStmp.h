@@ -24,7 +24,7 @@
 
 #include <omnetpp.h>
 #include "Clock2.h"
-#include "Node.h"
+#include "Slave.h"
 
 /**
  * TODO - Generated class
@@ -34,7 +34,7 @@ class PtpTimeStmp : public cSimpleModule
     private:
      bool useGlobalRefClock;
      Clock2 *pClk;
-     Node *pNode;
+     Slave *pNode;
 
   protected:
     virtual void initialize();

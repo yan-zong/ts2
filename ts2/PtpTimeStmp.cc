@@ -32,7 +32,8 @@ void PtpTimeStmp::initialize()
     // by default, if there is a clock module inside the node, use that clock as the time source
     //             if there is no a clock module, use the simTime() as the time source.
     ev<<"Timestamp: initialise "<<endl;
-    pNode=(Node *)(findHost()->getSubmodule("ptpCore"));
+    // pNode=(Node *)(findHost()->getSubmodule("ptpCore"));
+    pNode=(Slave *)(findHost()->getSubmodule("ptpCore"));
     pClk=(Clock2 *)(findHost()->getSubmodule("clock"));
 
     if (pClk == NULL)
