@@ -89,6 +89,7 @@ void RelayMaster::initialize()
         ev<<"Relay Master: debug: simTime() = "<< simTime() <<endl;
         ev<<"Relay Master: debug: Tsync = "<< Tsync <<endl;
         ev<<"Relay Master: debug: simTime() + Tsync = "<< simTime() + Tsync <<endl;
+        ev<<"Relay Master: uniform(0,1,0) = "<< uniform(0,1,0) <<endl;
 
         // ****************************************************************************
         // Register slave
