@@ -19,28 +19,39 @@
 //                Funded and RDF funded studentship, UK
 // ****************************************************************************
 
+#ifndef MASTER_H_
+#define MASTER_H_
 
-package ts2;
 
-simple MasterCore  like ICore
+#include <string.h>
+#include <omnetpp.h>
+#include "PtpPkt_m.h"
+#include "Event_m.h"
+#include "Constant.h"
+
+class Master : public cSimpleModule
 {
-    parameters:
-       @class(Master);
-    	double Tsync = default(1);
-        int masterAddrOffset;
-            
-    gates:
-        input upperGateIn; // from net layer
-        output upperGateOut; // to net layer
-    	// input upperControlIn; // control from net layer
-    	// output upperControlOut; // control to net layer
-        
-        input lowerGateIn; // from mac
-        output lowerGateOut; // to mac
-    	// input lowerControlIn; // control from mac
-    	// output lowerControlOut; // control to mac
-        
-        output outclock;
-        input inclock;
-        
-}   
+private:
+    const char *name;
+    int address;
+    double Tsync;
+
+protected:
+    int upperGateIn;
+    int upperGateOut;
+    int lowerGateIn;
+    int lowerGateOut;
+
+protected:
+    virtual void initialize();
+    virtual void handleMessage(cMessage *msg);
+    virtual void finish();
+    cModule *findHost(void);
+
+private:
+    void handleSelfMessage(cMessage *msg);
+    void handleSlaveMessage(PtpPkt *msg);
+
+};
+
+#endif // MASTER_H_

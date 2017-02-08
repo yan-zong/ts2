@@ -29,7 +29,7 @@
 /**
  * TODO - Generated class
  */
-class PtpTimeStmp : public cSimpleModule
+class Timestamp : public cSimpleModule
 {
     private:
      bool useGlobalRefClock;

@@ -66,4 +66,4 @@ private:
 
 };
 
-#endif /* PTPMASTER_H_ */
+#endif // MASTER_H_
