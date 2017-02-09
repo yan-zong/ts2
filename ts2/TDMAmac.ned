@@ -19,19 +19,17 @@
 //                Funded and RDF funded studentship, UK
 // ****************************************************************************
 
+
+// TDMAmac --> BaseMacLayer --> BaseLayer --> IWirelessMac
+// CSMA802154 --> csma --> BaseMacLayer --> BaseLayer --> IWirelessMac
 package ts2;
 
-// package org.mixim.base.modules;
+import org.mixim.base.modules.BaseMacLayer;
 
-// 'myTDMAmac(TDMAmac)' extend 'BaseMacLayer' extend 'BaseLayer' like 'IWirelessMac'
-simple TDMAmac
+simple TDMAmac extends BaseMacLayer
 {
-    
     parameters:
-    	// @class("myTDMAmac");
-    	@class(TDMAmac);
-    	
-    	// enable per module debug
+    	 // enable per module debug
         bool debug = default(false);
         // how long is a slot?
         double slotDuration @unit(s) = default(100ms);
@@ -48,29 +46,8 @@ simple TDMAmac
 		bool trace = default(false);
 		
         double txPower = default(50);
-	
-    	// from BaseMacLayer.ned
-    	// @class(BaseMacLayer);
-    	bool coreDebug = default(false);          // debug switch
-        int    headerLength @unit(bit);           // length of the MAC packet header (in bits)
-        string address = default("auto");         // MAC address as hex string (12 hex digits), or
-                                                  // "auto". "auto" values will be replaced by
-                                                  // a generated MAC address in init stage 1.
-    	
-    	// from BaseLayer.ned
-    	bool notAffectedByHostState = default(false);
-    	
-    	// from BaseLayer.ned (or IWirelessMac.ned)
-    gates:
-        input upperLayerIn; // from upper layer
-        output upperLayerOut; // to uppe layer
-        input upperControlIn; // control from upper layer
-        output upperControlOut; // control to upper layer
-        input lowerLayerIn; // from lower layer
-        output lowerLayerOut; // to lower layer
-        input lowerControlIn; // control from lower layer
-        output lowerControlOut; // control to lower layer
 
+    	@class("TDMAmac");
 }
 
 
