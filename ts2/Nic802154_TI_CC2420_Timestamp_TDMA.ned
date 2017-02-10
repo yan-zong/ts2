@@ -85,9 +85,25 @@ module Nic802154_TI_CC2420_Timestamp_TDMA like IWirelessNicUpperCtrl
         phy.timeTXToSleep = 0 s;
 
         mac.rxSetupTime = 0.001792 s;
-        // mac.txPower = default(1 mW);	// ToDo: double ckeck the unit
-        mac.txPower = default(1);
-
+        // mac.txPower = default(1 mW);	// for CSMA	
+        
+        // for TDMA integrated from MyTDMAmac.ned
+        // enable per module debug
+        bool debug = default(false);
+        // how long is a slot?
+        double slotDuration @unit(s) = default(100ms);
+        // length of MAC header
+        double queueLength = default(10);
+        // default channel 
+        double defaultChannel = default(0);
+        // bit rate 
+        double bitrate @unit(bps) = default(19200bps);
+        // level at which we consider medium busy FIXME not used currently
+		// double busyRSSI;
+		bool stats = default(false);
+		bool trace = default(false);		
+        double txPower = default(50);
+        
         @display("bgb=135,186,white");
     gates:
         input upperLayerIn; // to upper layers

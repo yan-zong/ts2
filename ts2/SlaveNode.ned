@@ -41,15 +41,22 @@ module SlaveNode extends HostCC2420a
         mobilityType = default("StationaryMobility"); // type of the mobility module
         arpType = "ArpHost";
 
-		// for NIC without hardware time stamp
-       	nicType = "Nic802154_TI_CC2420";
+		// for NIC without hardware time stamp for CSMA
+       	// nicType = "Nic802154_TI_CC2420";
 
-        // for NIC with hardware timie stamp
+        // for NIC with hardware timie stamp for CSMA
    		// nicType = "Nic802154_TI_CC2420_Timestamp";
    		// nic.tsstmp.useGlobalRefClock = default(false);
         // set useGlobalRefClock = true to use simTime() for time stamping
         // set useGlobalRefClock = false to use clock module for time stamping if a node has a clock module
 
+        // for NIC with hardware timie stamp for TDMA
+   		nicType = "Nic802154_TI_CC2420_Timestamp_TDMA";
+   		nic.Timestamp.useGlobalRefClock = default(false);
+        // set useGlobalRefClock = true to use simTime() for time stamping
+        // set useGlobalRefClock = false to use clock module for time stamping if a node has a clock module
+        
+        
         CoreType = default("SlaveCore");
         int numHosts; // total number of hosts in the network
 
