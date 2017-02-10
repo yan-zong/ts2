@@ -1,7 +1,7 @@
 //***************************************************************************
 // * File:        This file is part of TS2.
 // * Created on:  07 Dov 2016
-// * Author:      Yan Zong, Xuweu Dai
+// * Author:      Xuweu Dai
 // *
 // * Copyright:   (C) 2016 Northumbria University, UK.
 // *
@@ -17,6 +17,9 @@
 // *
 // * Funding:     This work was financed by the Northumbria University Faculty
 //                Funded and RDF funded studentship, UK
+// 
+// * Description: - base class for network layer packets
+// *              - subclass to create your own network layer packets
 // ****************************************************************************
 
 cplusplus {{

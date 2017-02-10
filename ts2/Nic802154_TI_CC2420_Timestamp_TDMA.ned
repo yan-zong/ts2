@@ -28,6 +28,8 @@ import org.mixim.base.phyLayer.IWirelessPhy;
 import org.mixim.base.modules.IWirelessMac;
 import org.mixim.modules.nic.IWirelessNicUpperCtrl;
 
+import mytdmamac.MyTDMAmac;
+
 
 // ****************************************************************************
 // This NIC implements a Texas Instruments CC 2420 802.15.4 network interface 
@@ -48,8 +50,8 @@ module Nic802154_TI_CC2420_Timestamp_TDMA like IWirelessNicUpperCtrl
         string phyType = default("org.mixim.modules.phy.PhyLayerBattery");
 
         // string macType = default("org.mixim.modules.mac.CSMAMacLayer");
-        // ToDo: do we change the 'macType' (Yan Zong)
-        // string macType = default("CSMA802154");
+        // string macType = default("CSMA802154");	// for CSMA
+        string macType = default("MyTDMAmac");	// for TDMA
 
         double sleepCurrent @unit(mA);
         double rxCurrent @unit(mA);
@@ -83,7 +85,8 @@ module Nic802154_TI_CC2420_Timestamp_TDMA like IWirelessNicUpperCtrl
         phy.timeTXToSleep = 0 s;
 
         mac.rxSetupTime = 0.001792 s;
-        // mac.txPower = default(1 mW);	// ToDo: double check this error (Yan Zong)
+        // mac.txPower = default(1 mW);	// ToDo: double ckeck the unit
+        mac.txPower = default(1);
 
         @display("bgb=135,186,white");
     gates:
@@ -94,15 +97,19 @@ module Nic802154_TI_CC2420_Timestamp_TDMA like IWirelessNicUpperCtrl
         input radioIn; // radioIn gate for sendDirect
 
     submodules:
-//        mac: <macType> like IWirelessMac {
-//            @display("p=74,46;i=block/layer;is=l");
-//        }
+        // for CSMA
+		// mac: <macType> like IWirelessMac {
+        //     @display("p=74,46;i=block/layer;is=l");
+        // }
         
-        mac: TDMAmac {
-        	@display("p=74,46;i=block/layer;is=l");
+        // for TDMA
+        mac: MyTDMAmac {
+            @display("p=74,46;i=block/layer;is=l");
         }
         
+        
         timestamp: Timestamp {
+
             @display("p=29,101;b=,,oval,red;i=device/clock;is=s;tt=Time Stamp ");
         }
 
