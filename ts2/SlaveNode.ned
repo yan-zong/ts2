@@ -51,10 +51,7 @@ module SlaveNode extends HostCC2420a
         // set useGlobalRefClock = false to use clock module for time stamping if a node has a clock module
 
         // for NIC with hardware timie stamp for TDMA
-   		nicType = "Nic802154_TI_CC2420_Timestamp_TDMA";
-   		nic.Timestamp.useGlobalRefClock = default(false);
-        // set useGlobalRefClock = true to use simTime() for time stamping
-        // set useGlobalRefClock = false to use clock module for time stamping if a node has a clock module
+   		nicType = "Nic_Timestamp_TDMA";
         
         
         CoreType = default("SlaveCore");
