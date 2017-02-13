@@ -28,6 +28,7 @@ package ts2;
 import org.mixim.modules.power.battery.BatteryStats;
 import org.mixim.modules.power.battery.SimpleBattery;
 import org.mixim.modules.node.WirelessNode;
+import mytdmamac.TDMAmac.Clock2;
 
 
 module MasterCC2420 extends HostCC2420a

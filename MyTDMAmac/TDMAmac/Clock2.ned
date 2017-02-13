@@ -1,4 +1,4 @@
-package ts2;
+package mytdmamac.TDMAmac;
 
 simple Clock2
 {

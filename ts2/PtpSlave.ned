@@ -27,7 +27,6 @@ package ts2;
 import ts2.im.Nodo;
 import ts2.im.Buffer3;
 import ts2.im.Manager;
-import ts2.im.Clock;
 
 module PtpSlave like IPtpCore
 {
