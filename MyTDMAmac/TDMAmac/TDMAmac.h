@@ -27,6 +27,7 @@
 #include <BaseMacLayer.h>
 #include <SimpleAddress.h>
 #include <DroppedPacket.h> //Not used yet !aaks
+#include <Clock2.h>
 
 class TDMAMacPkt; // TDMA Mac packet definition !aaks look at TDMAMacPkt.msg
 
@@ -40,6 +41,8 @@ class MIXIM_API TDMAmac : public BaseMacLayer
 
         /* @brief Assignment operator is not allowed. #LMAC */
         TDMAmac& operator=(const TDMAmac&);
+
+        Clock2 *pClock;
 
     /*
      * New variables apart from LMAC definition are:
@@ -137,6 +140,12 @@ protected:
     int droppedPackets;
 
     int MyID = 0;
+
+    double ClockTime;
+    double ClockTimeOffset;
+    double ScheduleTimeOffset;
+    double FrameTime;
+    double GuardTime;
 };
 
 #endif /* TDMAMAC_H_ */

@@ -38,6 +38,9 @@ simple TDMAmac extends BaseMacLayer
         double bitrate @unit(bps) = default(19200bps);
         // level at which we consider medium busy FIXME not used currently
 		// double busyRSSI;
+		// how long is a guard time?
+        double GuardTime @unit(s) = default(0ms);
+		
 		
 		bool stats = default(false);
 		bool trace = default(false);

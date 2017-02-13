@@ -169,8 +169,32 @@ void TDMAmac::handleSelfMsg(cMessage* msg)
           /* SETUP phase enters to start the MAC protocol !aaks */
           case 0:
           {
-              /* Start listening as a starting procedure !aaks */
-              scheduleAt(simTime() + (numNodes -1) * slotDuration, delayTimer);
+              ClockTime = 0;
+              /* Start listening as a starting procedure by using local drifting clock */
+              ClockTime = pClock -> getTimestamp(); // the local drifting clock time
+              EV << "TDMAmac: the local drifting clock time is " << ClockTime << endl;
+
+              ClockTimeOffset = ClockTime - SIMTIME_DBL(simTime());
+              EV << "TDMAmac: the local drifting clock time offset is " << ClockTimeOffset << endl;
+
+              if ((ClockTimeOffset > 0) | (ClockTimeOffset == 0))   // local clock time is greater than reference clock times
+              {
+                  ScheduleTimeOffset = slotDuration - ClockTimeOffset;
+              }
+              else  // local clock time is less than reference clock times
+              {
+                  ClockTimeOffset = SIMTIME_DBL(simTime()) - ClockTime;
+                  ScheduleTimeOffset = slotDuration + ClockTimeOffset;
+              }
+
+              FrameTime = slotDuration * numNodes + (numNodes -1) * GuardTime;
+              scheduleAt(simTime() + ScheduleTimeOffset + FrameTime, delayTimer);
+
+              EV << "TDMAmac: the offset of local drift clock is " << ClockTimeOffset <<endl;
+              EV << "I will schedule the next event after " << ScheduleTimeOffset << "at time: " << (simTime() + ScheduleTimeOffset + FrameTime) <<endl;
+              EV << "rather than the time " << (simTime() + FrameTime) <<endl;
+
+              // scheduleAt(simTime() + (numNodes -1) * slotDuration, delayTimer);
 
               if(macPktQueue.empty())
                   break;
