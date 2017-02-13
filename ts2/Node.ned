@@ -1,6 +1,6 @@
 package ts2;
 
-simple Slave
+simple Node
 {
     parameters:
        @class(Node);

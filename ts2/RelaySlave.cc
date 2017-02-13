@@ -26,6 +26,7 @@
 #include "NetwControlInfo.h"
 #include "SimpleAddress.h"
 #include "ApplPkt_m.h"
+// #include "Constant.h"
 
 
 Define_Module(RelaySlave);
@@ -43,13 +44,13 @@ void RelaySlave::initialize()
 	delta_t41Vec.setName("delta_t41");
 	TrVec.setName("Tr");
 
-	// variable initialisation.
+	/* Inizializzazione variabili di stato. */
 	Tcamp  = par("Tcamp");
-	// alpha = par("alpha");
-	// beta = par("beta");
-	// Tsync = par("Tsync");
-	ts2 = ts1 =	ts3 = ts4 = 0;
-	dprop = dms = dsm = 0;
+	//alpha = par("alpha");
+	//beta = par("beta");
+	//Tsync = par("Tsync");
+	ts2 = ts1 =	ts3 =	ts4 = 0;
+	dprop  = dms = dsm  = 0;
 	drift = 0;
 	if(ev.isGUI()){updateDisplay();}
 
@@ -59,14 +60,20 @@ void RelaySlave::initialize()
 	nbReceivedSyncsFromRelay = 0;
 	nbReceivedDelayResponsesFromRelay = 0;
 
-	// parameter for servo clock
+	/* Lettura dei parametri di ingresso. */
+	//Tsync = par("Tsync");
+	//Tcamp  = par("Tcamp");
+	/*Parametri servo clock*/
 	Ts = Ts_correct = Tm = Tm_previous = Ts_previous = 0;
 	offset_previous=0;
 
-	// Initialise the pointer to the clock module
+	/* Initialise the pointer to the clock module */
 	pClock = (Clock2 *)getParentModule()->getParentModule()->getSubmodule("clock");
 	if (pClock==NULL)
 	    error("No clock module is found in the module");
+
+	/* Initialise the addresses of slave & master */
+	name = "slave";
 
 	// ---------------------------------------------------------------------------
     // ArpHost module parameters
@@ -74,14 +81,14 @@ void RelaySlave::initialize()
     // set the slave address, using the same IP, MAC address as ArpHost (see the *.ini file)
     // ---------------------------------------------------------------------------
 	if (hasPar("slaveAddrOffset"))
-	    myAddress = (findHost() -> getIndex()) + (int)par("slaveAddrOffset"); // ->getId(); for compatible with MiXiM, see BaseAppLayer.cc
+	    myAddress = (findHost()->getIndex()) + (int)par("slaveAddrOffset"); // ->getId(); for compatible with MiXiM, see BaseAppLayer.cc
 	else
 	    error("No parameter slaveAddrOffset is found");
 
     ev << "Relay Slave address is "<< myAddress <<endl;
 
 	// find Sink node (or Master node), and Relay node, and their respective address
-    cModule *SinkModule = findHost() -> getParentModule();
+    cModule *SinkModule = findHost()->getParentModule();
     ev<<"Relay Slave: SinkModule: findHost()->getParentModule returns: "<< SinkModule->getName() <<endl;
     // Relay Slave: findHost()->getParentModule returns: TSieee802154SM
 
@@ -103,6 +110,7 @@ void RelaySlave::initialize()
     }
     else if (MasterModule != NULL)
     {
+        // master = 2000 + ((MasterModule->getIndex()) * 1000);
         myMasterAddress = 2000 + (MasterModule->getIndex());
         ev<<"Relay Slave: Master default address is "<< myMasterAddress <<endl;
         ev<<"Relay Slave: my master node is "<< MasterModule->getName() <<endl;
@@ -113,6 +121,7 @@ void RelaySlave::initialize()
     }
 
 	// Find the Relay Master, and Relay Master pointer
+	// ToDo: need to change the getSubmodule from ptpM2 to RelayMaster (Done by Yan Zong)
 	pRelayMaster = (RelayMaster *)getParentModule()->getSubmodule("RelayMaster");
 	ev<<"Relay Master: Relay Master pointer is "<< pRelayMaster <<endl;
     if (pRelayMaster==NULL)
@@ -120,7 +129,7 @@ void RelaySlave::initialize()
         error("could not find Relay Master module in a Relay node (boundary clock node)");
     }
 
-	// Register packet with master node
+	// Register with Master node
 	PtpPkt * temp = new PtpPkt("REGISTER");
 	temp->setPtpType(REG);
 	temp->setByteLength(0);
@@ -140,6 +149,7 @@ void RelaySlave::initialize()
 	ev << "Relay Slave: initialisation finished, send REGISTER \n";
 }
 
+// msg is always deleted at the end of handlMessage(), but the temp(msg) is not deleted at the end of initialize()
 void RelaySlave::handleMessage(cMessage *msg)
 {
 	ev << "Relay Slave: handleMessage invoked\n";
@@ -158,14 +168,13 @@ void RelaySlave::handleMessage(cMessage *msg)
 	}
 
 	if (msg->arrivedOn("in"))   // data packet from lower layer
-	{
-	    // check PtpPkt type
+	{   // check PtpPkt type
         if (dynamic_cast<PtpPkt *>(msg) != NULL)
         {
             EV << "Relay Slave receives a PtpPkt packet. ";
-            if(((PtpPkt*)msg)->getSource() != myAddress  &
-                     (((PtpPkt*)msg)->getDestination() == myAddress  |
-                             ((PtpPkt*)msg)->getDestination() == PTP_BROADCAST_ADDR))
+            if(((PtpPkt*)msg)->getSource()!=myAddress  &
+                     (((PtpPkt*)msg)->getDestination()==myAddress  |
+                             ((PtpPkt*)msg)->getDestination()==PTP_BROADCAST_ADDR))  // PTP_BROADCAST_ADDR = -1
             {
                 EV << "the PtpPkt packet is for me, Relay Slave is processing it\n";
                 handleMasterMessage(msg);
@@ -269,30 +278,31 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
         if (myMasterAddress == 1000)
         {
             ev << "Relay Slave receives SYNC packet from master node, process it\n";
-            ts1 = ((PtpPkt *)msg) -> getTsTx();
+            ts1 = ((PtpPkt *)msg)->getTsTx();
 
             ev << " Relay Slave: ts1 = "<< ts1 <<endl;
             ev << " Relay Slave: the arrival time of SYNC = "<< SIMTIME_DBL(simTime()) <<endl;
-            pClock -> setT123(ts1,0,0);
+            pClock->setT123(ts1,0,0);
 
-            Tr= ((Packet *)msg) -> getByteLength() * 8; // packet propagation delay
+            Tr= ((Packet *)msg)->getByteLength()*8; //包的传输时延,dxw->hyw: what is Tr for?
 
             // update the address of master according the received SYNC
             ev << "my master address is updated to "<< myMasterAddress <<endl;
 
             // New codes that call public function clock::getTimeStamp()
-            ts2 = pClock -> getTimestamp();  //DXW20150129: TODO: shall we use the packet's getTsRx()
+            ts2 = pClock->getTimestamp();  //DXW20150129: TODO: shall we use the packet's getTsRx()
                                             // to get the packet's Rx timestamp by the ptpStmp module
                                             //  or use the timestamp at higher layer (e.g. ptpSlave.Node)
             ev << " Relay Slave: ts2 = "<< ts2 <<endl;
             T= 1/rate;
-            // delay = uniform(0,Tcamp/10); // time delay between the t2 and t3
+            // delay = uniform(0,Tcamp/10);//t2包和t3包间的处理时延
             delay = uniform(0,1E-5);
             // delay=1E-5;
+            // ToDo: double check whether need scheduleAt (Done by Yan Zong).
+            // this scheduleAt use to generate the DREQ packet.
+            scheduleAt(simTime()+delay, new cMessage("SLtimer"));
+            delayVec.record(delay); //记录t2,t3间的时延
 
-            // this scheduleAt is used to generate the DREQ packet.
-            scheduleAt(simTime() + delay, new cMessage("SLtimer"));
-            delayVec.record(delay); // time delay between the t2 and t3
             ev << "delay (t2 to t3)= " << delay <<endl;
 
             nbReceivedSyncsFromMaster = nbReceivedSyncsFromMaster + 1;  // count the number of the received SYNC packet.
@@ -301,30 +311,30 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
         else if (myMasterAddress == 2000 || myMasterAddress > 2000)
         {
             ev << "Relay Slave receives SYNC packet from relay node, process it\n";
-            ts1 = ((PtpPkt *)msg) -> getTsTx();
+            ts1 = ((PtpPkt *)msg)->getTsTx();
 
             ev << " Relay Slave: ts1 = "<< ts1 <<endl;
             ev << " Relay Slave: the arrival time of SYNC = "<< SIMTIME_DBL(simTime()) <<endl;
-            pClock -> setT123(ts1,0,0);
+            pClock->setT123(ts1,0,0);
 
-            Tr= ((Packet *)msg) -> getByteLength() * 8; // packet propagation delay
+            Tr= ((Packet *)msg)->getByteLength()*8; //包的传输时延,dxw->hyw: what is Tr for?
 
             // update the address of master according the received SYNC
             ev << "my master address is updated to "<< myMasterAddress <<endl;
 
             // New codes that call public function clock::getTimeStamp()
-            ts2 = pClock -> getTimestamp();  //DXW20150129: TODO: shall we use the packet's getTsRx()
+            ts2 = pClock->getTimestamp();  //DXW20150129: TODO: shall we use the packet's getTsRx()
                                                         // to get the packet's Rx timestamp by the ptpStmp module
                                                         //  or use the timestamp at higher layer (e.g. ptpSlave.Node)
             ev << " Relay Slave: ts2 = "<< ts2 <<endl;
             T= 1/rate;
-            // delay = uniform(0,Tcamp/10); // time delay between the t2 and t3
+            // delay = uniform(0,Tcamp/10);//t2包和t3包间的处理时延
             delay = uniform(0,1E-5);
             // delay=1E-5;
-
+            // ToDo: double check whether need scheduleAt (Done by Yan Zong).
             // this scheduleAt use to generate the DREQ packet.
-            scheduleAt(simTime() + delay, new cMessage("SLtimer"));
-            delayVec.record(delay); // time delay between the t2 and t3
+            scheduleAt(simTime()+delay, new cMessage("SLtimer"));
+            delayVec.record(delay); //记录t2,t3间的时延
 
             ev << "delay (t2 to t3)= " << delay <<endl;
 
@@ -342,7 +352,7 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
         if (myMasterAddress == 1000)
         {
             ev << "Relay Slave handleMasterMesage() is processing DRES Packet from Master.\n";
-            ts4 = ((PtpPkt *)msg) -> getData();
+            ts4 = ((PtpPkt *)msg)->getData();
             ev << " Relay Slave: ts4 = "<< ts4 <<endl;
             delta_t41 = SIMTIME_DBL(simTime()) - ts1;
             servo_clock();
@@ -356,7 +366,7 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
         else if (myMasterAddress == 2000 || myMasterAddress > 2000)
         {
             ev << "Relay Slave handleMasterMesage() is processing DRES Packet from relay node.\n";
-            ts4 = ((PtpPkt *)msg) -> getData();
+            ts4 = ((PtpPkt *)msg)->getData();
             ev << " Relay Slave: ts4 = "<< ts4 <<endl;
             delta_t41 = SIMTIME_DBL(simTime()) - ts1;
             servo_clock();
@@ -389,15 +399,15 @@ void RelaySlave::ProduceT3packet()
     ts3 = pClock->getTimestamp();
     ev << "ts3 = "<< ts3 <<endl;
     PtpPkt *pck = new PtpPkt("DREQ");
-    pck -> setByteLength(DREQ_BYTE);    // DREQ_BYTE = 164
-    pck -> setPtpType(DREQ);
+    pck->setByteLength(DREQ_BYTE);    // DREQ_BYTE = 164
+    pck->setPtpType(DREQ);
 
-    pck -> setDestination(myMasterAddress);
-    pck -> setSource(myAddress);
+    pck->setDestination(myMasterAddress);
+    pck->setSource(myAddress);
 
     // set SrcAddr, DestAddr with LAddress::L3Type values for MiXiM
-    pck -> setDestAddr(LAddress::L3Type(myMasterAddress));
-    pck -> setSrcAddr(LAddress::L3Type(myAddress));
+    pck->setDestAddr(LAddress::L3Type(myMasterAddress));
+    pck->setSrcAddr(LAddress::L3Type(myAddress));
 
     // set the control info to tell the network layer (layer 3) address
     NetwControlInfo::setControlInfo(pck, LAddress::L3Type(myMasterAddress));
@@ -441,25 +451,26 @@ void RelaySlave::updateDisplay()
 		dms*1000,dsm*1000,dprop*1000,offset*1000);
 	getDisplayString().setTagArg("t",0,buf);
 }
-
-// ****************************************************************************
-// * SERVO CLOCK IMPLEMENTATION.
-// * This function must be overwritten by the user.
-// ****************************************************************************
+/*
+-------------------------------------------------------------------------------
+SERVO CLOCK IMPLEMENTATION.
+This function must be overwritten by the user.
+-------------------------------------------------------------------------------*/
 
 void RelaySlave::servo_clock()
 {
 	dms = ts2 - ts1;
 	dsm = ts4 - ts3;
-	ev<<" dms = "<< dms <<" dsm = "<< dsm <<endl;
-	dprop = (dms + dsm)/2;  // propagation delay
+	ev<<"dms="<<dms<<"dsm="<<dsm<<endl;
+	dprop = (dms + dsm)/2;
 	offset = dms - dprop;
-	// offset = ((ts2 - ts1)- (ts4 - ts3))/2;
-	ev<<"offset = "<< offset <<endl;
-    // double alpha = 1;
-    // double beta = 200;
-    // double y = offset/alpha;
-	// ev<<"y="<<y<<endl;
+	//offset = ((ts2 - ts1)- (ts4 - ts3))/2;
+	ev<<"offset="<<offset<<endl;
+    //double alpha = 1;
+    //double beta = 200;
+    //double y =offset/alpha;
+	//ev<<"y="<<y<<endl;
+    ev<<"offset= "<<offset<<endl;
 
 /*    // the following codes of packet exchange will be
     // replace by calling function clock2::adjtimeex() directly
@@ -472,21 +483,21 @@ void RelaySlave::servo_clock()
 */
 
 
-	Ts = ts2;   // T2
-	Tm = ts1;   // T1
-	ev<<"Ts - Ts_previous = "<< Ts - Ts_previous <<endl;
+	Ts = ts2;//T2
+	Tm = ts1;//T1
+	ev<<"Ts-Ts_previous="<<Ts-Ts_previous<<endl;
 	//if(Tm_previous > 0){  //去掉这个if判断语句，不然drift在第一次同步周期内没有得到校正,去掉之后对结果没什么影响
 	// TODO:drift estimate
 		//drift = (Ts-Ts_previous+y)/(Tm-Tm_previous)-1;//从物理意义上来说，这个计算drift的算法是错误的
-	// drift = (Ts - Ts_previous + offset_previous)/(Tm-Tm_previous)-1;//仿真结果最好的一个算法
-	// drift = (Ts - Ts_previous)/(Tm-Tm_previous)-1;//在我的时钟模型中，这个算法是不对的,应在clock中加上u[0][0]/Tsync
-    drift = (offset - offset_previous)/(Tm-Tm_previous);//仿真结果最差，这个算法是不对的,应在在clock中加上u[0][0]/Tsync;为了对应KF参数，采用此算法
+	//drift = (Ts - Ts_previous + offset_previous)/(Tm-Tm_previous)-1;//仿真结果最好的一个算法
+	//drift = (Ts - Ts_previous)/(Tm-Tm_previous)-1;//在我的时钟模型中，这个算法是不对的,应在clock中加上u[0][0]/Tsync
+    drift = (offset-offset_previous)/(Tm-Tm_previous);//仿真结果最差，这个算法是不对的,应在在clock中加上u[0][0]/Tsync;为了对应KF参数，采用此算法
 	//drift = offset/(Tm-Tm_previous);
 	/*double DELTADRIFT=10E-6;
 		if(drift>DELTADRIFT){drift=DELTADRIFT;}
 		else if(drift<-DELTADRIFT){drift=-DELTADRIFT;}//这个判定值与物理时钟drift的初始值有关*/
 	//double x= drift/beta;
-		ev<<"drift = "<<drift<<endl;
+		ev<<"drift="<<drift<<endl;
 
 /*    // the following codes of packet exchange will be
 	  // replace by calling function clock2::adjtimeex() directly

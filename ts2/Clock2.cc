@@ -1,26 +1,30 @@
 //***************************************************************************
 // * File:        This file is part of TS2.
-// * Created on:  07 Dov 2016
-// * Author:      Yan Zong, Xuweu Dai
+// * Created on:  29 Jan 2014
+// * Author:      Yiwen Huang, Xuweu Dai  (x.dai at ieee.org)
 // *
-// * Copyright:   (C) 2016 Northumbria University, UK.
+// * Copyright:   (C) 2014 Southwest University, Chongqing, China.
 // *
-// *              TS2 is free software; you can redistribute it and/or modify it
-// *              under the terms of the GNU General Public License as published
-// *              by the Free Software Foundation; either version 3 of the
-// *              License, or (at your option) any later version.
+// *              TS2 is free software; you can redistribute it  and/or modify
+// *              it under the terms of the GNU General Public License as published
+// *              by the Free Software Foundation; either  either version 3 of
+// *              the License, or (at your option) any later version.
 // *
-// *              TS2 is distributed in the hope that it will be useful, but
-// *              WITHOUT ANY WARRANTY; without even the implied warranty of
-// *              MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// *              GNU General Public License for more details.
+// *              TS2 is distributed in the hope that it will be useful,
+// *                  but WITHOUT ANY WARRANTY; without even the implied warranty of
+// *                  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// *                  GNU General Public License for more details.
 // *
-// * Funding:     This work was financed by the Northumbria University Faculty
-//                Funded and RDF funded studentship, UK
-// ****************************************************************************
+// * Credit:      Yiwen Huang, Taihua Li
+// * Funding:     This work was partially financed by the National Science Foundation China
+// %              _
+// %  \/\ /\ /   /  * _  '
+// % _/\ \/\/ __/__.'(_|_|_
+// **************************************************************************/
 
 #include "Clock2.h"
 #include "Constant.h"
+
 
 Define_Module(Clock2);
 
@@ -268,15 +272,15 @@ void Clock2::recordResult(){
 
 double Clock2::getTimestamp(){
     //TODO:Modify
-    ev<<"getTimestamp: "<<endl;
-    ev<<"simTime = "<< SIMTIME_DBL(simTime()) <<" lastupdatetime = "<< lastupdatetime <<endl;
+    ev<<"getTimestamp:"<<endl;
+    ev<<"simTime="<<SIMTIME_DBL(simTime())<<" lastupdatetime="<<lastupdatetime<<endl;
     double clock = offset + drift*(SIMTIME_DBL(simTime())-lastupdatetime) + SIMTIME_DBL(simTime());
-    ev<<"clock = "<< clock <<endl;
+    ev<<"clock= "<<clock<<endl;
     noise3 = normal(u3,sigma3);
-    ev<<"noise3 = "<< noise3 <<endl;
+    ev<<"noise3= "<<noise3<<endl;
     noise3Vec.record(noise3);
-    softclock = clock; // + noise3;
-    ev<<"softclock = "<< softclock <<endl;
+    softclock = clock ;//+ noise3;
+    ev<<"softclock= "<<softclock<<endl;
     softclockVec.record(softclock);
     //ev.printf("phyclock_float=%8f",phyclock_float);
     return softclock;
@@ -284,46 +288,47 @@ double Clock2::getTimestamp(){
 
 
 void Clock2::adjtimex(double value, int type){
-    switch(type)
-    {
-        case 0: // offset
-            /*noise3 = normal(0,sigma3);
-            ev<<"noise3= "<<noise3<<endl;
-            noise3Vec.record(noise3);
-            offset_adj_value = value + noise3;*/
-            offset_adj_value = value;
-            ev<<" offset_value = "<< value <<endl;
-            ev<<" offset_adj_value = "<<offset_adj_value<<endl;
-            break;
-        case 1: // drift
-            ev<<" clock_Tm_previous = "<< Tm_previous <<endl;
-            ev<<" clock_Tm - clock_Tm_previous = "<< Tm - Tm_previous <<endl;
-            drift_adj_value = value + offset_adj_previous/(Tm - Tm_previous);
-            //drift_adj_value = offset_adj_value/Tsync;
-            ev<<" drift_value= "<< value <<endl;
-            ev<<" drift_adj_value = "<< drift_adj_value <<endl;
-            break;
+    switch(type){
+    case 0: //offset
+        /*noise3 = normal(0,sigma3);
+        ev<<"noise3= "<<noise3<<endl;
+        noise3Vec.record(noise3);
+        offset_adj_value = value + noise3;*/
+        offset_adj_value = value;
+        ev<<"offset_value= "<<value<<endl;
+        ev<<"offset_adj_value = "<<offset_adj_value<<endl;
+
+        break;
+    case 1: //drift
+        ev<<"clock_Tm_previous= "<<Tm_previous<<endl;
+        ev<<"clock_Tm - clock_Tm_previous= "<<Tm - Tm_previous<<endl;
+        drift_adj_value = value+ offset_adj_previous/(Tm - Tm_previous);
+        //drift_adj_value = offset_adj_value/Tsync;
+        ev<<"drift_value= "<<value<<endl;
+        ev<<"drift_adj_value = "<<drift_adj_value<<endl;
+        break;
     }
+
 }
 void Clock2::adj_offset_drift(){
                 ev << "---------------------------------" << endl;
-                ev << "Clock: Update clock offset " << endl;
-                ev<<" simTime = "<< SIMTIME_DBL(simTime()) <<" lastupdatetime = "<< lastupdatetime <<endl;
+                ev << "CLOCK : AGGIORNAMENTO OFFSET" << endl;
+                ev<<"simTime="<<SIMTIME_DBL(simTime())<<" lastupdatetime="<<lastupdatetime<<endl;
 
-                ev << "Clock: offset- = " << offset <<endl;
+                ev << "CLOCK : offset- = " << offset<<endl;
                 offset_valueVec.record(offset);
-                ev<<" drift- = "<< drift <<endl;
+                ev<<"drift- ="<<drift<<endl;
                 drift_valueVec.record(drift);
-                // TODO:/*moving filter*/
-                // movingfilter();
-                // TODO:/*kalma filter*/
-                // kalmanfilter();
-                // TODO:更新drift估计公式中的变量，因为时钟更新时加了伺服
-                Tm_previous = Tm;
-                ev<<" clock_Tm_previous = "<< Tm_previous <<endl;
+                //TODO:/*moving filter*/
+                //movingfilter();
+                //TODO:/*kalma filter*/
+             //   kalmanfilter();
+                //TODO:更新drift估计公式中的变量，因为时钟更新时加了伺服
+                Tm_previous=Tm;
+                ev<<"clock_Tm_previous= "<<Tm_previous<<endl;
                 offset_adj_previous = offset_adj_value;
-                ev<<" offset_adj_value = "<< offset_adj_value <<endl;
-                ev<<" drift_adj_value = "<< drift_adj_value <<endl;
+                ev<<"offset_adj_value = "<<offset_adj_value<<endl;
+                ev<<"drift_adj_value = "<<drift_adj_value<<endl;
                 drift_adj_valueVec.record(drift_adj_value);
                 offset_adj_valueVec.record(offset_adj_value);
                 offset = offset - offset_adj_value;

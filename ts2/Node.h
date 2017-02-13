@@ -1,23 +1,26 @@
 //***************************************************************************
 // * File:        This file is part of TS2.
-// * Created on:  07 Dov 2016
-// * Author:      Yan Zong, Xuweu Dai
+// * Created on:  29 Jan 2014
+// * Author:      Yiwen Huang, Xuweu Dai  (x.dai at ieee.org)
 // *
-// * Copyright:   (C) 2016 Northumbria University, UK.
+// * Copyright:   (C) 2014 Southwest University, Chongqing, China.
 // *
-// *              TS2 is free software; you can redistribute it and/or modify it
-// *              under the terms of the GNU General Public License as published
-// *              by the Free Software Foundation; either version 3 of the
-// *              License, or (at your option) any later version.
+// *              TS2 is free software; you can redistribute it  and/or modify
+// *              it under the terms of the GNU General Public License as published
+// *              by the Free Software Foundation; either  either version 3 of
+// *              the License, or (at your option) any later version.
 // *
-// *              TS2 is distributed in the hope that it will be useful, but
-// *              WITHOUT ANY WARRANTY; without even the implied warranty of
-// *              MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// *              GNU General Public License for more details.
+// *              TS2 is distributed in the hope that it will be useful,
+// *                  but WITHOUT ANY WARRANTY; without even the implied warranty of
+// *                  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// *                  GNU General Public License for more details.
 // *
-// * Funding:     This work was financed by the Northumbria University Faculty
-//                Funded and RDF funded studentship, UK
-// ****************************************************************************
+// * Credit:      Yiwen Huang, Taihua Li
+// * Funding:     This work was partially financed by the National Science Foundation China
+// %              _
+// %  \/\ /\ /   /  * _  '
+// % _/\ \/\/ __/__.'(_|_|_
+// **************************************************************************/
 
 
 
@@ -32,7 +35,6 @@
 #include "NetwControlInfo.h"
 #include "SimpleAddress.h"
 #include "Clock2.h"
-#include "RelayMaster.h"
 
 /**
  * @brief A PTP slave node
@@ -40,7 +42,7 @@
  *
  * @author Xuewu Dai
  */
-class RelaySlave: public cSimpleModule{
+class Node: public cSimpleModule{
 protected:
 	virtual void initialize();
 	virtual void handleMessage(cMessage *msg);
@@ -64,13 +66,12 @@ private:
 
 	/*Dichiarazione variabili.*/
 	const char *name;
-	int myAddress;          // the variable is used in the multi-hop network
-	int myMasterAddress;    // the variable is used in the multi-hop network
+	int address;
+	int master;
     LAddress::L3Type masterL3Addr;
     LAddress::L3Type myL3Addr;
 
     cModule *myMasterNode; // default value (at stage 1) is myself (this)
-    RelayMaster *pRelayMaster; // a pointer to the Relay Master module in my nodes (a boundary clock)
     Clock2 *pClock; // pointer to my clock module
 
     /* Definitions of variable for time synchronization.*/
@@ -101,13 +102,6 @@ private:
 	double rate;
 	double T;
 	double Tr;
-
-	double nbSentDelayRequests;  // count the total number of sent DelayRequest
-	double nbReceivedSyncsFromMaster;  // count the total number of received Sync from Master
-	double nbReceivedDelayResponsesFromMaster;  // count the total number of received DelayResponse from Master
-	double nbReceivedSyncsFromRelay;  // count the total number of received Sync from Relay
-	double nbReceivedDelayResponsesFromRelay;  // count the total number of received DelayResponse from Relay
-
 	/*»¬¶¯ filter*/
    // double alpha;
     //double  beta;

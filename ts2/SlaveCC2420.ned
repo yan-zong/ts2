@@ -1,23 +1,26 @@
 //***************************************************************************
 // * File:        This file is part of TS2.
-// * Created on:  07 Dov 2016
-// * Author:      Yan Zong, Xuweu Dai
+// * Created on:  29 Jan 2014
+// * Author:      Xuweu Dai  (x.dai at ieee.org)
 // *
-// * Copyright:   (C) 2016 Northumbria University, UK.
+// * Copyright:   (C) 2014 Southwest University, Chongqing, China.
 // *
-// *              TS2 is free software; you can redistribute it and/or modify it
-// *              under the terms of the GNU General Public License as published
-// *              by the Free Software Foundation; either version 3 of the
-// *              License, or (at your option) any later version.
+// *              TS2 is free software; you can redistribute it  and/or modify
+// *              it under the terms of the GNU General Public License as published
+// *              by the Free Software Foundation; either  either version 3 of
+// *              the License, or (at your option) any later version.
 // *
-// *              TS2 is distributed in the hope that it will be useful, but
-// *              WITHOUT ANY WARRANTY; without even the implied warranty of
-// *              MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// *              GNU General Public License for more details.
+// *              TS2 is distributed in the hope that it will be useful,
+// *                  but WITHOUT ANY WARRANTY; without even the implied warranty of
+// *                  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// *                  GNU General Public License for more details.
 // *
-// * Funding:     This work was financed by the Northumbria University Faculty
-//                Funded and RDF funded studentship, UK
-// ****************************************************************************
+// * Credit:      Yiwen Huang, Taihua Li
+// * Funding:     This work was partially financed by the National Science Foundation China
+// %              _
+// %  \/\ /\ /   /  * _  '
+// % _/\ \/\/ __/__.'(_|_|_
+// **************************************************************************/
 
 
 package ts2;
@@ -27,7 +30,7 @@ import org.mixim.modules.power.battery.SimpleBattery;
 import org.mixim.modules.node.WirelessNode;
 
 
-module RelayNode extends HostCC2420a
+module SlaveCC2420 extends HostCC2420a
 {
     parameters:
 
@@ -41,23 +44,22 @@ module RelayNode extends HostCC2420a
         mobilityType = default("StationaryMobility"); //type of the mobility module
         arpType = "ArpHost";
 
-
 		// ####	NIC (CSMA, TDMA), and Hardware TimeStamp ####
 		// for NIC without hardware time stamp, and also for CSMA
 		// nicType = "Nic802154_TI_CC2420";
-      
-		// for NIC with hardware timie stamp, and also for CSMA
+       
+        // for NIC with hardware timie stamp, and also for CSMA
 		// nicType = "Nic_CC2420_TmStmp";
 		// nic.tsstmp.useGlobalRefClock = default(false);
         // set useGlobalRefClock = true to use simTime() for time stamping
         // set useGlobalRefClock = false to use clock module for time stamping if a node has a clock module
-		
+
 		// for NIC with hardware timie stamp, and also for TDMA
 		nicType = "Nic_Timestamp_TDMA";
+		
+		// ####	End of NIC (CSMA, TDMA), Hardware TimeStamp ####
 
-        // ####	End of NIC (CSMA, TDMA), Hardware TimeStamp ####
-
-        ptpCoreType = default("RelayCore");
+        ptpCoreType = default("PtpSlave");
         int numHosts; // total number of hosts in the network
 
         @display("bgb=271,307,white;i=misc/node;i2=status/battery;b=40,40,rect;is=s");

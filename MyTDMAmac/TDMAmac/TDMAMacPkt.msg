@@ -19,27 +19,20 @@
 //                Funded and RDF funded studentship, UK
 // ****************************************************************************
 
-#ifndef __TSIM_PTPTIMESTMP_H_
-#define __TSIM_PTPTIMESTMP_H_
+cplusplus {{
+#include "MiXiMMacPkt.h"
+}}
 
-#include <omnetpp.h>
-#include "Clock2.h"
-#include "Slave.h"
 
-/**
- * TODO - Generated class
- */
-class Timestamp : public cSimpleModule
+class MacPkt;
+
+//
+// Defines all fields of an 802.11 MAC frame
+//
+packet TDMAMacPkt extends MacPkt
 {
-    private:
-     bool useGlobalRefClock;
-     Clock2 *pClk;
-     Slave *pNode;
-
-  protected:
-    virtual void initialize();
-    virtual void handleMessage(cMessage *msg);
-    cModule *findHost(void);
-};
-
-#endif
+    int address3;
+    int address4;
+    int mySlot; // the node's current slot number
+    bool retry;
+}

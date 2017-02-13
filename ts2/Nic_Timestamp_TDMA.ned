@@ -23,14 +23,16 @@ package ts2;
 
 import org.mixim.modules.nic.IWirelessNicUpperCtrl;
 import org.mixim.modules.phy.PhyLayer;
-import mytdmamac.tdmamac.TDMAmac;
+import mytdmamac.TDMAmac.TDMAmac;
+// import mytdmamac.MyTDMAmac;
 
 module Nic_Timestamp_TDMA like IWirelessNicUpperCtrl
 {
     parameters:
         string connectionManagerName = default("");   //name of the ConnectionManager module
         string phyType = default("org.mixim.modules.phy.PhyLayer");
-        string macType = default("TDMAmac");       
+        string macType = default("TDMAmac");
+        //string macType = default("MyTDMAmac");
         
 	gates:
         input upperLayerIn; // to upper layers
@@ -38,12 +40,15 @@ module Nic_Timestamp_TDMA like IWirelessNicUpperCtrl
         output upperControlOut; // control information 
         input upperControlIn; // control information 
         input radioIn; // radioIn gate for sendDirect
+        
 	submodules:
         mac: TDMAmac {
+        //mac: MyTDMAmac {
             @display("p=74,46;i=block/layer;is=l");
         }
 
-		timestamp: Timestamp {
+		// timestamp: Timestamp {
+		timestamp: PtpTimeStmp {
             @display("p=29,101;b=,,oval,red;i=device/clock;is=s;tt=Time Stamp ");
         }
 
@@ -69,13 +74,3 @@ module Nic_Timestamp_TDMA like IWirelessNicUpperCtrl
         radioIn --> phy.radioIn;
 
 }
-
-
-
-
-
-
-
-
-
-

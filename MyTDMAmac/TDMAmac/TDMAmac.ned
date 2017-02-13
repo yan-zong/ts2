@@ -19,28 +19,30 @@
 //                Funded and RDF funded studentship, UK
 // ****************************************************************************
 
+package mytdmamac.TDMAmac;
 
-package ts2;
+import org.mixim.base.modules.BaseMacLayer;
 
-simple MasterCore  like ICore
+simple TDMAmac extends BaseMacLayer
 {
     parameters:
-       @class(Master);
-    	double Tsync = default(1);
-        int masterAddrOffset;
-            
-    gates:
-        input upperGateIn; // from net layer
-        output upperGateOut; // to net layer
-    	// input upperControlIn; // control from net layer
-    	// output upperControlOut; // control to net layer
-        
-        input lowerGateIn; // from mac
-        output lowerGateOut; // to mac
-    	// input lowerControlIn; // control from mac
-    	// output lowerControlOut; // control to mac
-        
-        output outclock;
-        input inclock;
-        
-}   
+    	 // enable per module debug
+        bool debug = default(false);
+        // how long is a slot?
+        double slotDuration @unit(s) = default(100ms);
+        // length of MAC header
+        double queueLength = default(10);
+        // default channel 
+        double defaultChannel = default(0);
+        // bit rate 
+        double bitrate @unit(bps) = default(19200bps);
+        // level at which we consider medium busy FIXME not used currently
+		// double busyRSSI;
+		
+		bool stats = default(false);
+		bool trace = default(false);
+		
+        double txPower = default(50);
+
+    	@class("TDMAmac");
+}
