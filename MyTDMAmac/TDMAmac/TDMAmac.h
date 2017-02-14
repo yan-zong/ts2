@@ -42,7 +42,7 @@ class MIXIM_API TDMAmac : public BaseMacLayer
         /* @brief Assignment operator is not allowed. #LMAC */
         TDMAmac& operator=(const TDMAmac&);
 
-        Clock2 *pClock;
+        Clock2 *pClock2;
 
     /*
      * New variables apart from LMAC definition are:

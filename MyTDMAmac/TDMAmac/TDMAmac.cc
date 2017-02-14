@@ -79,6 +79,11 @@ void TDMAmac::initialize(int stage)
         << " slotDuration = " << slotDuration
         << " bitrate = " << bitrate << endl;
 
+        // Initialise the pointer
+        pClock2 = (Clock2 *)findHost()->getSubmodule("clock");
+        if (pClock2 == NULL)
+            error("No clock module is found in the module");
+
         cModule* myNode = NULL;
         numNodes = 0;
 
@@ -171,7 +176,7 @@ void TDMAmac::handleSelfMsg(cMessage* msg)
           {
               ClockTime = 0;
               /* Start listening as a starting procedure by using local drifting clock */
-              ClockTime = pClock -> getTimestamp(); // the local drifting clock time
+              ClockTime = pClock2 -> getTimestamp(); // the local drifting clock time
               EV << "TDMAmac: the local drifting clock time is " << ClockTime << endl;
 
               ClockTimeOffset = ClockTime - SIMTIME_DBL(simTime());
