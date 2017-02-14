@@ -105,14 +105,18 @@ protected:
 
     /* @brief Duration of a slot #LMAC */
     double slotDuration;
+
     /* @brief how many slots are there #LMAC */
     int numSlots;
 
     /*@brief length of the queue #LMAC */
     unsigned queueLength;
 
-    /* Self messages for TDMA slot timer callbacks */
-    cMessage* delayTimer;
+    /* Self messages for TDMA Frame timer */
+    cMessage* FrameTimer;
+
+    /* Self messages for local drift clock timer */
+    cMessage* OffsetTimer;
 
     int numNodes;
 
@@ -141,11 +145,20 @@ protected:
 
     int MyID = 0;
 
+    /* @brief local drift clock time */
     double ClockTime;
+
+    /* @brief the offset of local drift clock time  */
     double ClockTimeOffset;
-    double ScheduleTimeOffset;
-    double FrameTime;
+
+    /* @brief the duration of frame in one packet */
+    double FrameDuration;
+
+    /* @brief guard time */
     double GuardTime;
+
+    /* @brief maxim offset of local drifting clock */
+    double MaximOffset;
 };
 
 #endif /* TDMAMAC_H_ */

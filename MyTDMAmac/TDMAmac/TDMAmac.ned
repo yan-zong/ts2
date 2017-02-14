@@ -40,7 +40,8 @@ simple TDMAmac extends BaseMacLayer
 		// double busyRSSI;
 		// how long is a guard time?
         double GuardTime @unit(s) = default(0ms);
-		
+    	// maxim offset of local drifting clock
+    	double MaximOffset @unit(s) = default(0ms);
 		
 		bool stats = default(false);
 		bool trace = default(false);

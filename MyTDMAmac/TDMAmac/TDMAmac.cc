@@ -49,6 +49,8 @@ void TDMAmac::initialize(int stage)
         headerLength = par("headerLength");
         coreEV << "headerLength is: " << headerLength << endl;
         txPower = par("txPower");
+        GuardTime = par("GuardTime");
+        MaximOffset = par("MaximOffset");
 
         /* For dropped packets if required !aaks */
         droppedPacket.setReason(DroppedPacket::NONE);
@@ -94,20 +96,26 @@ void TDMAmac::initialize(int stage)
 
         numNodes = numNodes + 1;
 
-        delayTimer = new cMessage( "delay-timer", 0 );
+        FrameDuration = slotDuration * numNodes + (numNodes -1) * GuardTime;
+        EV << "TDMAmac: the FrameDuration is " << FrameDuration << endl;
+
+        FrameTimer = new cMessage( "frame-timer", 0 );
+        OffsetTimer = new cMessage( "offset-timer", 1 );
 
         /* Schedule a self-message to start superFrame !aaks */
         // EV<< "I will start at " << simTime() + myId*slotDuration << " s every " << numNodes*slotDuration << " s" << endl;
-        EV<< "I will start at " << simTime() + MyID*slotDuration << " s every " << numNodes*slotDuration << " s" << endl;
+        EV<< "TDMA mac will start at " << (simTime() + MyID*slotDuration + FrameDuration, FrameTimer) << " s every " << FrameDuration << " s" << endl;
         // scheduleAt(simTime() + myId*slotDuration, delayTimer);
-        scheduleAt(simTime() + MyID*slotDuration, delayTimer);
+
+        scheduleAt(simTime() + MyID*slotDuration + FrameDuration, FrameTimer);
     }
 }
 
 /* Module destructor #LMAC !aaks */
 
 TDMAmac::~TDMAmac() {
-    cancelAndDelete(delayTimer);
+    cancelAndDelete(FrameTimer);
+    cancelAndDelete(OffsetTimer);
 
     MacPktQueue::iterator it;
        for(it = macPktQueue.begin(); it != macPktQueue.end(); ++it) {
@@ -175,38 +183,34 @@ void TDMAmac::handleSelfMsg(cMessage* msg)
           case 0:
           {
               ClockTime = 0;
-              /* Start listening as a starting procedure by using local drifting clock */
               ClockTime = pClock2 -> getTimestamp(); // the local drifting clock time
               EV << "TDMAmac: the local drifting clock time is " << ClockTime << endl;
 
               ClockTimeOffset = ClockTime - SIMTIME_DBL(simTime());
               EV << "TDMAmac: the local drifting clock time offset is " << ClockTimeOffset << endl;
 
-              if ((ClockTimeOffset > 0) | (ClockTimeOffset == 0))   // local clock time is greater than reference clock times
-              {
-                  ScheduleTimeOffset = slotDuration - ClockTimeOffset;
-              }
-              else  // local clock time is less than reference clock times
-              {
-                  ClockTimeOffset = SIMTIME_DBL(simTime()) - ClockTime;
-                  ScheduleTimeOffset = slotDuration + ClockTimeOffset;
-              }
+              if (ClockTimeOffset > FrameDuration)
+                  error("the clock offset is greater than frame duration");
 
-              FrameTime = slotDuration * numNodes + (numNodes -1) * GuardTime;
-              scheduleAt(simTime() + ScheduleTimeOffset + FrameTime, delayTimer);
+              if ((ClockTimeOffset + MaximOffset) < 0)
+                  error("(ClockTimeOffset + MaximOffset) is less than 0");
 
-              EV << "TDMAmac: the offset of local drift clock is " << ClockTimeOffset <<endl;
-              EV << "I will schedule the next event after " << ScheduleTimeOffset << "at time: " << (simTime() + ScheduleTimeOffset + FrameTime) <<endl;
-              EV << "rather than the time " << (simTime() + FrameTime) <<endl;
+              scheduleAt(simTime() + FrameDuration, FrameTimer);
+              scheduleAt(simTime() + ClockTimeOffset + MaximOffset, OffsetTimer);
 
-              // scheduleAt(simTime() + (numNodes -1) * slotDuration, delayTimer);
+              EV << "TDMA mac will schedule the next event after " << ClockTimeOffset + MaximOffset << endl;
+              EV << "at time: " << (simTime() + ClockTimeOffset + MaximOffset) <<endl;
 
+          }
+          break;
+          case 1:
+          {
               if(macPktQueue.empty())
                   break;
 
               phy->setRadioState(MiximRadio::TX);
               TDMAMacPkt* data = macPktQueue.front()->dup();
-              data->setKind(0);
+              data->setKind(1);
               attachSignal(data);
               coreEV << "Sending down data packet\n";
               sendDown(data);
