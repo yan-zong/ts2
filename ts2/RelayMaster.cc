@@ -200,7 +200,7 @@ void RelayMaster::handleSelfMessage(cMessage *msg)
 
     PtpPkt *pck = new PtpPkt("SYNC");
     pck->setPtpType(SYNC);
-    pck->setByteLength(SYNC_BYTE);
+    pck->setByteLength(40); // SYNC_BYTE = 40
 
     pck->setTimestamp(simTime());
 
@@ -304,7 +304,7 @@ void RelayMaster::handleSlaveMessage(PtpPkt *msg)
             // register, rather than the assignment (Done By Yan Zong)
 
             PtpPkt *pck = new PtpPkt("DRES");
-            pck->setByteLength(DRES_BYTE);
+            pck->setByteLength(50);  // DRES_BYTE = 50
 
             pck->setDestination(mySlaveAddress);
             pck->setSource(myAddress);
@@ -388,7 +388,7 @@ void RelayMaster::startSync()
 
     PtpPkt *pck = new PtpPkt("SYNC");
     pck->setPtpType(SYNC);
-    pck->setByteLength(SYNC_BYTE);
+    pck->setByteLength(40); // SYNC_BYTE = 40
 
     pck->setTimestamp(simTime());   // time stamp
 

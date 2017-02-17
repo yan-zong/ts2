@@ -99,6 +99,8 @@ void TDMAmac::initialize(int stage)
         FrameDuration = slotDuration * numNodes + (numNodes -1) * GuardTime;
         EV << "TDMAmac: the FrameDuration is " << FrameDuration << endl;
 
+        FrameDuration = 1;
+
         FrameTimer = new cMessage( "frame-timer", 0 );
         OffsetTimer = new cMessage( "offset-timer", 1 );
 

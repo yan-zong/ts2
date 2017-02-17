@@ -156,7 +156,7 @@ void PtpMaster::handleSelfMessage(cMessage *msg){
     PtpPkt *pck = new PtpPkt("SYNC");
     pck->setPtpType(SYNC);
     // pck->setClockType(TIME_REQ);
-    pck->setByteLength(SYNC_BYTE);
+    pck->setByteLength(40); // SYNC_BYTE = 40
     pck->setTimestamp(simTime());
     pck->setSource(address);
     pck->setDestination(-1);
@@ -185,7 +185,7 @@ void PtpMaster::handleSlaveMessage(PtpPkt *msg){
             break;
         case DREQ:
         {  PtpPkt *pck = new PtpPkt("DRES");
-            pck->setByteLength(DRES_BYTE);
+            pck->setByteLength(50);  // DRES_BYTE = 50
             pck->setDestination(((PtpPkt *)msg)->getSource());
             pck->setSource(address);
             pck->setPtpType(DRES);

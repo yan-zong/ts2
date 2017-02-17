@@ -399,7 +399,7 @@ void RelaySlave::ProduceT3packet()
     ts3 = pClock->getTimestamp();
     ev << "ts3 = "<< ts3 <<endl;
     PtpPkt *pck = new PtpPkt("DREQ");
-    pck->setByteLength(DREQ_BYTE);    // DREQ_BYTE = 164
+    pck->setByteLength(40);    // DREQ_BYTE = 40
     pck->setPtpType(DREQ);
 
     pck->setDestination(myMasterAddress);
