@@ -155,13 +155,13 @@ void TDMAmac::handleUpperMsg(cMessage* msg){
     /* Casting upper layer message to mac packet format !aaks */
     TDMAMacPkt *mac = static_cast<TDMAMacPkt *>(encapsMsg(static_cast<cPacket*>(msg)));
 
-    /* Check if packet queue is full !aakss */
+    /* Queue is not full, put packet at the end of list */
     if (macPktQueue.size() <= queueLength) {
         macPktQueue.push_back(mac);
         EV << "packet put in queue\n  queue size: " << macPktQueue.size() << endl;
     }
     else {
-           /* Queue is full, message has to be deleted #LMAC */
+           /* Queue is full, new packet has to be deleted */
            EV << "New packet arrived, but queue is FULL, so new packet is deleted\n";
            mac->setName("MAC ERROR");
            mac->setKind(PACKET_DROPPED);
