@@ -89,10 +89,10 @@ private:
 	double offset_previous;//前一时刻同步周期offset的观测值
 
 	/* Parameters for clock correction*/
-	double Ts;  //
+	double Ts;  // slave (drifting) clock time
 	double Ts_correct;
 	double Ts_previous;
-	double Tm;
+	double Tm;  // master (perfect) clock time
 	double Tm_previous;
 	double  delay;//t2、t3之间的时延
 	//t4-t1，(t4-t1)<Tcamp<Tsync，保证同步过程在一个Tcamp内完成，这样与PTP假设条件一致，在一个同步过程中，drift和offset不变

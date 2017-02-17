@@ -1,36 +1,33 @@
 //***************************************************************************
 // * File:        This file is part of TS2.
-// * Created on:  29 Jan 2014
-// * Author:      Yiwen Huang, Xuweu Dai  (x.dai at ieee.org)
+// * Created on:  07 Dov 2016
+// * Author:      Yan Zong, Xuweu Dai
 // *
-// * Copyright:   (C) 2014 Southwest University, Chongqing, China.
+// * Copyright:   (C) 2016 Northumbria University, UK.
 // *
-// *              TS2 is free software; you can redistribute it  and/or modify
-// *              it under the terms of the GNU General Public License as published
-// *              by the Free Software Foundation; either  either version 3 of
-// *              the License, or (at your option) any later version.
+// *              TS2 is free software; you can redistribute it and/or modify it
+// *              under the terms of the GNU General Public License as published
+// *              by the Free Software Foundation; either version 3 of the
+// *              License, or (at your option) any later version.
 // *
-// *              TS2 is distributed in the hope that it will be useful,
-// *                  but WITHOUT ANY WARRANTY; without even the implied warranty of
-// *                  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// *                  GNU General Public License for more details.
+// *              TS2 is distributed in the hope that it will be useful, but
+// *              WITHOUT ANY WARRANTY; without even the implied warranty of
+// *              MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// *              GNU General Public License for more details.
 // *
-// * Credit:      Yiwen Huang, Taihua Li
-// * Funding:     This work was partially financed by the National Science Foundation China
-// %              _
-// %  \/\ /\ /   /  * _  '
-// % _/\ \/\/ __/__.'(_|_|_
-// **************************************************************************/
+// * Funding:     This work was financed by the Northumbria University Faculty
+//                Funded and RDF funded studentship, UK
+// ****************************************************************************
 
 #include "Clock2.h"
 #include "Constant.h"
 
-
 Define_Module(Clock2);
 
-void Clock2::initialize(){
+void Clock2::initialize()
+{
     // ---------------------------------------------------------------------------
-    // Inizializzazione variabile per il salvataggio dei dati in uscita.
+    // Initialise variable for saving output data
     // ---------------------------------------------------------------------------
     softclockVec.setName("softclock");
     softclock_t2Vec.setName("softclock_t2");
@@ -49,37 +46,41 @@ void Clock2::initialize(){
     delta_offsetVec.setName("delta_offset");
     drift_adj_valueVec.setName("drift_adj_value");
     offset_adj_valueVec.setName("offset_adj_value");
+
     // ---------------------------------------------------------------------------
-    // Lettura parametri di ingresso.
+    // Initialise variable
     // ---------------------------------------------------------------------------
     offset = par("offset");
     drift =  par("drift");
     sim_time_limit = par("sim_time_limit");
     error_drift = offset;
-    error_offset =drift;
+    error_offset = drift;
     sigma1  = par("sigma1");
     sigma2 = par("sigma2");
     sigma3 = par("sigma3");
     u3 = par("u3");
     Tcamp  = par("Tcamp");
     Tsync = par("Tsync");
-    alpha=par("alpha");
-    beta=par("beta");
+    alpha = par("alpha");
+    beta = par("beta");
+
     // ---------------------------------------------------------------------------
-    // Lettura parametri di ingresso.
+    // Initialise variable
     // ---------------------------------------------------------------------------
     lastupdatetime = SIMTIME_DBL(simTime());
     phyclock = softclock = offset;
-    drift_previous =drift;
-    offset_previous=offset;
+    drift_previous = drift;
+    offset_previous = offset;
     i = 0;
     j = 0;
     delta_drift = delta_offset = 0;
     k = int(sim_time_limit/Tcamp);
     Tm = Tm_previous =0;
     offset_adj_previous=0;
-    /*kalman filter parameter Initialize*/
 
+    // ---------------------------------------------------------------------------
+    // Initialise variable for Kalman Filter
+    // ---------------------------------------------------------------------------
     //(1)A[2][2]={{1,Tsync},{0,1}}
      A[0][0] = 1;
      A[0][1] = Tsync;
@@ -124,63 +125,78 @@ void Clock2::initialize(){
        }
    }
 
-    //openfile();
-    // ---------------------------------------------------------------------------
-    // Inizializzazione del timer. Il timer viene ripristinato con un tempo fisso
-    // pari a 1.0 secondo. Viene utilizzato per campionare in intervalli di
-    // durata costante il clock di sistema. I valori campionati vengono salvati
-    // nella vraibile di uscita timestampVec.
-    // ---------------------------------------------------------------------------
-    if(ev.isGUI()){updateDisplay();}
-    //TODO::??131
-    //recordResult();
-    delta_driftVec.record(delta_drift);
-    delta_offsetVec.record(delta_offset);
-    scheduleAt(simTime() + Tcamp,new cMessage("CLTimer"));
+   // openfile();
+   // ---------------------------------------------------------------------------
+   // Initialise timer, the sampling interval is 'Tcamp' (See omnetpp.ini)
+   // ---------------------------------------------------------------------------
+   if(ev.isGUI())
+   {
+       updateDisplay();
+   }
+
+   //TODO::??131
+   //recordResult();
+
+   delta_driftVec.record(delta_drift);
+   delta_offsetVec.record(delta_offset);
+
+   // Tcamp is clock update period
+   scheduleAt(simTime() + Tcamp,new cMessage("CLTimer"));
 }
 
-void Clock2::handleMessage(cMessage *msg){
-    if(msg->isSelfMessage()){
-    // ---------------------------------------------------------------------------
-    // Timer. Viene salvato il valore del clock in uscita, ottenuto mediante la
-    // funzione interna getTimestamp(). Viene ripristinato il timer a 1.0 s.
-    // ---------------------------------------------------------------------------
+void Clock2::handleMessage(cMessage *msg)
+{
+    if(msg -> isSelfMessage())
+    {
+        // ---------------------------------------------------------------------------
+        // Timer. Viene salvato il valore del clock in uscita, ottenuto mediante la
+        // funzione interna getTimestamp(). Viene ripristinato il timer a 1.0 s.
+        // ---------------------------------------------------------------------------
         //TODO:??
-        Phyclockupdate();
-        i = i+1;
-        ev<<"i= "<<i<<endl;
-        ev<<"k="<<k<<endl;
-        /*¼ÓifÅÐ¶ÏÓï¾ä£¬ÔÚsim_time_limit/Tcamp½ÏÐ¡Ê±¿ÉÒÔ¼ÇÂ¼½Ï¶àÊý¾Ý*/
-        if(i%10==0){
-                    ev<<"count delta_drfit and delta_offset:"<<endl;
-                     delta_drift = drift - drift_previous;
-                     delta_offset = offset - offset_previous;
-                     if(k >= 9999999){
-                         ev<<"compare 1 success!"<<endl;
-                         if(i%100==0){
-                         ev<<"Larger amount of data,record delta_offset and delta_drift."<<endl;
-                         delta_driftVec.record(delta_drift);
-                         delta_offsetVec.record(delta_offset);
-                         }
-                     }
-                     else{
-                         ev<<"less amount of data£¬record delta_offset and delta_drift."<<endl;
-                         delta_driftVec.record(delta_drift);
-                         delta_offsetVec.record(delta_offset);
-                     }
-                     drift_previous = drift;
-                     offset_previous = offset;
+        Phyclockupdate();   // update physical clock by clock offset and drift
+        i = i + 1;
+        ev << "i = "<< i << endl;
+        ev << "k = " << k << endl;
+        /*¼ÓifÅÐ¶ÏÓï¾ä£¬ÔÚsim_time_limit/Tcamp½ÏÐ¡Ês±¿ÉÒÔ¼ÇÂ¼½Ï¶àÊý¾Ý*/
+        if(i % 10 == 0)
+        {
+            ev << "count delta_drfit and delta_offset:" << endl;
+            delta_drift = drift - drift_previous;
+            delta_offset = offset - offset_previous;
+            if(k >= 9999999)
+            {
+                ev<<"compare 1 success!"<<endl;
+                if(i%100==0)
+                {
+                    ev<<"Larger amount of data,record delta_offset and delta_drift."<<endl;
+                    delta_driftVec.record(delta_drift);
+                    delta_offsetVec.record(delta_offset);
                 }
-        if(k>=9999999){
-            ev<<"compare 2 success!"<<endl;
-            if((i>10)&&(i%100==0)){
-            ev<<"Larger amount of data,record offset and drift of updatePhyclock"<<endl;
-            recordResult();
-            driftStd.collect(drift);
-            offsetStd.collect(offset);
             }
-         }
-        else{
+            else
+            {
+                ev<<"less amount of data£¬record delta_offset and delta_drift."<<endl;
+                delta_driftVec.record(delta_drift);
+                delta_offsetVec.record(delta_offset);
+            }
+
+            drift_previous = drift;
+            offset_previous = offset;
+        }
+
+        if(k >= 9999999)
+        {
+            ev<<"compare 2 success!"<<endl;
+            if((i>10)&&(i%100==0))
+            {
+                ev<<"Larger amount of data,record offset and drift of updatePhyclock"<<endl;
+                recordResult();
+                driftStd.collect(drift);
+                offsetStd.collect(offset);
+            }
+        }
+        else
+        {
             ev<<"Less amount of data,record offset and drift of updatePhyclock"<<endl;
             recordResult();
             //TODO:Í³¼ÆdriftºÍoffsetµÄÖµ
@@ -189,7 +205,10 @@ void Clock2::handleMessage(cMessage *msg){
         }
 
         scheduleAt(simTime()+ Tcamp,new cMessage("CLTimer"));
-    }else{
+    }
+
+    else
+    {
         error("Clock2 gets a Packet from node. It now does not exchange Packet with node.\n");
     // ---------------------------------------------------------------------------
     // Messaggio ricevuto dal sistema (nodo a cui il clock si riferisce).
@@ -243,12 +262,18 @@ void Clock2::handleMessage(cMessage *msg){
                                  // we process the FREQ_ADJ packet two times??
         }
     }
+
     delete msg;
-    if(ev.isGUI()){updateDisplay();}
+
+    if(ev.isGUI())
+    {
+        updateDisplay();
+    }
 }
 // TODo:adding Phyclockupdate()
-double Clock2::Phyclockupdate(){
-    ev<<"update Phyclock&offset:"<<endl;
+double Clock2::Phyclockupdate()
+{
+    ev << "update Phyclock&offset:"<<endl;
     noise2 =  normal(0,sigma2,1);
     offset = offset + drift*(SIMTIME_DBL(simTime())-lastupdatetime)+ noise2;
     //offset = (drift+ noise1)*(SIMTIME_DBL(simTime())-lastupdatetime)+ noise2;
@@ -270,87 +295,96 @@ void Clock2::recordResult(){
 
 }
 
-double Clock2::getTimestamp(){
+double Clock2::getTimestamp()
+{
     //TODO:Modify
-    ev<<"getTimestamp:"<<endl;
-    ev<<"simTime="<<SIMTIME_DBL(simTime())<<" lastupdatetime="<<lastupdatetime<<endl;
-    double clock = offset + drift*(SIMTIME_DBL(simTime())-lastupdatetime) + SIMTIME_DBL(simTime());
-    ev<<"clock= "<<clock<<endl;
+    ev << "get Timestamp " << endl;
+    ev << "simTime = " << SIMTIME_DBL(simTime()) << " lastupdatetime = "<< lastupdatetime << endl;
+    double clock = offset + drift * (SIMTIME_DBL(simTime()) - lastupdatetime) + SIMTIME_DBL(simTime());
+    ev << "clock = " << clock << endl;
     noise3 = normal(u3,sigma3);
-    ev<<"noise3= "<<noise3<<endl;
+    ev << " noise3 = "<< noise3 <<endl;
     noise3Vec.record(noise3);
     softclock = clock ;//+ noise3;
-    ev<<"softclock= "<<softclock<<endl;
+    ev << "softclock = " << softclock << endl;
     softclockVec.record(softclock);
     //ev.printf("phyclock_float=%8f",phyclock_float);
     return softclock;
 }
 
 
-void Clock2::adjtimex(double value, int type){
-    switch(type){
-    case 0: //offset
-        /*noise3 = normal(0,sigma3);
-        ev<<"noise3= "<<noise3<<endl;
-        noise3Vec.record(noise3);
-        offset_adj_value = value + noise3;*/
-        offset_adj_value = value;
-        ev<<"offset_value= "<<value<<endl;
-        ev<<"offset_adj_value = "<<offset_adj_value<<endl;
-
-        break;
-    case 1: //drift
-        ev<<"clock_Tm_previous= "<<Tm_previous<<endl;
-        ev<<"clock_Tm - clock_Tm_previous= "<<Tm - Tm_previous<<endl;
-        drift_adj_value = value+ offset_adj_previous/(Tm - Tm_previous);
-        //drift_adj_value = offset_adj_value/Tsync;
-        ev<<"drift_value= "<<value<<endl;
-        ev<<"drift_adj_value = "<<drift_adj_value<<endl;
-        break;
+void Clock2::adjtimex(double value, int type)
+{
+    switch(type)
+    {
+        case 0: // adjust the local clock offset
+        {
+            /*noise3 = normal(0,sigma3);
+            ev<<"noise3= "<<noise3<<endl;
+            noise3Vec.record(noise3);
+            offset_adj_value = value + noise3;*/
+            offset_adj_value = value;
+            ev << "offset_value = " << value << endl;
+            ev << "offset_adj_value = "<< offset_adj_value << endl;
+            break;
+        }
+        case 1: // adjust the local clock drift
+        {
+            ev << "clock_Tm_previous = " << Tm_previous << endl;
+            ev << "clock_Tm - clock_Tm_previous = "<< Tm - Tm_previous << endl;
+            drift_adj_value = value + offset_adj_previous/(Tm - Tm_previous);
+            //drift_adj_value = offset_adj_value/Tsync;
+            ev << " drift_value = " << value << endl;
+            ev << " drift_adj_value = " << drift_adj_value << endl;
+            break;
+        }
     }
 
 }
-void Clock2::adj_offset_drift(){
-                ev << "---------------------------------" << endl;
-                ev << "CLOCK : AGGIORNAMENTO OFFSET" << endl;
-                ev<<"simTime="<<SIMTIME_DBL(simTime())<<" lastupdatetime="<<lastupdatetime<<endl;
+void Clock2::adj_offset_drift()
+{
+    ev << "update clock offset" << endl;
+    ev << "simTime = "<< SIMTIME_DBL(simTime()) << ", and lastupdatetime = "<< lastupdatetime <<endl;
 
-                ev << "CLOCK : offset- = " << offset<<endl;
-                offset_valueVec.record(offset);
-                ev<<"drift- ="<<drift<<endl;
-                drift_valueVec.record(drift);
-                //TODO:/*moving filter*/
-                //movingfilter();
-                //TODO:/*kalma filter*/
-             //   kalmanfilter();
-                //TODO:¸üÐÂdrift¹À¼Æ¹«Ê½ÖÐµÄ±äÁ¿£¬ÒòÎªÊ±ÖÓ¸üÐÂÊ±¼ÓÁËËÅ·þ
-                Tm_previous=Tm;
-                ev<<"clock_Tm_previous= "<<Tm_previous<<endl;
-                offset_adj_previous = offset_adj_value;
-                ev<<"offset_adj_value = "<<offset_adj_value<<endl;
-                ev<<"drift_adj_value = "<<drift_adj_value<<endl;
-                drift_adj_valueVec.record(drift_adj_value);
-                offset_adj_valueVec.record(offset_adj_value);
-                offset = offset - offset_adj_value;
-                drift = drift - drift_adj_value;
+    ev << "Clock: offset(-) = " << offset << endl;
+    offset_valueVec.record(offset);
+    ev << "Clock: drift(-) = " << drift << endl;
+    drift_valueVec.record(drift);
 
-                ev << " offset+ = " << offset << endl;
-                error_offset = offset;
-                //error_offset = offset - offset_adj_value;
-                error_offsetVec.record(error_offset);
+    //TODO:/*moving filter*/
+    //movingfilter();
+    //TODO:/*kalma filter*/
+    //   kalmanfilter();
+    //TODO:¸üÐÂdrift¹À¼Æ¹«Ê½ÖÐµÄ±äÁ¿£¬ÒòÎªÊ±ÖÓ¸üÐÂÊ±¼ÓÁËËÅ·þ
 
-                ev<<"drift+ ="<<drift<<endl;
-                error_drift = drift;
-                //error_drift = drift - drift_adj_value;
-                error_driftVec.record(error_drift);
+    Tm_previous = Tm;
+    ev << "clock_Tm_previous = " << Tm_previous << endl;
+    offset_adj_previous = offset_adj_value;
+    ev << "offset_adj_value = " << offset_adj_value << endl;
+    ev << "drift_adj_value = " << drift_adj_value << endl;
+    drift_adj_valueVec.record(drift_adj_value);
+    offset_adj_valueVec.record(offset_adj_value);
 
-                j= j+1;
-                if(j>10){
-                error_sync_offset.collect(error_offset);
-                error_sync_drift.collect(error_drift);
-                }
-                //preprocess_offset();
+    offset = offset - offset_adj_value;
+    drift = drift - drift_adj_value;
 
+    ev << " offset(+) = " << offset << endl;
+    error_offset = offset;
+    //error_offset = offset - offset_adj_value;
+    error_offsetVec.record(error_offset);
+
+    ev << "drift(+) = " << drift << endl;
+    error_drift = drift;
+    //error_drift = drift - drift_adj_value;
+    error_driftVec.record(error_drift);
+
+    j = j+1;
+    if(j > 10)
+    {
+        error_sync_offset.collect(error_offset);
+        error_sync_drift.collect(error_drift);
+    }
+    //preprocess_offset();
 }
 
 

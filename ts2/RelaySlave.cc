@@ -467,11 +467,11 @@ void RelaySlave::updateDisplay()
 		dms*1000,dsm*1000,dprop*1000,offset*1000);
 	getDisplayString().setTagArg("t",0,buf);
 }
-/*
--------------------------------------------------------------------------------
-SERVO CLOCK IMPLEMENTATION.
-This function must be overwritten by the user.
--------------------------------------------------------------------------------*/
+
+
+// ---------------------------------------------------------------------------
+// Servo Clock used to update the local drifting clock
+// ---------------------------------------------------------------------------
 
 void RelaySlave::servo_clock()
 {
