@@ -159,6 +159,9 @@ protected:
 
     /* @brief maxim offset of local drifting clock */
     double MaximOffset;
+
+    /* @brief the id of node */
+    int NodeId;
 };
 
 #endif /* TDMAMAC_H_ */

@@ -277,6 +277,14 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
     {
         if (myMasterAddress == 1000)
         {
+            // for PCO (Pulse-Coupled Oscillator)
+            ev << "Relay Slave receives SYNC packet from master node, process it\n";
+            ev << "Relay Slave emit a SYNC packet after receipting a SYNC packet from master\n";
+            pRelayMaster->startSync();
+            break;
+
+            // for PTP, there is no need use these in the PCO (Pulse-Coupled Oscillator)
+            /*
             ev << "Relay Slave receives SYNC packet from master node, process it\n";
             ts1 = ((PtpPkt *)msg)->getTsTx();
 
@@ -307,9 +315,16 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
 
             nbReceivedSyncsFromMaster = nbReceivedSyncsFromMaster + 1;  // count the number of the received SYNC packet.
             break;
+            */
         }
         else if (myMasterAddress == 2000 || myMasterAddress > 2000)
         {
+            // for PCO (Pulse-Coupled Oscillator)
+            ev << "Relay Slave receives SYNC packet from relay node, ignore it\n";
+            break;
+
+            // for PTP, there is no need use these in the PCO (Pulse-Coupled Oscillator)
+            /*
             ev << "Relay Slave receives SYNC packet from relay node, process it\n";
             ts1 = ((PtpPkt *)msg)->getTsTx();
 
@@ -340,6 +355,7 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
 
             nbReceivedSyncsFromRelay = nbReceivedSyncsFromRelay + 1;  // count the number of the received SYNC packet.
             break;
+            */
         }
         else
         {

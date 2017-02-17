@@ -51,6 +51,7 @@ void TDMAmac::initialize(int stage)
         txPower = par("txPower");
         GuardTime = par("GuardTime");
         MaximOffset = par("MaximOffset");
+        FrameDuration = par("FrameDuration");
 
         /* For dropped packets if required !aaks */
         droppedPacket.setReason(DroppedPacket::NONE);
@@ -96,20 +97,23 @@ void TDMAmac::initialize(int stage)
 
         numNodes = numNodes + 1;
 
-        FrameDuration = slotDuration * numNodes + (numNodes -1) * GuardTime;
-        EV << "TDMAmac: the FrameDuration is " << FrameDuration << endl;
-
-        FrameDuration = 1;
+        // FrameDuration = slotDuration * numNodes + (numNodes -1) * GuardTime;
+        EV << "TDMAmac: the slotDuration is " << slotDuration << "s, and number of node is " << numNodes ;
+        EV << ", based on the GuardTime " << GuardTime << "s, the FrameDuration is " << FrameDuration << "s." << endl;
 
         FrameTimer = new cMessage( "frame-timer", 0 );
         OffsetTimer = new cMessage( "offset-timer", 1 );
 
+        NodeId = (getParentModule()->getParentModule()->getId()-4);
+        EV << "TDMAmac: the node id is is " << NodeId << endl ;
+        // NodeID: mnode - 0; rnode[0] - 1; rnode[1] - 2; ...
+
         /* Schedule a self-message to start superFrame !aaks */
         // EV<< "I will start at " << simTime() + myId*slotDuration << " s every " << numNodes*slotDuration << " s" << endl;
-        EV<< "TDMA mac will start at " << (simTime() + MyID*slotDuration + FrameDuration, FrameTimer) << " s every " << FrameDuration << " s" << endl;
+        EV<< "TDMA mac will start at " << (simTime() + NodeId*slotDuration + FrameDuration, FrameTimer) << " s every " << FrameDuration << " s" << endl;
         // scheduleAt(simTime() + myId*slotDuration, delayTimer);
-
-        scheduleAt(simTime() + MyID*slotDuration + FrameDuration, FrameTimer);
+        // scheduleAt(simTime() + MyID*slotDuration + FrameDuration, FrameTimer);
+        scheduleAt(simTime() + NodeId*slotDuration + FrameDuration, FrameTimer);
     }
 }
 

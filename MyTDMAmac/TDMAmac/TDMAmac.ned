@@ -42,6 +42,8 @@ simple TDMAmac extends BaseMacLayer
         double GuardTime @unit(s) = default(0ms);
     	// maxim offset of local drifting clock
     	double MaximOffset @unit(s) = default(0ms);
+    	// how long is a Superframe?
+    	double FrameDuration @unit(s) = default(1000ms);
 		
 		bool stats = default(false);
 		bool trace = default(false);

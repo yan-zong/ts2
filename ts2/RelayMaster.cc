@@ -88,7 +88,8 @@ void RelayMaster::initialize()
             error("No Parameter RandomValue is found in the *.ini file");
         }
 
-        scheduleAt(simTime()+Tsync+ScheduleRandomTime, new cMessage("MStimer"));
+        // for multi-hop PTP, there is no need use this in the PCO (Pulse-Coupled Oscillator)
+        // scheduleAt(simTime()+Tsync+ScheduleRandomTime, new cMessage("MStimer"));
 
         // scheduleAt(simTime()+Tsync, new cMessage("MStimer"));
         ev<<"Relay Master: debug: simTime() = "<< simTime() <<endl;
@@ -243,6 +244,12 @@ void RelayMaster::handleSlaveMessage(PtpPkt *msg)
         }
         else if (mySlaveAddress == 2000 || mySlaveAddress > 2000)
         {
+            // for PCO
+            ev << "Relay Master: the received REGISTER packet is from the Relay node, ignore it\n";
+            break;
+
+            // for PTP, there is no need use these in the PCO (Pulse-Coupled Oscillator)
+            /*
             ev << "Relay Master: the received REGISTER packet is from the Relay node, generate the REPLY_REGISTER packet\n";
 
             // ToDo: the destination address should be the relay node address, configure by using the
@@ -271,6 +278,7 @@ void RelayMaster::handleSlaveMessage(PtpPkt *msg)
             EV << "Relay Master transmits REPLY_REGISGE Rpacket" << endl;
             send(rplPkt, "lowerGateOut");
             break;
+            */
 
         }
         else
@@ -384,7 +392,7 @@ void RelayMaster::startSync()
 {
     Enter_Method_Silent(); // see simuutil.h for detail
 
-    EV << "Relay Master Timer fired New 'SYNC' Packet for slave of the second-hop\n";
+    EV << "Relay Master Timer fired New 'SYNC' Packet \n";
 
     PtpPkt *pck = new PtpPkt("SYNC");
     pck->setPtpType(SYNC);
@@ -405,7 +413,7 @@ void RelayMaster::startSync()
     // set the control info to tell the network layer (layer 3) address
     NetwControlInfo::setControlInfo(pck, LAddress::L3BROADCAST );
 
-    EV << "Relay Master broadcasts SYNC packet to Slave" << endl;
+    EV << "Relay Master broadcasts SYNC packet" << endl;
     send(pck,"lowerGateOut");
 
     nbSentSyncs = nbSentSyncs + 1;  // count the total number of the sent SYNC packet
