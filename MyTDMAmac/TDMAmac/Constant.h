@@ -54,13 +54,15 @@
 #define PTP_BROADCAST_ADDR -1
 #define PTP_NULL_ADDR 0
 
-/** @brief Types for PTP packets PtpPkt.ptpType*/
-enum PtpPacket_types {
-    SYNC=0,
-    DREQ=1,
-    DRES=2,
-    REG=3,
-    REGREPLY=4
+/** @brief Types for PTP packets PtpPkt.ptpType */
+enum PtpPacket_types
+{
+    SYNC = 0,
+    DREQ = 1,
+    DRES = 2,
+    REG = 3,
+    REGREPLY = 4,
+    REGRELAYMASTER = 5
 };
 
 /** @brief Values for PtpPkt.pckType

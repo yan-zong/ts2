@@ -44,6 +44,9 @@ simple TDMAmac extends BaseMacLayer
     	double MaximOffset @unit(s) = default(0ms);
     	// how long is a Superframe?
     	double FrameDuration @unit(s) = default(1000ms);
+    	// schedule the second SYNC from node (i.e., rnode[0])
+    	// duration between beacon (first SYNC packet) and second SYNC packet
+    	double ScheduleOffset @unit(s) = default(0ms);
 		
 		bool stats = default(false);
 		bool trace = default(false);

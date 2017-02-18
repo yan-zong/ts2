@@ -36,6 +36,7 @@
 
 class Clock2:public cSimpleModule{
 public:
+    // for PTP
     double getTimestamp();  // timestamp clock
     void adjtimex(double value, int type); // adjust the local clock offset (0) or drift (1)
     void adj_offset_drift(); // adjust the drift and offset of local clock
@@ -43,6 +44,8 @@ public:
     {
         Tm=t1;
     }
+    // for PCO
+    void adjustThreshold();
 
 protected:
     virtual void initialize();
@@ -52,6 +55,7 @@ protected:
     //virtual void openfile();
     //virtual void closefile();
 private:
+    // for PTP
     double Phyclockupdate();
     void   recordResult();
     // double getTimestamp(); // now getTimestamp() is public
@@ -61,6 +65,8 @@ private:
     void movingfilter();
     void kalmanfilter();
     //void adjtimex(double value[2]);
+
+
     double lastupdatetime;
     double phyclock;
     double softclock;
@@ -108,6 +114,13 @@ private:
     double ukhat[2][1];//offset、dirft的估计值（观测值/校正值）的初始值
     double Pk[2][2]; //先验估计误差协方差矩阵
     double Kf[2][2];//卡尔曼增益
+
+    /*PCO Parameter*/
+    double RegisterThreshold;   // the threshold value of register
+    double ThresholdAdjustValue;
+    double ThresholdAdjustValuePrevious;
+    double StandardTimePrevious;    // used to reset the clock
+    int iStandardTime;  // used to reset the clock
 
     std::ofstream outFile;
     cOutVector softclockVec;

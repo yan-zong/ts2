@@ -162,6 +162,10 @@ protected:
 
     /* @brief the id of node */
     int NodeId;
+
+    /* @brief schedule the second SYNC from node (i.e., rnode[0]) */
+    /* @brief duration between beacon (first SYNC packet) and second SYNC packet */
+    double ScheduleOffset;
 };
 
 #endif /* TDMAMAC_H_ */

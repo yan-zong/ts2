@@ -100,7 +100,7 @@ void RelayMaster::initialize()
         // Register slave
         // ---------------------------------------------------------------------------
         PtpPkt * temp = new PtpPkt("REGISTER");
-        temp->setPtpType(REG);
+        temp->setPtpType(REGRELAYMASTER);
 
         // use the host modules findHost() as a application address
         temp->setDestination(PTP_BROADCAST_ADDR);   //PTP_BROADCAST_ADDR = -1
@@ -286,6 +286,11 @@ void RelayMaster::handleSlaveMessage(PtpPkt *msg)
             ev << "the received REGISTER packet is invalid, ignore it \n";
             break;
         }
+    }
+    case REGRELAYMASTER:
+    {
+        ev << " Register packet from relay node, ignore\n";
+        break;
     }
     case REGREPLY:
     {

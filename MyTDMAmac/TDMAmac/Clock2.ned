@@ -14,6 +14,7 @@ simple Clock2
         volatile double sim_time_limit;
         volatile double alpha;
         volatile double  beta;
+        volatile double RegisterThreshold;
     gates:
         input inclock;
         output outclock;

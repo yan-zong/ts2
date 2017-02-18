@@ -220,8 +220,14 @@ void PtpMaster::handleSlaveMessage(PtpPkt *msg){
              send(rplPkt, "lowerGateOut");
              break;
         }
+        case REGRELAYMASTER:
+        {
+            ev << " Register packet from relay node, ignore\n";
+            break;
+        }
         case REGREPLY:
-        {   ev<<"Received register_reply packet (PtpType=REGREPLY), ignore\n";
+        {
+            ev<<"Received register_reply packet (PtpType=REGREPLY), ignore\n";
             break;
         }
         default:

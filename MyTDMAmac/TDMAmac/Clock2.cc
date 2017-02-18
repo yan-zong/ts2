@@ -63,6 +63,7 @@ void Clock2::initialize()
     Tsync = par("Tsync");
     alpha = par("alpha");
     beta = par("beta");
+    RegisterThreshold = par("RegisterThreshold");
 
     // ---------------------------------------------------------------------------
     // Initialise variable
@@ -77,6 +78,18 @@ void Clock2::initialize()
     k = int(sim_time_limit/Tcamp);
     Tm = Tm_previous =0;
     offset_adj_previous=0;
+
+    // ---------------------------------------------------------------------------
+    // Initialise variable for PCO, when times of clock update reaches the
+    // 'UpdateTimes', also means the clock time reaches the threshold
+    // (RegisterThreshold). The clock time reset to zero, and a pulse is generated
+    // and broadcasted at the same time
+    // ---------------------------------------------------------------------------
+    ev << "Clock: the threshold of register is " << RegisterThreshold << "s." << endl;
+    ThresholdAdjustValuePrevious = 0;
+    ThresholdAdjustValue = 0;
+    StandardTimePrevious = 0;
+    iStandardTime = 1;
 
     // ---------------------------------------------------------------------------
     // Initialise variable for Kalman Filter
@@ -128,6 +141,9 @@ void Clock2::initialize()
    // openfile();
    // ---------------------------------------------------------------------------
    // Initialise timer, the sampling interval is 'Tcamp' (See omnetpp.ini)
+   // the real time clock frequency is 32.768 KHz, and the corresponding
+   // period is 1/(32.768k) = 30.51757813 us. Therefore, the clock update period is
+   // 30.51757813 us, (configure in omnetpp.ini)
    // ---------------------------------------------------------------------------
    if(ev.isGUI())
    {
@@ -154,10 +170,12 @@ void Clock2::handleMessage(cMessage *msg)
         // ---------------------------------------------------------------------------
         //TODO:??
         Phyclockupdate();   // update physical clock by clock offset and drift
+
         i = i + 1;
         ev << "i = "<< i << endl;
         ev << "k = " << k << endl;
         /*¼ÓifÅÐ¶ÏÓï¾ä£¬ÔÚsim_time_limit/Tcamp½ÏÐ¡Ês±¿ÉÒÔ¼ÇÂ¼½Ï¶àÊý¾Ý*/
+/*
         if(i % 10 == 0)
         {
             ev << "count delta_drfit and delta_offset:" << endl;
@@ -203,7 +221,7 @@ void Clock2::handleMessage(cMessage *msg)
             driftStd.collect(drift);
             offsetStd.collect(offset);
         }
-
+*/
         scheduleAt(simTime()+ Tcamp,new cMessage("CLTimer"));
     }
 
@@ -270,20 +288,45 @@ void Clock2::handleMessage(cMessage *msg)
         updateDisplay();
     }
 }
-// TODo:adding Phyclockupdate()
+
+/* when the physical clock reach the threshold value, the clock time will be reset to zero */
 double Clock2::Phyclockupdate()
 {
-    ev << "update Phyclock&offset:"<<endl;
+    ev << "Clock: update physical clock, the offset is "<< offset << ", and drift is "<< drift <<endl;
+
     noise2 =  normal(0,sigma2,1);
     offset = offset + drift*(SIMTIME_DBL(simTime())-lastupdatetime)+ noise2;
     //offset = (drift+ noise1)*(SIMTIME_DBL(simTime())-lastupdatetime)+ noise2;
+    ev << "Clock: the UPDATED offset is "<< offset << endl;
+
     noise1 =  normal(0,sigma1,1);
     drift = drift + noise1;
     //drift = drift;
-    phyclock = offset + SIMTIME_DBL(simTime());
+    ev << "Clock: the UPDATED drift is "<< drift <<endl;
+
+    if ((simTime() - (1 * iStandardTime)) == 0)
+    {
+        StandardTimePrevious = SIMTIME_DBL(simTime());
+        iStandardTime = iStandardTime + 1;
+        EV << "Clock: based on the i " << iStandardTime << ", the previous standard time is "<< StandardTimePrevious <<endl;
+    }
+
+    phyclock = offset + SIMTIME_DBL(simTime()) - StandardTimePrevious;
+    ev << "Clock: the physical clock time is " << phyclock << endl;
+
+    // check the clock time reaches to threshold or not
+    if ((phyclock == RegisterThreshold) | (phyclock > RegisterThreshold))
+    {
+        ThresholdAdjustValue = phyclock - RegisterThreshold;
+        phyclock = 0;
+        EV << "Clock: because the physical clock time is greater than threshold value " << RegisterThreshold;
+        EV << ", the physical clock time is RESET to " << phyclock << endl;
+    }
+
+    ev << "Clock: Therefore the UPDATED physical clock time is " << phyclock << endl;
+
     lastupdatetime = SIMTIME_DBL(simTime());
-    ev<<"offset="<<offset<<endl;
-    ev<<"simTime=lastupdatetime="<<SIMTIME_DBL(simTime())<<endl;
+    ev << "Clock: the variable 'lastupdatetime' is "<< SIMTIME_DBL(simTime()) <<endl;
     return phyclock;
 }
 void Clock2::recordResult(){
@@ -918,3 +961,23 @@ void Clock2::closefile(){
     ev << "CLOCK: ---- CHIUSURA FILE ----\n";
     outFile.close();
 }*/
+
+void Clock2::adjustThreshold()
+{
+    double ThresholdTemp = ThresholdAdjustValue;
+
+
+    if (ThresholdAdjustValue > 0)
+    {
+        ThresholdAdjustValue = (ThresholdAdjustValuePrevious + ThresholdAdjustValue)/2;
+        ev << " the previous adjust value of threshold is " << ThresholdAdjustValuePrevious ;
+        ev << ", and now adjust value of threshold is " << ThresholdAdjustValue << endl;
+
+        ThresholdAdjustValuePrevious = ThresholdTemp;
+        ev << "based on the adjustment of clock, the RegisterThreshold change from " << RegisterThreshold;
+        RegisterThreshold = RegisterThreshold + ThresholdAdjustValue;
+        ev << " to " << RegisterThreshold << endl;
+    }
+
+}
+

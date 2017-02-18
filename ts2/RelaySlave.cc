@@ -253,6 +253,12 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
         ev << "receive REGISTER package, slave node does nothing. returns\n";
         break;
     }
+    case REGRELAYMASTER:
+    {
+        ev << "receive REGISTER package, slave node does nothing. returns\n";
+        break;
+    }
+
     case REGREPLY:
     {
         if (myMasterAddress == 1000)
@@ -280,7 +286,10 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
             // for PCO (Pulse-Coupled Oscillator)
             ev << "Relay Slave receives SYNC packet from master node, process it\n";
             ev << "Relay Slave emit a SYNC packet after receipting a SYNC packet from master\n";
-            pRelayMaster->startSync();
+
+            // pClock -> adjustThreshold();    // adjust the clock
+
+            pRelayMaster->startSync();  // broadcast SYNC packet
             break;
 
             // for PTP, there is no need use these in the PCO (Pulse-Coupled Oscillator)
@@ -527,9 +536,9 @@ void RelaySlave::servo_clock()
 	//}
 */
 	//dxw->hyw: see my question in Clock2.cc, line 225
-	pClock->adjtimex(offset, 0);
-	pClock->adjtimex(drift,1);
-	pClock->adj_offset_drift();
+	pClock->adjtimex(offset, 0);    // calculate the offset adjust value
+	pClock->adjtimex(drift,1);  // calculate the drift adjust value
+	pClock->adj_offset_drift(); // adjust the clock offset and drift
 
 	recordResult();
 
