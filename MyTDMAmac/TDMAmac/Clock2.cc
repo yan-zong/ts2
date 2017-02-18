@@ -317,8 +317,9 @@ double Clock2::Phyclockupdate()
     // check the clock time reaches to threshold or not
     if ((phyclock == RegisterThreshold) | (phyclock > RegisterThreshold))
     {
-        ThresholdAdjustValue = phyclock - RegisterThreshold;
+        ThresholdAdjustValue = RegisterThreshold - phyclock;
         phyclock = 0;
+        EV << "Clock: The variable 'ThresholdAdjustValue' is " << ThresholdAdjustValue << endl;
         EV << "Clock: because the physical clock time is greater than threshold value " << RegisterThreshold;
         EV << ", the physical clock time is RESET to " << phyclock << endl;
     }
@@ -962,22 +963,39 @@ void Clock2::closefile(){
     outFile.close();
 }*/
 
+/*
 void Clock2::adjustThreshold()
 {
-    double ThresholdTemp = ThresholdAdjustValue;
+    ThresholdAdjustValue = (ThresholdAdjustValuePrevious + ThresholdAdjustValue)/2;
+    ev << "the PREVIOUS adjust value of threshold is " << ThresholdAdjustValuePrevious ;
+    ev << ", and NEW adjust value of threshold is " << ThresholdAdjustValue << endl;
 
+    ThresholdAdjustValuePrevious = ThresholdAdjustValue;
+    ev << "based on the adjustment of clock, the RegisterThreshold change from " << RegisterThreshold;
 
-    if (ThresholdAdjustValue > 0)
-    {
-        ThresholdAdjustValue = (ThresholdAdjustValuePrevious + ThresholdAdjustValue)/2;
-        ev << " the previous adjust value of threshold is " << ThresholdAdjustValuePrevious ;
-        ev << ", and now adjust value of threshold is " << ThresholdAdjustValue << endl;
-
-        ThresholdAdjustValuePrevious = ThresholdTemp;
-        ev << "based on the adjustment of clock, the RegisterThreshold change from " << RegisterThreshold;
-        RegisterThreshold = RegisterThreshold + ThresholdAdjustValue;
-        ev << " to " << RegisterThreshold << endl;
-    }
+    RegisterThreshold = RegisterThreshold + ThresholdAdjustValue;
+    ev << " to " << RegisterThreshold << endl;
 
 }
 
+*/
+
+void Clock2::adjustThreshold(double value)
+{
+    ThresholdAdjustValue = (ThresholdAdjustValuePrevious + value)/2;
+    ev << "Clock: the PREVIOUS adjust value of threshold is " << ThresholdAdjustValuePrevious ;
+    ev << ", and NEW adjust value of threshold is " << ThresholdAdjustValue << endl;
+
+    ThresholdAdjustValuePrevious = ThresholdAdjustValue;
+    ev << "Clock: based on the adjustment of clock, the RegisterThreshold change from " << RegisterThreshold;
+
+    RegisterThreshold = RegisterThreshold + ThresholdAdjustValue;
+    ev << " to " << RegisterThreshold << endl;
+
+}
+
+double Clock2::getThresholdAdjustValue()
+{
+    ev << "Clock: the returned 'ThresholdAdjustValue' is " << ThresholdAdjustValue << endl;
+    return ThresholdAdjustValue;
+}

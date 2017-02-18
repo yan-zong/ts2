@@ -60,6 +60,9 @@ void RelaySlave::initialize()
 	nbReceivedSyncsFromRelay = 0;
 	nbReceivedDelayResponsesFromRelay = 0;
 
+	// for PCO
+	ThresholdAdjustValue = 0;
+
 	/* Lettura dei parametri di ingresso. */
 	//Tsync = par("Tsync");
 	//Tcamp  = par("Tcamp");
@@ -287,9 +290,9 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
             ev << "Relay Slave receives SYNC packet from master node, process it\n";
             ev << "Relay Slave emit a SYNC packet after receipting a SYNC packet from master\n";
 
-            // pClock -> adjustThreshold();    // adjust the clock
-
             pRelayMaster->startSync();  // broadcast SYNC packet
+
+            servo_clock();  // adjust the clock
             break;
 
             // for PTP, there is no need use these in the PCO (Pulse-Coupled Oscillator)
@@ -482,21 +485,33 @@ void RelaySlave::updateDisplay()
 // Servo Clock used to update the local drifting clock
 // ---------------------------------------------------------------------------
 
+
 void RelaySlave::servo_clock()
 {
-	dms = ts2 - ts1;
-	dsm = ts4 - ts3;
-	ev<<"dms="<<dms<<"dsm="<<dsm<<endl;
-	dprop = (dms + dsm)/2;
-	offset = dms - dprop;
-	//offset = ((ts2 - ts1)- (ts4 - ts3))/2;
-	ev<<"offset="<<offset<<endl;
-    //double alpha = 1;
-    //double beta = 200;
-    //double y =offset/alpha;
-	//ev<<"y="<<y<<endl;
-    ev<<"offset= "<<offset<<endl;
+    ThresholdAdjustValue = pClock -> getThresholdAdjustValue();
+    ev << "TDMA: the returned 'ThresholdAdjustValue' is " << ThresholdAdjustValue << endl;
 
+    pClock -> adjustThreshold(ThresholdAdjustValue);
+}
+
+
+
+
+//void RelaySlave::servo_clock()
+//{
+//	dms = ts2 - ts1;
+//	dsm = ts4 - ts3;
+//	ev<<"dms="<<dms<<"dsm="<<dsm<<endl;
+//	dprop = (dms + dsm)/2;
+//	offset = dms - dprop;
+//	//offset = ((ts2 - ts1)- (ts4 - ts3))/2;
+//	ev<<"offset="<<offset<<endl;
+//   //double alpha = 1;
+//    //double beta = 200;
+//    //double y =offset/alpha;
+//	//ev<<"y="<<y<<endl;
+//    ev<<"offset= "<<offset<<endl;
+//
 /*    // the following codes of packet exchange will be
     // replace by calling function clock2::adjtimeex() directly
     Packet *pck = new Packet("ADJ_OFFSET");
@@ -506,24 +521,24 @@ void RelaySlave::servo_clock()
 	pck->setData(offset);
 	send(pck,"outclock");
 */
-
-
-	Ts = ts2;//T2
-	Tm = ts1;//T1
-	ev<<"Ts-Ts_previous="<<Ts-Ts_previous<<endl;
-	//if(Tm_previous > 0){  //去掉这个if判断语句，不然drift在第一次同步周期内没有得到校正,去掉之后对结果没什么影响
-	// TODO:drift estimate
-		//drift = (Ts-Ts_previous+y)/(Tm-Tm_previous)-1;//从物理意义上来说，这个计算drift的算法是错误的
-	//drift = (Ts - Ts_previous + offset_previous)/(Tm-Tm_previous)-1;//仿真结果最好的一个算法
-	//drift = (Ts - Ts_previous)/(Tm-Tm_previous)-1;//在我的时钟模型中，这个算法是不对的,应在clock中加上u[0][0]/Tsync
-    drift = (offset-offset_previous)/(Tm-Tm_previous);//仿真结果最差，这个算法是不对的,应在在clock中加上u[0][0]/Tsync;为了对应KF参数，采用此算法
-	//drift = offset/(Tm-Tm_previous);
+//
+//
+//	Ts = ts2;//T2
+//	Tm = ts1;//T1
+//	ev<<"Ts-Ts_previous="<<Ts-Ts_previous<<endl;
+//	//if(Tm_previous > 0){  //去掉这个if判断语句，不然drift在第一次同步周期内没有得到校正,去掉之后对结果没什么影响
+//	// TODO:drift estimate
+//		//drift = (Ts-Ts_previous+y)/(Tm-Tm_previous)-1;//从物理意义上来说，这个计算drift的算法是错误的
+//	//drift = (Ts - Ts_previous + offset_previous)/(Tm-Tm_previous)-1;//仿真结果最好的一个算法
+//	//drift = (Ts - Ts_previous)/(Tm-Tm_previous)-1;//在我的时钟模型中，这个算法是不对的,应在clock中加上u[0][0]/Tsync
+//   drift = (offset-offset_previous)/(Tm-Tm_previous);//仿真结果最差，这个算法是不对的,应在在clock中加上u[0][0]/Tsync;为了对应KF参数，采用此算法
+//	//drift = offset/(Tm-Tm_previous);
 	/*double DELTADRIFT=10E-6;
 		if(drift>DELTADRIFT){drift=DELTADRIFT;}
 		else if(drift<-DELTADRIFT){drift=-DELTADRIFT;}//这个判定值与物理时钟drift的初始值有关*/
-	//double x= drift/beta;
-		ev<<"drift="<<drift<<endl;
-
+//	//double x= drift/beta;
+//		ev<<"drift="<<drift<<endl;
+//
 /*    // the following codes of packet exchange will be
 	  // replace by calling function clock2::adjtimeex() directly
 		Packet *pckd = new Packet("ADJ_FREQ");
@@ -535,19 +550,21 @@ void RelaySlave::servo_clock()
 		send(pckd,"outclock");
 	//}
 */
-	//dxw->hyw: see my question in Clock2.cc, line 225
-	pClock->adjtimex(offset, 0);    // calculate the offset adjust value
-	pClock->adjtimex(drift,1);  // calculate the drift adjust value
-	pClock->adj_offset_drift(); // adjust the clock offset and drift
+//	//dxw->hyw: see my question in Clock2.cc, line 225
+//	pClock->adjtimex(offset, 0);    // calculate the offset adjust value
+//	pClock->adjtimex(drift,1);  // calculate the drift adjust value
+//	pClock->adj_offset_drift(); // adjust the clock offset and drift
+//
+//	recordResult();
+//
+//    offset_previous = offset;
+//	Tm_previous = Tm;
+//	Ts_previous = Ts;
+//
+//
+//}
 
-	recordResult();
 
-    offset_previous = offset;
-	Tm_previous = Tm;
-	Ts_previous = Ts;
-
-
-}
 
 cModule *RelaySlave::findHost(void)
 {

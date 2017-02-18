@@ -102,6 +102,9 @@ private:
 	double T;
 	double Tr;
 
+	// for PCO
+	double ThresholdAdjustValue;
+
 	double nbSentDelayRequests;  // count the total number of sent DelayRequest
 	double nbReceivedSyncsFromMaster;  // count the total number of received Sync from Master
 	double nbReceivedDelayResponsesFromMaster;  // count the total number of received DelayResponse from Master

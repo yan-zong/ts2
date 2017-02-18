@@ -45,7 +45,8 @@ public:
         Tm=t1;
     }
     // for PCO
-    void adjustThreshold();
+    void adjustThreshold(double value);
+    double getThresholdAdjustValue();
 
 protected:
     virtual void initialize();
