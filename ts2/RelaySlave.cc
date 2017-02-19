@@ -489,7 +489,7 @@ void RelaySlave::updateDisplay()
 void RelaySlave::servo_clock()
 {
     ThresholdAdjustValue = pClock -> getThresholdAdjustValue();
-    ev << "TDMA: the returned 'ThresholdAdjustValue' is " << ThresholdAdjustValue << endl;
+    ev << "RelaySlave: the returned 'ThresholdAdjustValue' is " << ThresholdAdjustValue << endl;
 
     pClock -> adjustThreshold(ThresholdAdjustValue);
 }

@@ -121,7 +121,7 @@ private:
     double ThresholdAdjustValue;
     double ThresholdAdjustValuePrevious;
     double StandardTimePrevious;    // used to reset the clock
-    int iStandardTime;  // used to reset the clock
+    double iStandardTime;  // used to reset the clock
 
     std::ofstream outFile;
     cOutVector softclockVec;

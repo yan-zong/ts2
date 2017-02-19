@@ -170,6 +170,8 @@ void Clock2::handleMessage(cMessage *msg)
         // ---------------------------------------------------------------------------
         //TODO:??
         Phyclockupdate();   // update physical clock by clock offset and drift
+        EV << "Clock: phyclock = " << phyclock << endl;
+        EV << "Clock: ThresholdAdjustValue = " << ThresholdAdjustValue << endl;
 
         i = i + 1;
         ev << "i = "<< i << endl;
@@ -304,27 +306,63 @@ double Clock2::Phyclockupdate()
     //drift = drift;
     ev << "Clock: the UPDATED drift is "<< drift <<endl;
 
-    if ((simTime() - (1 * iStandardTime)) == 0)
+    ev << "Clock: the PREVIOUS physical clock time is " << phyclock << endl;
+
+    if ((phyclock == RegisterThreshold) | (phyclock > RegisterThreshold))
+    {
+        StandardTimePrevious = SIMTIME_DBL(simTime());
+        EV << "Clock: the previous standard time is "<< StandardTimePrevious <<endl;
+
+        phyclock = offset + SIMTIME_DBL(simTime()) - StandardTimePrevious;
+        ThresholdAdjustValue = RegisterThreshold -  ((offset + SIMTIME_DBL(simTime())) - (SIMTIME_DBL(simTime())-1));
+        ev << "Clock: based on the UPDATED offset "<< offset << ", the UPDATED physical clock time is " << phyclock ;
+        EV << ", and the variable 'ThresholdAdjustValue' is " << ThresholdAdjustValue << endl;
+    }
+    else
+    {
+        phyclock = offset + SIMTIME_DBL(simTime()) - StandardTimePrevious;
+        ev << "Clock: based on the UPDATED offset "<< offset << ", the UPDATED physical clock time is " << phyclock << endl;
+    }
+
+
+
+
+
+
+
+/*
+    if (((simTime()) - (1 * iStandardTime)) == 0)
     {
         StandardTimePrevious = SIMTIME_DBL(simTime());
         iStandardTime = iStandardTime + 1;
-        EV << "Clock: based on the i " << iStandardTime << ", the previous standard time is "<< StandardTimePrevious <<endl;
+        EV << "Clock: i = " << iStandardTime << ", the previous standard time is "<< StandardTimePrevious <<endl;
+
+        phyclock = offset + SIMTIME_DBL(simTime()) - StandardTimePrevious;
+        ev << "Clock: based on the UPDATED offset "<< offset << ", the UPDATED physical clock time is " << phyclock << endl;
+
+        ThresholdAdjustValue = offset;
+        EV << "Clock: The variable 'ThresholdAdjustValue' is " << ThresholdAdjustValue << endl;
+    }
+    else
+    {
+        phyclock = offset + SIMTIME_DBL(simTime()) - StandardTimePrevious;
+        ev << "Clock: based on the UPDATED offset "<< offset << ", the UPDATED physical clock time is " << phyclock << endl;
     }
 
-    phyclock = offset + SIMTIME_DBL(simTime()) - StandardTimePrevious;
-    ev << "Clock: the physical clock time is " << phyclock << endl;
-
+    ev << "Clock: the if-loop condition is " << ((phyclock == RegisterThreshold) | (phyclock > RegisterThreshold)) << endl;
     // check the clock time reaches to threshold or not
     if ((phyclock == RegisterThreshold) | (phyclock > RegisterThreshold))
     {
         ThresholdAdjustValue = RegisterThreshold - phyclock;
         phyclock = 0;
+        iStandardTime = iStandardTime + 1;
         EV << "Clock: The variable 'ThresholdAdjustValue' is " << ThresholdAdjustValue << endl;
         EV << "Clock: because the physical clock time is greater than threshold value " << RegisterThreshold;
         EV << ", the physical clock time is RESET to " << phyclock << endl;
     }
 
-    ev << "Clock: Therefore the UPDATED physical clock time is " << phyclock << endl;
+*/
+    // ev << "Clock: Therefore the UPDATED physical clock time is " << phyclock << endl;
 
     lastupdatetime = SIMTIME_DBL(simTime());
     ev << "Clock: the variable 'lastupdatetime' is "<< SIMTIME_DBL(simTime()) <<endl;
