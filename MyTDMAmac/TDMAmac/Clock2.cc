@@ -315,54 +315,16 @@ double Clock2::Phyclockupdate()
 
         phyclock = offset + SIMTIME_DBL(simTime()) - StandardTimePrevious;
         ThresholdAdjustValue = RegisterThreshold -  ((offset + SIMTIME_DBL(simTime())) - (SIMTIME_DBL(simTime())-1));
-        ev << "Clock: based on the UPDATED offset "<< offset << ", the UPDATED physical clock time is " << phyclock ;
+        EV << "Clock: based on the UPDATED offset "<< offset << ", the UPDATED physical clock time is " << phyclock ;
         EV << ", and the variable 'ThresholdAdjustValue' is " << ThresholdAdjustValue << endl;
-    }
-    else
-    {
-        phyclock = offset + SIMTIME_DBL(simTime()) - StandardTimePrevious;
-        ev << "Clock: based on the UPDATED offset "<< offset << ", the UPDATED physical clock time is " << phyclock << endl;
-    }
-
-
-
-
-
-
-
-/*
-    if (((simTime()) - (1 * iStandardTime)) == 0)
-    {
-        StandardTimePrevious = SIMTIME_DBL(simTime());
-        iStandardTime = iStandardTime + 1;
-        EV << "Clock: i = " << iStandardTime << ", the previous standard time is "<< StandardTimePrevious <<endl;
-
-        phyclock = offset + SIMTIME_DBL(simTime()) - StandardTimePrevious;
-        ev << "Clock: based on the UPDATED offset "<< offset << ", the UPDATED physical clock time is " << phyclock << endl;
-
-        ThresholdAdjustValue = offset;
-        EV << "Clock: The variable 'ThresholdAdjustValue' is " << ThresholdAdjustValue << endl;
-    }
-    else
-    {
-        phyclock = offset + SIMTIME_DBL(simTime()) - StandardTimePrevious;
-        ev << "Clock: based on the UPDATED offset "<< offset << ", the UPDATED physical clock time is " << phyclock << endl;
-    }
-
-    ev << "Clock: the if-loop condition is " << ((phyclock == RegisterThreshold) | (phyclock > RegisterThreshold)) << endl;
-    // check the clock time reaches to threshold or not
-    if ((phyclock == RegisterThreshold) | (phyclock > RegisterThreshold))
-    {
-        ThresholdAdjustValue = RegisterThreshold - phyclock;
-        phyclock = 0;
-        iStandardTime = iStandardTime + 1;
-        EV << "Clock: The variable 'ThresholdAdjustValue' is " << ThresholdAdjustValue << endl;
         EV << "Clock: because the physical clock time is greater than threshold value " << RegisterThreshold;
         EV << ", the physical clock time is RESET to " << phyclock << endl;
     }
-
-*/
-    // ev << "Clock: Therefore the UPDATED physical clock time is " << phyclock << endl;
+    else
+    {
+        phyclock = offset + SIMTIME_DBL(simTime()) - StandardTimePrevious;
+        ev << "Clock: based on the UPDATED offset "<< offset << ", the UPDATED physical clock time is " << phyclock << endl;
+    }
 
     lastupdatetime = SIMTIME_DBL(simTime());
     ev << "Clock: the variable 'lastupdatetime' is "<< SIMTIME_DBL(simTime()) <<endl;
@@ -377,6 +339,23 @@ void Clock2::recordResult(){
 
 }
 
+/* @breif for PCO in TDMAmac.cc */
+double Clock2::getTimestamp()
+{
+    ev << "Clock: Timestamp " << endl;
+    ev << "simTime = " << SIMTIME_DBL(simTime()) << " lastupdatetime = "<< lastupdatetime << endl;
+    double clock = offset + drift * (SIMTIME_DBL(simTime()) - lastupdatetime) + SIMTIME_DBL(simTime());
+    ev << "clock = " << clock << endl;
+    softclock = clock;
+    ev << "softclock = " << softclock << endl;
+    softclockVec.record(softclock);
+    ev << "Clock: the returned clock time is " << softclock <<endl;
+    return softclock;
+}
+
+
+// for PTP
+/*
 double Clock2::getTimestamp()
 {
     //TODO:Modify
@@ -393,6 +372,7 @@ double Clock2::getTimestamp()
     //ev.printf("phyclock_float=%8f",phyclock_float);
     return softclock;
 }
+*/
 
 
 void Clock2::adjtimex(double value, int type)
