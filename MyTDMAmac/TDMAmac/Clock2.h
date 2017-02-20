@@ -37,7 +37,7 @@
 class Clock2:public cSimpleModule{
 public:
     // for PTP
-    double getTimestamp();  // timestamp clock
+
     void adjtimex(double value, int type); // adjust the local clock offset (0) or drift (1)
     void adj_offset_drift(); // adjust the drift and offset of local clock
     void setT123(double t1, double t2, double t3)
@@ -46,7 +46,9 @@ public:
     }
     // for PCO
     void adjustThreshold(double value);
-    double getThresholdAdjustValue();
+    int getnumPulse();
+    double getPCOTimestamp();
+    double getTimestamp();  // timestamp clock
 
 protected:
     virtual void initialize();
@@ -118,10 +120,11 @@ private:
 
     /*PCO Parameter*/
     double RegisterThreshold;   // the threshold value of register
-    double ThresholdAdjustValue;
-    double ThresholdAdjustValuePrevious;
-    double StandardTimePrevious;    // used to reset the clock
-    double iStandardTime;  // used to reset the clock
+    double PulseTimePrevious;    // used to reset the clock
+    int numFires;
+    int numPulse;
+    double FrameDuration;
+    double LastUpdateTime;
 
     std::ofstream outFile;
     cOutVector softclockVec;

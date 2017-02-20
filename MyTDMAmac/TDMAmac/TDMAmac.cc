@@ -57,6 +57,14 @@ void TDMAmac::initialize(int stage)
         /* For dropped packets if required !aaks */
         droppedPacket.setReason(DroppedPacket::NONE);
 
+        /* For PCO */
+        ClockTime = 0;
+        TDMATime = 0;
+        ThresholdAdjustValue = 0;
+        TDMAdjustValue = 0;
+        numPulse = 0;
+        TDMATimeOffset = 0;
+
         trace = par("trace").boolValue();
         stats = par("stats").boolValue();
 
@@ -189,24 +197,35 @@ void TDMAmac::handleSelfMsg(cMessage* msg)
           /* SETUP phase enters to start the MAC protocol !aaks */
           case 0:
           {
-              ClockTime = 0;
-              ClockTime = pClock2 -> getTimestamp(); // the local drifting clock time
-              EV << "TDMAmac: the local drifting clock time is " << ClockTime << endl;
+              ClockTime = pClock2 -> getPCOTimestamp(); // the PCO clock time
+              TDMATime = pClock2 -> getTimestamp(); // the local drifting clock time
+              numPulse = pClock2 -> getnumPulse();  // the number of pulse
+              EV << "TDMAmac: the PCO local drifting clock time is " << ClockTime << endl;
+              EV << "TDMAmac: the local drifting clock time is " << TDMATime << endl;
+              EV << "TDMAmac: the number of pulse is " << numPulse << endl;
 
-              ClockTimeOffset = ClockTime - SIMTIME_DBL(simTime());
-              EV << "TDMAmac: the local drifting clock time offset is " << ClockTimeOffset << endl;
 
-              if (ClockTimeOffset > FrameDuration)
-                  error("the clock offset is greater than frame duration");
+              ThresholdAdjustValue = ClockTime - RegisterThreshold;
+              TDMAdjustValue = (numPulse + 1) * FrameDuration - TDMATime;
 
-              if ((ClockTimeOffset + MaximOffset) < 0)
+              pClock2 -> adjustThreshold(ThresholdAdjustValue);
+              TDMAdjustValue = (TDMAdjustValue / 2) + (((numPulse + 1) * FrameDuration) - MaximOffset) - TDMAdjustValue;
+
+
+              TDMATimeOffset = TDMATime - SIMTIME_DBL(simTime());
+              EV << "TDMAmac: the local drifting clock time offset is " << TDMATimeOffset << endl;
+
+              if (TDMATimeOffset > FrameDuration)
+                  error("the TDMA offset is greater than frame duration");
+
+              if ((TDMATimeOffset + MaximOffset) < 0)
                   error("(ClockTimeOffset + MaximOffset) is less than 0");
 
               scheduleAt(simTime() + FrameDuration, FrameTimer);
-              scheduleAt(simTime() + ClockTimeOffset + MaximOffset, OffsetTimer);
+              scheduleAt(simTime() + TDMAdjustValue, OffsetTimer);
 
-              EV << "TDMA mac will schedule the next event after " << ClockTimeOffset + MaximOffset << endl;
-              EV << "at time: " << (simTime() + ClockTimeOffset + MaximOffset) <<endl;
+              EV << "TDMA mac will schedule the next event after " << TDMAdjustValue << endl;
+              EV << "at time: " << (simTime() + TDMAdjustValue) <<endl;
 
           }
           break;

@@ -47,6 +47,8 @@ simple TDMAmac extends BaseMacLayer
     	// schedule the second SYNC from node (i.e., rnode[0])
     	// duration between beacon (first SYNC packet) and second SYNC packet
     	double ScheduleOffset @unit(s) = default(0ms);
+    	// threshold value of register of PCO
+    	double RegisterThreshold @unit(s) = default(1000ms);
 		
 		bool stats = default(false);
 		bool trace = default(false);

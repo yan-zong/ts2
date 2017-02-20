@@ -145,11 +145,26 @@ protected:
 
     int MyID = 0;
 
-    /* @brief local drift clock time */
+    /* @brief PCO clock time */
     double ClockTime;
 
+    /* @brief local drift clock time */
+    double TDMATime;
+
+    /* @brief PCO register threshold */
+    double RegisterThreshold;
+
+    /* @brief threshold of register adjustment value */
+    double ThresholdAdjustValue;
+
+    /* @brief TDMA adjustment value */
+    double TDMAdjustValue;
+
+    /* @brief the number of pulse */
+    int numPulse;
+
     /* @brief the offset of local drift clock time  */
-    double ClockTimeOffset;
+    double TDMATimeOffset;
 
     /* @brief the duration of frame in one packet */
     double FrameDuration;
