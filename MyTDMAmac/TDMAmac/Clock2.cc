@@ -323,6 +323,10 @@ double Clock2::Phyclockupdate()
         EV << "Clock: because the clock time is greater than threshold value " << RegisterThreshold;
         EV << ", the clock time is RESET to " << phyclock;
         EV << ", and the offset is also RESET to " << offset << endl;
+
+        generateSYNC();
+        EV << "Clock: generate and sent SYNC packet to Core module. " << endl;
+
     }
     else
     {

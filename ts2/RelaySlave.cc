@@ -169,29 +169,8 @@ void RelaySlave::handleMessage(cMessage *msg)
 	{
 	    EV << "Relay Slave receives a SYNC packet from clock module, delete it and re-generate a full SYNC packet \n";
 	    delete msg;
-	    EV << "Relay Slave generates a NEW SYNC Packet \n";
 
-	    PtpPkt *pck = new PtpPkt("SYNC");
-	    pck->setPtpType(SYNC);
-	    pck->setByteLength(40); // SYNC_BYTE = 40
-
-	    pck->setTimestamp(simTime());   // time stamp
-
-	    pck->setSource(myAddress);
-	    pck->setDestination(PTP_BROADCAST_ADDR);
-
-	    pck->setData(SIMTIME_DBL(simTime()));
-	    pck->setTsTx(SIMTIME_DBL(simTime())); // set transmission time stamp ts1 on SYNC
-
-	    // set SrcAddr, DestAddr with LAddress::L3Type values for MiXiM
-	    pck->setSrcAddr( LAddress::L3Type(myAddress));
-	    pck->setDestAddr(LAddress::L3BROADCAST);
-
-	    // set the control info to tell the network layer (layer 3) address
-	    NetwControlInfo::setControlInfo(pck, LAddress::L3BROADCAST );
-
-	    EV << "Relay Slave broadcasts SYNC packet" << endl;
-	    send(pck,"lowerGateOut");
+	    scheduleAt(simTime(), new cMessage("OffsetTimer"));
 
 	    // handleClockMessage(msg);
 	}
@@ -243,7 +222,32 @@ void RelaySlave::handleMessage(cMessage *msg)
 
 void RelaySlave::handleSelfMessage(cMessage *msg)
 {
-    ProduceT3packet();
+
+    EV << "Relay Slave generates a NEW SYNC Packet \n";
+
+    PtpPkt *pck = new PtpPkt("SYNC");
+    pck->setPtpType(SYNC);
+    pck->setByteLength(40); // SYNC_BYTE = 40
+
+    pck->setTimestamp(simTime());   // time stamp
+
+    pck->setSource(myAddress);
+    pck->setDestination(PTP_BROADCAST_ADDR);
+
+    pck->setData(SIMTIME_DBL(simTime()));
+    pck->setTsTx(SIMTIME_DBL(simTime())); // set transmission time stamp ts1 on SYNC
+
+    // set SrcAddr, DestAddr with LAddress::L3Type values for MiXiM
+    pck->setSrcAddr( LAddress::L3Type(myAddress));
+    pck->setDestAddr(LAddress::L3BROADCAST);
+
+    // set the control info to tell the network layer (layer 3) address
+    NetwControlInfo::setControlInfo(pck, LAddress::L3BROADCAST );
+
+    EV << "Relay Slave broadcasts SYNC packet" << endl;
+    send(pck,"out");
+
+    // ProduceT3packet();
 }
 
 void RelaySlave::handleOtherPacket(cMessage *msg)

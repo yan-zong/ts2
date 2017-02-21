@@ -139,28 +139,9 @@ void PtpMaster::handleMessage(cMessage* msg)
     {
         EV << "Master receives a SYNC packet from clock module, delete it and re-generate a full SYNC packet \n";
         delete msg;
-        EV << "Master generates a NEW SYNC Packet \n";
 
-        PtpPkt *pck = new PtpPkt("SYNC");
-        pck->setPtpType(SYNC);
+        scheduleAt(simTime(), new cMessage("FrameTimer"));
 
-        pck->setByteLength(40); // SYNC_BYTE = 40
-        pck->setTimestamp(simTime());
-
-        pck->setSource(address);
-        pck->setDestination(-1);
-
-        pck->setData(SIMTIME_DBL(simTime()));
-        pck->setTsTx(SIMTIME_DBL(simTime())); // set transmission timie stamp ts1 on SYNC
-
-        // set SrcAddr, DestAddr with LAddress::L3Type values for MiXiM
-        pck->setSrcAddr( LAddress::L3Type(address));
-        pck->setDestAddr(LAddress::L3BROADCAST);
-
-        NetwControlInfo::setControlInfo(pck, LAddress::L3BROADCAST );
-
-        EV << "Master broadcasts SYNC packet" << endl;
-        send(pck,"lowerGateOut");
     }
 
     else if(whichGate==-1) {
@@ -190,6 +171,29 @@ void PtpMaster::handleSelfMessage(cMessage *msg){
  //   LAddress::L2Type macAddr;
  //   LAddress::L3Type netwAddr;
 
+    EV << "Master generates a NEW SYNC Packet \n";
+    PtpPkt *pck = new PtpPkt("SYNC");
+    pck->setPtpType(SYNC);
+
+    pck->setByteLength(40); // SYNC_BYTE = 40
+    pck->setTimestamp(simTime());
+
+    pck->setSource(address);
+    pck->setDestination(-1);
+
+    pck->setData(SIMTIME_DBL(simTime()));
+    pck->setTsTx(SIMTIME_DBL(simTime())); // set transmission timie stamp ts1 on SYNC
+
+    // set SrcAddr, DestAddr with LAddress::L3Type values for MiXiM
+    pck->setSrcAddr( LAddress::L3Type(address));
+    pck->setDestAddr(LAddress::L3BROADCAST);
+
+    NetwControlInfo::setControlInfo(pck, LAddress::L3BROADCAST );
+
+    EV << "Master broadcasts SYNC packet" << endl;
+    send(pck,"lowerGateOut");
+
+/*
     EV <<"Tysnc Timer fired ... new SYNC PtpPkt\n";
 
     PtpPkt *pck = new PtpPkt("SYNC");
@@ -209,6 +213,7 @@ void PtpMaster::handleSelfMessage(cMessage *msg){
     EV << "PtpCore broadcasts SYNC packet!" << endl;
     send(pck,"lowerGateOut");
     scheduleAt(simTime()+Tsync, new cMessage("MStimer"));
+    */
 }
 
 
