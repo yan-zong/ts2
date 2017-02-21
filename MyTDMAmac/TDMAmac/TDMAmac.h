@@ -181,6 +181,16 @@ protected:
     /* @brief schedule the second SYNC from node (i.e., rnode[0]) */
     /* @brief duration between beacon (first SYNC packet) and second SYNC packet */
     double ScheduleOffset;
+
+    /* @brief two modes will be used, first mode is the TimeSyncMode
+     * (only synchronisation in this mode), and second mode is the
+     * Synchronised TDMA Data transmission mode (both data transmission
+     * and synchronisation in this mode)
+     * TRUE == mode 1 (synchronisation )
+     * FALSE == mode 2 (Synchronised TDMA Data transmission mode )
+     * */
+    bool SyncStatus;
+
 };
 
 #endif /* TDMAMAC_H_ */

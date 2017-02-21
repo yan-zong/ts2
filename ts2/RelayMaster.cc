@@ -74,6 +74,7 @@ void RelayMaster::initialize()
         ev<<"Relay Master: RelayModule Index is "<< RelayIndex <<endl;
         // SlaveAddr = 2000 + (((RelayModule->getIndex()) - 1) * 1000); ToDo
 
+        /*
         // Schedule the time-synchronisation of relay
         // ToDo: add a random value function to improve the efficiency of packet exchange
         // RandomTime = intuniform(0,1,0);
@@ -89,13 +90,16 @@ void RelayMaster::initialize()
         }
 
         // for multi-hop PTP, there is no need use this in the PCO (Pulse-Coupled Oscillator)
-        // scheduleAt(simTime()+Tsync+ScheduleRandomTime, new cMessage("MStimer"));
+        scheduleAt(simTime()+Tsync+ScheduleRandomTime, new cMessage("MStimer"));
 
         // scheduleAt(simTime()+Tsync, new cMessage("MStimer"));
         ev<<"Relay Master: debug: simTime() = "<< simTime() <<endl;
         ev<<"Relay Master: debug: Tsync = "<< Tsync <<endl;
         ev<<"Relay Master: debug: simTime() + Tsync = "<< simTime() + Tsync <<endl;
 
+        */
+
+        /*
         // ---------------------------------------------------------------------------
         // Register slave
         // ---------------------------------------------------------------------------
@@ -118,6 +122,7 @@ void RelayMaster::initialize()
         EV << "Relay Master broadcasts REGISTER packet" << endl;
         send(temp,"lowerGateOut");
         ev << "debug: packet->getdestination() = " <<temp->getDestination()<<".\n";
+        */
   }
 
 

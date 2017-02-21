@@ -37,6 +37,8 @@ void PtpMaster::initialize()
         upperGateOut = findGate("upperGateOut");
         lowerGateIn  = findGate("lowerGateIn");
         lowerGateOut = findGate("lowerGateOut");
+        inclock = findGate ("inclock");
+        // outclock = findGate ("outclock");
  //        upperControlIn  = findGate("upperControlIn");
 //        upperControlOut = findGate("upperControlOut");
 //        lowerControlIn  = findGate("lowerControlIn");
@@ -99,11 +101,17 @@ void PtpMaster::handleMessage(cMessage* msg)
         handleSelfMessage(msg);
         return;
     }
+
     // not self-message,check where it comes frome
     whichGate=msg->getArrivalGateId();
-    if(whichGate==upperGateIn) {
+
+    if(whichGate==upperGateIn)
+    {
         send(msg,"lowerGateOut");
-    } else if(whichGate==lowerGateIn) {
+    }
+
+    else if(whichGate==lowerGateIn)
+    {
         // check PtpPkt type
         EV<<"Received a packet"<<endl;
 
@@ -125,7 +133,37 @@ void PtpMaster::handleMessage(cMessage* msg)
         {   EV<<"NOt a PtpPkt packet, semd it up to higher layer"<<endl;
              send(msg,"upperGateOut");
          }
-    } else if(whichGate==-1) {
+    }
+
+    else if(whichGate == inclock)
+    {
+        EV << "Master receives a SYNC packet from clock module, delete it and re-generate a full SYNC packet \n";
+        delete msg;
+        EV << "Master generates a NEW SYNC Packet \n";
+
+        PtpPkt *pck = new PtpPkt("SYNC");
+        pck->setPtpType(SYNC);
+
+        pck->setByteLength(40); // SYNC_BYTE = 40
+        pck->setTimestamp(simTime());
+
+        pck->setSource(address);
+        pck->setDestination(-1);
+
+        pck->setData(SIMTIME_DBL(simTime()));
+        pck->setTsTx(SIMTIME_DBL(simTime())); // set transmission timie stamp ts1 on SYNC
+
+        // set SrcAddr, DestAddr with LAddress::L3Type values for MiXiM
+        pck->setSrcAddr( LAddress::L3Type(address));
+        pck->setDestAddr(LAddress::L3BROADCAST);
+
+        NetwControlInfo::setControlInfo(pck, LAddress::L3BROADCAST );
+
+        EV << "Master broadcasts SYNC packet" << endl;
+        send(pck,"lowerGateOut");
+    }
+
+    else if(whichGate==-1) {
         /* Classes extending this class may not use all the gates, f.e.
          * BaseApplLayer has no upper gates. In this case all upper gate-
          * handles are initialized to -1. When getArrivalGateId() equals -1,
@@ -133,7 +171,8 @@ void PtpMaster::handleMessage(cMessage* msg)
          * as they actually don't exist, so raise an error instead.
          */
         opp_error("No self message and no gateID?? Check configuration.");
-    } else {
+    }
+    else {
         /* msg->getArrivalGateId() should be valid, but it isn't recognized
          * here. This could signal the case that this class is extended
          * with extra gates, but handleMessage() isn't overridden to

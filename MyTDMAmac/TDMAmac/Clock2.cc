@@ -21,6 +21,7 @@
 
 #include "Clock2.h"
 #include "Constant.h"
+#include "PtpPkt_m.h"
 
 Define_Module(Clock2);
 
@@ -93,6 +94,8 @@ void Clock2::initialize()
     LastUpdateTime = SIMTIME_DBL(simTime());
     offsetStore = 0;    // offset is set to zero when PCO time is greater than threshold, store the offset
     ThresholdAdjustValuePrevious = 0;
+    RefTimePreviousPulse = 0;
+    offsetTotal = 0;
 
     // ---------------------------------------------------------------------------
     // Initialise variable for Kalman Filter
@@ -311,9 +314,9 @@ double Clock2::Phyclockupdate()
     if ((phyclock == RegisterThreshold) | (phyclock > RegisterThreshold))
     {
         numPulse = numPulse + 1;
-        PulseTimePrevious = SIMTIME_DBL(simTime());
-        offsetStore = offsetStore + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime)+ noise2; // record the offset
-        EV << "Clock: the PREVIOUS pulse time is "<< PulseTimePrevious <<endl;
+        RefTimePreviousPulse = SIMTIME_DBL(simTime());
+        offsetTotal = offsetTotal + offset; // record the offset
+        EV << "Clock: the PREVIOUS pulse time is "<< RefTimePreviousPulse <<endl;
 
         phyclock = 0;
         offset = 0;
@@ -323,7 +326,7 @@ double Clock2::Phyclockupdate()
     }
     else
     {
-        phyclock = offset + (SIMTIME_DBL(simTime()) - PulseTimePrevious);
+        phyclock = offset + (SIMTIME_DBL(simTime()) - RefTimePreviousPulse);
         ev << "Clock: based on the UPDATED offset: "<< offset << ", the UPDATED physical clock time is " << phyclock << endl;
     }
 
@@ -346,15 +349,7 @@ double Clock2::getPCOTimestamp()
     ev << "Clock: PCO Timestamp " << endl;
     ev << "Clock: simTime = " << SIMTIME_DBL(simTime()) << ", LastUpdateTime = "<< LastUpdateTime << endl;
 
-    double offsetTemp = offset;
-    double driftTemp = drift;
-    ev << "Clock: PREVIOUS offsetTemp = " << offsetTemp << ", PREVIOUS driftTemp = "<< driftTemp << endl;
-
-    driftTemp = driftTemp + noise1;
-    offsetTemp = driftTemp * (SIMTIME_DBL(simTime()) - LastUpdateTime)+ noise2;
-    ev << "Clock: UPDATED offsetTemp = " << offsetTemp << ", UPDATED driftTemp = "<< driftTemp << endl;
-
-    double PCOClock = phyclock + offsetTemp;
+    double PCOClock = phyclock + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime);
     ev << "PCOClock = " << PCOClock << endl;
 
     softclock = PCOClock;
@@ -368,10 +363,10 @@ double Clock2::getPCOTimestamp()
 /* @breif get timestamp of local drifting clock */
 double Clock2::getTimestamp()
 {
-    double clock = getPCOTimestamp() + numPulse * FrameDuration + offsetStore;
+    double clock = getPCOTimestamp() + numPulse * FrameDuration + offsetTotal;
 
     ev << "Clock: numPulse * FrameDuration = " << numPulse * FrameDuration;
-    ev << ", the variable 'offsetStore' is " << offsetStore <<endl;
+    ev << ", the variable 'offsetTotal' is " << offsetTotal <<endl;
     ev << ", the returned clock time is " << clock <<endl;
     return clock;
 }
@@ -1044,4 +1039,32 @@ double Clock2::getThreshold()
 {
     ev << "Clock: the returned 'RegisterThreshold' is " << RegisterThreshold << endl;
     return RegisterThreshold;
+}
+
+void Clock2::generateSYNC()
+{
+    EV << "Clock: PCO time reaches threshold, generate a SYNC packet \n";
+
+    PtpPkt *pck = new PtpPkt("SYNC");
+    pck->setPtpType(SYNC);
+    pck->setByteLength(40); // SYNC_BYTE = 40
+
+    /*
+    pck->setSource(myAddress);
+    pck->setDestination(PTP_BROADCAST_ADDR);
+
+    pck->setData(SIMTIME_DBL(simTime()));
+    pck->setTsTx(SIMTIME_DBL(simTime())); // set transmission time stamp ts1 on SYNC
+
+    // set SrcAddr, DestAddr with LAddress::L3Type values for MiXiM
+    pck->setSrcAddr( LAddress::L3Type(myAddress));
+    pck->setDestAddr(LAddress::L3BROADCAST);
+
+    // set the control info to tell the network layer (layer 3) address
+    NetwControlInfo::setControlInfo(pck, LAddress::L3BROADCAST );
+    */
+
+    EV << "Clock send SYNC packet to Core module" << endl;
+    send(pck,"outclock");
+
 }

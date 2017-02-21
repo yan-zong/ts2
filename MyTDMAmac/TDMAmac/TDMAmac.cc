@@ -64,6 +64,7 @@ void TDMAmac::initialize(int stage)
         TDMAdjustValue = 0;
         numPulse = 0;
         TDMATimeOffset = 0;
+        SyncStatus = true;
 
         trace = par("trace").boolValue();
         stats = par("stats").boolValue();
@@ -122,7 +123,7 @@ void TDMAmac::initialize(int stage)
 
         // scheduleAt(simTime() + myId*slotDuration, delayTimer);
         // scheduleAt(simTime() + MyID*slotDuration + FrameDuration, FrameTimer);
-        scheduleAt(simTime() + NodeId*slotDuration - MaximOffset + FrameDuration + ScheduleOffset, FrameTimer);
+        // scheduleAt(simTime() + NodeId*slotDuration - MaximOffset + FrameDuration + ScheduleOffset, FrameTimer);
     }
 }
 
@@ -161,15 +162,35 @@ void TDMAmac::handleUpperMsg(cMessage* msg){
 
     EV << "Packet from upper layer" << endl;
 
-    /* Casting upper layer message to mac packet format !aaks */
+    /* Casting upper layer message to mac packet format */
     TDMAMacPkt *mac = static_cast<TDMAMacPkt *>(encapsMsg(static_cast<cPacket*>(msg)));
 
-    /* Queue is not full, put packet at the end of list */
-    if (macPktQueue.size() <= queueLength) {
-        macPktQueue.push_back(mac);
-        EV << "packet put in queue\n  queue size: " << macPktQueue.size() << endl;
+    /* check the synchronisation state (mode 1 or mode 2) */
+    if (SyncStatus == TRUE)
+    {
+        EV << "TDMAmac: in mode 1, send SYNC packet directly " << endl;
+
+        phy->setRadioState(MiximRadio::TX);
+        TDMAMacPkt* data = mac->dup();
+        // TDMAMacPkt* data = macPktQueue.front()->dup();
+        data->setKind(1);
+        attachSignal(data);
+
+        coreEV << "Sending down data packet\n";
+        sendDown(data);
+
     }
-    else {
+
+    else
+    {
+        /* Queue is not full, put packet at the end of list */
+        if (macPktQueue.size() <= queueLength)
+        {
+            macPktQueue.push_back(mac);
+            EV << "packet put in queue\n  queue size: " << macPktQueue.size() << endl;
+        }
+        else
+        {
            /* Queue is full, new packet has to be deleted */
            EV << "New packet arrived, but queue is FULL, so new packet is deleted\n";
            mac->setName("MAC ERROR");
@@ -179,7 +200,9 @@ void TDMAmac::handleUpperMsg(cMessage* msg){
            emit(BaseLayer::catDroppedPacketSignal, &droppedPacket);
            EV <<  "ERROR: Queue is full, forced to delete.\n";
            droppedPackets++;
+        }
     }
+
     if(!gateway){
         if(trace) {
             vqLength.record(macPktQueue.size());
@@ -313,9 +336,17 @@ void TDMAmac::handleLowerControl(cMessage* msg) {
     case MacToPhyInterface::TX_OVER:
            debugEV << "PHY indicated transmission over" << endl;
            phy->setRadioState(MiximRadio::RX);
-           delete macPktQueue.front();
-           macPktQueue.pop_front();
-           delete msg;
+
+           if (SyncStatus == TRUE)
+           {
+               delete msg;
+           }
+           else
+           {
+               delete macPktQueue.front();
+               macPktQueue.pop_front();
+               delete msg;
+           }
            break;
     default:{
         EV << "WARNING: unknown lower control " << msg->getKind() << endl;
@@ -331,6 +362,3 @@ void TDMAmac::attachSignal(macpkt_ptr_t macPkt)
     //create signal
     setDownControlInfo(macPkt, createSignal(simTime(), duration, txPower, bitrate));
 }
-
-
-

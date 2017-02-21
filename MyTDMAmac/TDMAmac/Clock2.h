@@ -70,6 +70,9 @@ private:
     void kalmanfilter();
     //void adjtimex(double value[2]);
 
+    // for PCO
+    void generateSYNC();
+
 
     double lastupdatetime;
     double phyclock;
@@ -128,6 +131,9 @@ private:
     double LastUpdateTime;
     double offsetStore;
     double ThresholdAdjustValuePrevious;
+    double offsetTotal;
+    double RefTimePreviousPulse;
+
 
     std::ofstream outFile;
     cOutVector softclockVec;

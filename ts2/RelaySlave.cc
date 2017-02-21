@@ -167,9 +167,33 @@ void RelaySlave::handleMessage(cMessage *msg)
 
 	if (msg->arrivedOn("inclock"))
 	{
-	    error("Relay Slave does not exchange Packet with clock.");
-	    // handleClockMessage(msg);
+	    EV << "Relay Slave receives a SYNC packet from clock module, delete it and re-generate a full SYNC packet \n";
 	    delete msg;
+	    EV << "Relay Slave generates a NEW SYNC Packet \n";
+
+	    PtpPkt *pck = new PtpPkt("SYNC");
+	    pck->setPtpType(SYNC);
+	    pck->setByteLength(40); // SYNC_BYTE = 40
+
+	    pck->setTimestamp(simTime());   // time stamp
+
+	    pck->setSource(myAddress);
+	    pck->setDestination(PTP_BROADCAST_ADDR);
+
+	    pck->setData(SIMTIME_DBL(simTime()));
+	    pck->setTsTx(SIMTIME_DBL(simTime())); // set transmission time stamp ts1 on SYNC
+
+	    // set SrcAddr, DestAddr with LAddress::L3Type values for MiXiM
+	    pck->setSrcAddr( LAddress::L3Type(myAddress));
+	    pck->setDestAddr(LAddress::L3BROADCAST);
+
+	    // set the control info to tell the network layer (layer 3) address
+	    NetwControlInfo::setControlInfo(pck, LAddress::L3BROADCAST );
+
+	    EV << "Relay Slave broadcasts SYNC packet" << endl;
+	    send(pck,"lowerGateOut");
+
+	    // handleClockMessage(msg);
 	}
 
 	if (msg->arrivedOn("in"))   // data packet from lower layer
@@ -292,9 +316,9 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
             ev << "Relay Slave receives SYNC packet from master node, process it\n";
             ev << "Relay Slave emit a SYNC packet after receipting a SYNC packet from master\n";
 
-            pRelayMaster->startSync();  // broadcast SYNC packet
+            // pRelayMaster->startSync();  // broadcast SYNC packet
 
-            servo_clock();  // adjust the clock
+            // servo_clock();  // adjust the clock
             break;
 
             // for PTP, there is no need use these in the PCO (Pulse-Coupled Oscillator)

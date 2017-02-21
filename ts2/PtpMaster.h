@@ -55,6 +55,8 @@ protected:
     int upperGateOut;
     int lowerGateIn;
     int lowerGateOut;
+    int inclock;
+    // int outclock;
     /*@}*/
 
 protected:
