@@ -182,7 +182,7 @@ void Clock2::handleMessage(cMessage *msg)
         ev << "i = "<< i << endl;
         ev << "k = " << k << endl;
         /*¼ÓifÅĞ¶ÏÓï¾ä£¬ÔÚsim_time_limit/Tcamp½ÏĞ¡Ês±¿ÉÒÔ¼ÇÂ¼½Ï¶àÊı¾İ*/
-/*
+
         if(i % 10 == 0)
         {
             ev << "count delta_drfit and delta_offset:" << endl;
@@ -228,7 +228,7 @@ void Clock2::handleMessage(cMessage *msg)
             driftStd.collect(drift);
             offsetStd.collect(offset);
         }
-*/
+
         scheduleAt(simTime()+ Tcamp,new cMessage("CLTimer"));
     }
 
@@ -316,7 +316,9 @@ double Clock2::Phyclockupdate()
         numPulse = numPulse + 1;
         RefTimePreviousPulse = SIMTIME_DBL(simTime());
         offsetTotal = offsetTotal + offset; // record the offset
-        EV << "Clock: the PREVIOUS pulse time is "<< RefTimePreviousPulse <<endl;
+        EV << "Clock: the 'numPulse' is "<< numPulse <<endl;
+        EV << "Clock: the 'RefTimePreviousPulse' is "<< RefTimePreviousPulse <<endl;
+        EV << "Clock: the 'offsetTotal' is "<< offsetTotal <<endl;
 
         phyclock = 0;
         offset = 0;

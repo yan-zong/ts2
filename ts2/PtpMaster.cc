@@ -60,7 +60,7 @@ void PtpMaster::initialize()
         else
             address = findHost()->getIndex();
 
-        scheduleAt(simTime()+Tsync, new cMessage("MStimer"));
+        // scheduleAt(simTime()+Tsync, new cMessage("MStimer"));
         // ---------------------------------------------------------------------------
         // Register node
         // ---------------------------------------------------------------------------
