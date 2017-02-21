@@ -14,8 +14,8 @@ simple Clock2
         volatile double sim_time_limit;
         volatile double alpha;
         volatile double  beta;        
-        double RegisterThreshold @unit(s) = default(1000ms);        
-        double FrameDuration @unit(s) = default(1000ms);
+        volatile double RegisterThreshold;        
+        volatile double FrameDuration;
     gates:
         input inclock;
         output outclock;

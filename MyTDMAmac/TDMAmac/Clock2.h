@@ -49,6 +49,7 @@ public:
     int getnumPulse();
     double getPCOTimestamp();
     double getTimestamp();  // timestamp clock
+    double getThreshold();
 
 protected:
     virtual void initialize();
@@ -125,6 +126,8 @@ private:
     int numPulse;
     double FrameDuration;
     double LastUpdateTime;
+    double offsetStore;
+    double ThresholdAdjustValuePrevious;
 
     std::ofstream outFile;
     cOutVector softclockVec;

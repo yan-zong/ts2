@@ -105,6 +105,12 @@ private:
 	// for PCO
 	double ThresholdAdjustValue;
 
+	/* @brief PCO clock time */
+	double ClockTime;
+
+	/* @brief PCO register threshold */
+    double RegisterThreshold;
+
 	double nbSentDelayRequests;  // count the total number of sent DelayRequest
 	double nbReceivedSyncsFromMaster;  // count the total number of received Sync from Master
 	double nbReceivedDelayResponsesFromMaster;  // count the total number of received DelayResponse from Master

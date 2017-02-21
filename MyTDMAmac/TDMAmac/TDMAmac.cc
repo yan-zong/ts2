@@ -113,12 +113,12 @@ void TDMAmac::initialize(int stage)
         OffsetTimer = new cMessage( "offset-timer", 1 );
 
         NodeId = (getParentModule()->getParentModule()->getId()-4);
-        EV << "TDMAmac: the node id is is " << NodeId << endl ;
+        EV << "TDMAmac: the node id is " << NodeId << endl ;
         // NodeID: mnode - 0; rnode[0] - 1; rnode[1] - 2; ...
 
         /* Schedule a self-message to start superFrame */
         // EV<< "I will start at " << simTime() + myId*slotDuration << " s every " << numNodes*slotDuration << " s" << endl;
-        EV<< "TDMA mac will start at " << (simTime() + NodeId*slotDuration + FrameDuration, FrameTimer) << " s every " << FrameDuration << " s" << endl;
+        EV<< "TDMA: FrameTimer will start at " << (simTime() + NodeId*slotDuration - MaximOffset + FrameDuration + ScheduleOffset) << " s every " << FrameDuration << " s" << endl;
 
         // scheduleAt(simTime() + myId*slotDuration, delayTimer);
         // scheduleAt(simTime() + MyID*slotDuration + FrameDuration, FrameTimer);
@@ -197,19 +197,19 @@ void TDMAmac::handleSelfMsg(cMessage* msg)
           /* SETUP phase enters to start the MAC protocol !aaks */
           case 0:
           {
-              ClockTime = pClock2 -> getPCOTimestamp(); // the PCO clock time
+              // ClockTime = pClock2 -> getPCOTimestamp(); // the PCO clock time
               TDMATime = pClock2 -> getTimestamp(); // the local drifting clock time
               numPulse = pClock2 -> getnumPulse();  // the number of pulse
-              EV << "TDMAmac: the PCO local drifting clock time is " << ClockTime << endl;
+              // EV << "TDMAmac: the PCO local drifting clock time is " << ClockTime << endl;
               EV << "TDMAmac: the local drifting clock time is " << TDMATime << endl;
               EV << "TDMAmac: the number of pulse is " << numPulse << endl;
 
 
-              ThresholdAdjustValue = ClockTime - RegisterThreshold;
+              // ThresholdAdjustValue = ClockTime - RegisterThreshold;
               TDMAdjustValue = (numPulse + 1) * FrameDuration - TDMATime;
-
-              pClock2 -> adjustThreshold(ThresholdAdjustValue);
-              TDMAdjustValue = (TDMAdjustValue / 2) + (((numPulse + 1) * FrameDuration) - MaximOffset) - TDMAdjustValue;
+              // pClock2 -> adjustThreshold(ThresholdAdjustValue);
+              // TDMAdjustValue = (TDMAdjustValue / 2) + (((numPulse + 1) * FrameDuration) - MaximOffset) - TDMAdjustValue;
+              TDMAdjustValue = MaximOffset - (TDMAdjustValue / 2);
 
 
               TDMATimeOffset = TDMATime - SIMTIME_DBL(simTime());
@@ -221,11 +221,10 @@ void TDMAmac::handleSelfMsg(cMessage* msg)
               if ((TDMATimeOffset + MaximOffset) < 0)
                   error("(ClockTimeOffset + MaximOffset) is less than 0");
 
+              EV << "TDMA: FrameTimer will schedule the next event after " << FrameDuration << " at time: " << (simTime() + FrameDuration) <<endl;
               scheduleAt(simTime() + FrameDuration, FrameTimer);
+              EV << "TDMA: OffsetTimer will schedule the next event after " << TDMAdjustValue << " at time: " << (simTime() + TDMAdjustValue) <<endl;
               scheduleAt(simTime() + TDMAdjustValue, OffsetTimer);
-
-              EV << "TDMA mac will schedule the next event after " << TDMAdjustValue << endl;
-              EV << "at time: " << (simTime() + TDMAdjustValue) <<endl;
 
           }
           break;

@@ -91,6 +91,8 @@ void Clock2::initialize()
     numFires = 1;
     numPulse = 0;
     LastUpdateTime = SIMTIME_DBL(simTime());
+    offsetStore = 0;    // offset is set to zero when PCO time is greater than threshold, store the offset
+    ThresholdAdjustValuePrevious = 0;
 
     // ---------------------------------------------------------------------------
     // Initialise variable for Kalman Filter
@@ -177,7 +179,7 @@ void Clock2::handleMessage(cMessage *msg)
         ev << "i = "<< i << endl;
         ev << "k = " << k << endl;
         /*¼ÓifÅÐ¶ÏÓï¾ä£¬ÔÚsim_time_limit/Tcamp½ÏÐ¡Ês±¿ÉÒÔ¼ÇÂ¼½Ï¶àÊý¾Ý*/
-
+/*
         if(i % 10 == 0)
         {
             ev << "count delta_drfit and delta_offset:" << endl;
@@ -223,7 +225,7 @@ void Clock2::handleMessage(cMessage *msg)
             driftStd.collect(drift);
             offsetStd.collect(offset);
         }
-
+*/
         scheduleAt(simTime()+ Tcamp,new cMessage("CLTimer"));
     }
 
@@ -296,14 +298,13 @@ double Clock2::Phyclockupdate()
 {
     ev << "Clock: update clock, the PREVIOUS offset is "<< offset << ", and PREVIOUS drift is "<< drift <<endl;
 
-    noise2 =  normal(0,sigma2,1);
-    // offset = offset + drift * (SIMTIME_DBL(simTime())-lastupdatetime)+ noise2;
-    offset = offset + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime)+ noise2;
-    ev << "Clock: the UPDATED offset is "<< offset << endl;
-
     noise1 =  normal(0,sigma1,1);
     drift = drift + noise1;
     ev << "Clock: the UPDATED drift is "<< drift <<endl;
+
+    noise2 =  normal(0,sigma2,1);
+    offset = offset + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime)+ noise2;
+    ev << "Clock: the UPDATED offset is "<< offset << endl;
 
     ev << "Clock: the PREVIOUS physical clock time is " << phyclock << endl;
 
@@ -311,8 +312,9 @@ double Clock2::Phyclockupdate()
     {
         numPulse = numPulse + 1;
         PulseTimePrevious = SIMTIME_DBL(simTime());
+        offsetStore = offsetStore + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime)+ noise2; // record the offset
         EV << "Clock: the PREVIOUS pulse time is "<< PulseTimePrevious <<endl;
-        // numFires = numFires + 1;
+
         phyclock = 0;
         offset = 0;
         EV << "Clock: because the clock time is greater than threshold value " << RegisterThreshold;
@@ -322,10 +324,9 @@ double Clock2::Phyclockupdate()
     else
     {
         phyclock = offset + (SIMTIME_DBL(simTime()) - PulseTimePrevious);
-        ev << "Clock: based on the UPDATED offset "<< offset << ", the UPDATED physical clock time is " << phyclock << endl;
+        ev << "Clock: based on the UPDATED offset: "<< offset << ", the UPDATED physical clock time is " << phyclock << endl;
     }
 
-    // lastupdatetime = SIMTIME_DBL(simTime());
     LastUpdateTime = SIMTIME_DBL(simTime());
     ev << "Clock: the variable 'LastUpdateTime' is "<< SIMTIME_DBL(simTime()) <<endl;
     return phyclock;
@@ -343,25 +344,35 @@ void Clock2::recordResult(){
 double Clock2::getPCOTimestamp()
 {
     ev << "Clock: PCO Timestamp " << endl;
-    ev << "simTime = " << SIMTIME_DBL(simTime()) << " LastUpdateTime = "<< LastUpdateTime << endl;
+    ev << "Clock: simTime = " << SIMTIME_DBL(simTime()) << ", LastUpdateTime = "<< LastUpdateTime << endl;
 
-    double PCOClock = phyclock + (drift * (SIMTIME_DBL(simTime()) - LastUpdateTime));
-    ev << "PCO Clock = " << PCOClock << endl;
+    double offsetTemp = offset;
+    double driftTemp = drift;
+    ev << "Clock: PREVIOUS offsetTemp = " << offsetTemp << ", PREVIOUS driftTemp = "<< driftTemp << endl;
+
+    driftTemp = driftTemp + noise1;
+    offsetTemp = driftTemp * (SIMTIME_DBL(simTime()) - LastUpdateTime)+ noise2;
+    ev << "Clock: UPDATED offsetTemp = " << offsetTemp << ", UPDATED driftTemp = "<< driftTemp << endl;
+
+    double PCOClock = phyclock + offsetTemp;
+    ev << "PCOClock = " << PCOClock << endl;
 
     softclock = PCOClock;
     ev << "softclock = " << softclock << endl;
 
     softclockVec.record(softclock);
-    ev << "Clock: the returned clock time is " << softclock <<endl;
+    ev << "Clock: the returned PCOClock time is " << softclock <<endl;
     return softclock;
 }
 
 /* @breif get timestamp of local drifting clock */
 double Clock2::getTimestamp()
 {
-    // double clock = getPCOTimestamp() + numFires * FrameDuration;
-    double clock = getPCOTimestamp() + numPulse * FrameDuration;
-    ev << "Clock: the returned clock time is " << softclock <<endl;
+    double clock = getPCOTimestamp() + numPulse * FrameDuration + offsetStore;
+
+    ev << "Clock: numPulse * FrameDuration = " << numPulse * FrameDuration;
+    ev << ", the variable 'offsetStore' is " << offsetStore <<endl;
+    ev << ", the returned clock time is " << clock <<endl;
     return clock;
 }
 
@@ -1014,9 +1025,10 @@ void Clock2::adjustThreshold()
 void Clock2::adjustThreshold(double value)
 {
     double ThresholdAdjustValue =  value;
-    ThresholdAdjustValue = ThresholdAdjustValue / 2;
+    ThresholdAdjustValue = (ThresholdAdjustValuePrevious + ThresholdAdjustValue)/2;
+    ThresholdAdjustValuePrevious = ThresholdAdjustValue;
 
-    ev << "Clock: based on the adjustment of clock, the RegisterThreshold change from " << RegisterThreshold;
+    ev << "Clock: based on the threshold adjustment value: "<< ThresholdAdjustValue << ", the RegisterThreshold change from " << RegisterThreshold;
     RegisterThreshold = RegisterThreshold + ThresholdAdjustValue;
     ev << " to " << RegisterThreshold << endl;
 
@@ -1026,4 +1038,10 @@ int Clock2::getnumPulse()
 {
     ev << "Clock: the returned 'numPulse' is " << numPulse << endl;
     return numPulse;
+}
+
+double Clock2::getThreshold()
+{
+    ev << "Clock: the returned 'RegisterThreshold' is " << RegisterThreshold << endl;
+    return RegisterThreshold;
 }

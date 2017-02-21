@@ -62,6 +62,8 @@ void RelaySlave::initialize()
 
 	// for PCO
 	ThresholdAdjustValue = 0;
+	ClockTime = 0;
+	RegisterThreshold = 0;
 
 	/* Lettura dei parametri di ingresso. */
 	//Tsync = par("Tsync");
@@ -488,7 +490,11 @@ void RelaySlave::updateDisplay()
 
 void RelaySlave::servo_clock()
 {
-    ThresholdAdjustValue = pClock -> getThresholdAdjustValue();
+
+    RegisterThreshold = pClock -> getThreshold();
+    ClockTime = pClock -> getPCOTimestamp(); // the PCO clock time
+
+    ThresholdAdjustValue = ClockTime - RegisterThreshold;
     ev << "RelaySlave: the returned 'ThresholdAdjustValue' is " << ThresholdAdjustValue << endl;
 
     pClock -> adjustThreshold(ThresholdAdjustValue);

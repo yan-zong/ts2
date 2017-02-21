@@ -37,6 +37,9 @@ simple RelaySlave
 	//  volatile double s3;
        int slaveAddrOffset;
        
+       	// threshold value of register of PCO
+		// volatile double RegisterThreshold;
+       
     gates:
         input in;
         input inclock;

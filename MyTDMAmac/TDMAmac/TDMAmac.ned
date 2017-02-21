@@ -48,7 +48,7 @@ simple TDMAmac extends BaseMacLayer
     	// duration between beacon (first SYNC packet) and second SYNC packet
     	double ScheduleOffset @unit(s) = default(0ms);
     	// threshold value of register of PCO
-    	double RegisterThreshold @unit(s) = default(1000ms);
+    	// double RegisterThreshold @unit(s) = default(1000ms);
 		
 		bool stats = default(false);
 		bool trace = default(false);
