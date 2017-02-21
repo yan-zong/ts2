@@ -64,6 +64,8 @@ void RelaySlave::initialize()
 	ThresholdAdjustValue = 0;
 	ClockTime = 0;
 	RegisterThreshold = 0;
+    slotDuration = par("slotDuration");
+    ScheduleOffset = par("ScheduleOffset");
 
 	/* Lettura dei parametri di ingresso. */
 	//Tsync = par("Tsync");
@@ -134,6 +136,10 @@ void RelaySlave::initialize()
         error("could not find Relay Master module in a Relay node (boundary clock node)");
     }
 
+    NodeId = (findHost()->getIndex() + 1);
+    EV << "RelaySlave: the node id is " << NodeId << endl ;
+    // id of relay[0] should be 1; id of relay[1] should be 2;
+
 	// Register with Master node
 	PtpPkt * temp = new PtpPkt("REGISTER");
 	temp->setPtpType(REG);
@@ -170,7 +176,8 @@ void RelaySlave::handleMessage(cMessage *msg)
 	    EV << "Relay Slave receives a SYNC packet from clock module, delete it and re-generate a full SYNC packet \n";
 	    delete msg;
 
-	    scheduleAt(simTime(), new cMessage("OffsetTimer"));
+	    // scheduleAt(simTime(), new cMessage("OffsetTimer"));
+	    scheduleAt(simTime() + NodeId*slotDuration + ScheduleOffset, new cMessage("OffsetTimer"));
 
 	    // handleClockMessage(msg);
 	}
@@ -318,7 +325,7 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
         {
             // for PCO (Pulse-Coupled Oscillator)
             ev << "Relay Slave receives SYNC packet from master node, process it\n";
-            ev << "Relay Slave emit a SYNC packet after receipting a SYNC packet from master\n";
+            ev << "Relay Slave: adjust the threshold of clock...\n";
 
             // pRelayMaster->startSync();  // broadcast SYNC packet
 

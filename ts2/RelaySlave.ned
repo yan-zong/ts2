@@ -37,8 +37,13 @@ simple RelaySlave
 	//  volatile double s3;
        int slaveAddrOffset;
        
-       	// threshold value of register of PCO
-		// volatile double RegisterThreshold;
+		// how long is a slot?
+        double slotDuration @unit(s) = default(100ms);
+    	// schedule the second SYNC from node (i.e., rnode[0])
+    	// duration between beacon (first SYNC packet) and second SYNC packet
+    	double ScheduleOffset @unit(s) = default(0ms);
+		
+		
        
     gates:
         input in;
