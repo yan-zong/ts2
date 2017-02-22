@@ -118,14 +118,14 @@ private:
 	double nbReceivedDelayResponsesFromRelay;  // count the total number of received DelayResponse from Relay
 
     /* @brief the id of node */
-	int NodeId;
+	// int NodeId;
 
     /* @brief Duration of a slot #LMAC */
-    double slotDuration;
+    // double slotDuration;
 
     /* @brief schedule the second SYNC from node (i.e., rnode[0]) */
     /* @brief duration between beacon (first SYNC packet) and second SYNC packet */
-    double ScheduleOffset;
+    // double ScheduleOffset;
 
 	/*»¬¶¯ filter*/
    // double alpha;

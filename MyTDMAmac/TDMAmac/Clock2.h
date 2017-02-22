@@ -59,6 +59,7 @@ protected:
     virtual void updateDisplay();
     //virtual void openfile();
     //virtual void closefile();
+    cModule *findHost(void);
 private:
     // for PTP
     double Phyclockupdate();
@@ -135,6 +136,16 @@ private:
     double offsetTotal;
     double RefTimePreviousPulse;
     double ReceivedPulseTime;
+
+    /* @brief the id of node */
+    int NodeId;
+
+    /* @brief Duration of a slot #LMAC */
+    double slotDuration;
+
+    /* @brief schedule the second SYNC from node (i.e., rnode[0]) */
+    /* @brief duration between beacon (first SYNC packet) and second SYNC packet */
+    double ScheduleOffset;
 
 
     std::ofstream outFile;

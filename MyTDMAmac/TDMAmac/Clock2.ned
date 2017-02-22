@@ -16,6 +16,11 @@ simple Clock2
         volatile double  beta;        
         volatile double RegisterThreshold;        
         volatile double FrameDuration;
+        // how long is a slot?
+        double slotDuration @unit(s) = default(0ms);
+    	// schedule the second SYNC from node (i.e., rnode[0])
+    	// duration between beacon (first SYNC packet) and second SYNC packet
+    	double ScheduleOffset @unit(s) = default(0ms);
     gates:
         input inclock;
         output outclock;

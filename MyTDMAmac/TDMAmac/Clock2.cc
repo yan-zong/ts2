@@ -66,6 +66,8 @@ void Clock2::initialize()
     beta = par("beta");
     RegisterThreshold = par("RegisterThreshold");
     FrameDuration = par ("FrameDuration");
+    slotDuration = par("slotDuration");
+    ScheduleOffset = par("ScheduleOffset");
 
     // ---------------------------------------------------------------------------
     // Initialise variable
@@ -97,6 +99,10 @@ void Clock2::initialize()
     RefTimePreviousPulse = 0;
     offsetTotal = 0;
     ReceivedPulseTime = 0;
+
+    NodeId = (findHost()->getIndex() + 1);
+    EV << "Clock: the node id is " << NodeId << endl ;
+    // id of relay[0] should be 1; id of relay[1] should be 2;
 
     // ---------------------------------------------------------------------------
     // Initialise variable for Kalman Filter
@@ -164,7 +170,8 @@ void Clock2::initialize()
    delta_offsetVec.record(delta_offset);
 
    // Tcamp is clock update period
-   scheduleAt(simTime() + Tcamp,new cMessage("CLTimer"));
+   scheduleAt(simTime() + NodeId*slotDuration + ScheduleOffset,new cMessage("CLTimer"));
+   EV << "Clock: Clock starts at " << (simTime() + NodeId*slotDuration + ScheduleOffset) << endl;
 }
 
 void Clock2::handleMessage(cMessage *msg)
@@ -1083,3 +1090,18 @@ double Clock2::setReceivedTime(double value)
     ReceivedPulseTime = value;
     return ReceivedPulseTime;
 }
+
+cModule *Clock2::findHost(void)
+{
+    cModule *parent = getParentModule();
+    cModule *node = this;
+
+    // all nodes should be a sub module of the simulation which has no parent module!!!
+    while( parent->getParentModule() != NULL )
+    {
+        node = parent;
+        parent = node->getParentModule();
+    }
+    return node;
+}
+
