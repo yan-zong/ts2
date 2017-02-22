@@ -108,28 +108,41 @@ void PtpTimeStmp::handleMessage(cMessage *msg)
 
     // Rx packet
     if(msg->arrivedOn("lowerGateIn"))
-    {   ev<<"   RX packet ";
+    {
+        ev << "Timestamp: RX packet: " << endl;
 
-        while( pck->getEncapsulatedPacket()!= NULL )
-         { pck = pck->getEncapsulatedPacket();
-          }
-       if (dynamic_cast<PtpPkt *>(pck) != NULL)
-       { // the encapsulated packet is a PtpPkt
-         // Put a time stamp
-           double rxTimeStamp;
-           ev<<" is a PtpPkt, its timestamp was "<<((PtpPkt*)pck)->getData()<<endl;
-           if (useGlobalRefClock)
-             { rxTimeStamp=SIMTIME_DBL(simTime());
-               ev<<"   Now using simTime() for new time stamp,\n";
-             }
-           else
-             { rxTimeStamp=pClk->getTimestamp();
-               ev<<"   Now using clock module for new time stamp.\n";
-             }
-           // ((PtpPkt*)pck)->setData(rxTimeStamp);
-           ((PtpPkt*)pck)->setTsRx(rxTimeStamp);
-           ev<<"    and new time stamp is "<<((PtpPkt*)pck)->getData()<<endl;
+        while(pck->getEncapsulatedPacket() != NULL)
+        {
+            pck = pck->getEncapsulatedPacket();
+        }
+        if (dynamic_cast<PtpPkt *>(pck) != NULL)
+        {
+            double driftClock;
+            driftClock = pClk->getTimestamp();
+            pClk->setReceivedTime(driftClock);
+            ev << "Timestamp: SYNC packet is received at " << driftClock << " on Timastamp module. " << endl;
 
+            // for PTP
+            /*
+            // the encapsulated packet is a PtpPkt, put a time stamp
+            double rxTimeStamp;
+            ev<<" is a PtpPkt, its timestamp was "<<((PtpPkt*)pck)->getData()<<endl;
+            if (useGlobalRefClock)
+            {
+                rxTimeStamp=SIMTIME_DBL(simTime());
+                ev << " Now using simTime() for new time stamp,\n";
+            }
+            else
+            {
+                rxTimeStamp=pClk->getTimestamp();
+                ev << " Now using clock module for new time stamp.\n";
+            }
+
+            // ((PtpPkt*)pck)->setData(rxTimeStamp);
+            ((PtpPkt*)pck)->setTsRx(rxTimeStamp);
+            ev << " and new time stamp is "<<((PtpPkt*)pck)->getData()<<endl;
+
+            */
        }
        else
        {

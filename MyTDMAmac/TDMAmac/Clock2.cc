@@ -96,6 +96,7 @@ void Clock2::initialize()
     ThresholdAdjustValuePrevious = 0;
     RefTimePreviousPulse = 0;
     offsetTotal = 0;
+    ReceivedPulseTime = 0;
 
     // ---------------------------------------------------------------------------
     // Initialise variable for Kalman Filter
@@ -310,8 +311,10 @@ double Clock2::Phyclockupdate()
     ev << "Clock: the UPDATED offset is "<< offset << endl;
 
     ev << "Clock: the PREVIOUS physical clock time is " << phyclock << endl;
+    ev << "Clock: RegisterThreshold - Tcamp = " << (RegisterThreshold - Tcamp) << endl;
+    ev << "Clock: phyclock - (RegisterThreshold - Tcamp) = " << (phyclock - (RegisterThreshold - Tcamp)) << endl;
 
-    if ((phyclock == RegisterThreshold) | (phyclock > RegisterThreshold))
+    if (phyclock - (RegisterThreshold - Tcamp) > (-1E-6))
     {
         numPulse = numPulse + 1;
         RefTimePreviousPulse = SIMTIME_DBL(simTime());
@@ -1073,4 +1076,10 @@ void Clock2::generateSYNC()
     EV << "Clock send SYNC packet to Core module" << endl;
     send(pck,"outclock");
 
+}
+
+double Clock2::setReceivedTime(double value)
+{
+    ReceivedPulseTime = value;
+    return ReceivedPulseTime;
 }

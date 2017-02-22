@@ -50,6 +50,7 @@ public:
     double getPCOTimestamp();
     double getTimestamp();  // timestamp clock
     double getThreshold();
+    double setReceivedTime(double value);
 
 protected:
     virtual void initialize();
@@ -133,6 +134,7 @@ private:
     double ThresholdAdjustValuePrevious;
     double offsetTotal;
     double RefTimePreviousPulse;
+    double ReceivedPulseTime;
 
 
     std::ofstream outFile;
