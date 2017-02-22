@@ -45,11 +45,10 @@ public:
         Tm=t1;
     }
     // for PCO
-    void adjustThreshold(double value);
+    void adjustThreshold();
     int getnumPulse();
     double getPCOTimestamp();
     double getTimestamp();  // timestamp clock
-    double getThreshold();
     double setReceivedTime(double value);
 
 protected:
@@ -132,10 +131,21 @@ private:
     double FrameDuration;
     double LastUpdateTime;
     double offsetStore;
-    double ThresholdAdjustValuePrevious;
+    double ThresholdAdjustValue;
     double offsetTotal;
     double RefTimePreviousPulse;
     double ReceivedPulseTime;
+
+    double ThresholdOffset;
+
+    /* @brief this delay consists of transmission delay and propagation delay
+     * for propagation delay, the time for 50m is 1/6us
+     * for transmission delay, the time for one SYNC packet (44 bytes) is 1.408ms
+     * the propagation delay is negligible */
+    double delay;
+
+    /* @breif the offset between the PCO drifting clock and standard clock */
+    double ClockOffset;
 
     /* @brief the id of node */
     int NodeId;
@@ -170,6 +180,10 @@ private:
     cStdDev    offsetStd;
     cStdDev    error_sync_drift;  // 为计算drift同步误差平均值和标准差
     cStdDev    error_sync_offset;     // 为计算offset同步误差平均值和标准差
+
+    cOutVector adjustedthresholdvalueVec;    // the adjusted value of threshold
+    cOutVector thresholdVec;    // the threshold value
+    cOutVector phyclockVec;
 };
 
 

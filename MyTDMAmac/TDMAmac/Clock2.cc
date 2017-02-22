@@ -48,6 +48,10 @@ void Clock2::initialize()
     drift_adj_valueVec.setName("drift_adj_value");
     offset_adj_valueVec.setName("offset_adj_value");
 
+    phyclockVec.setName("phyclock");
+    adjustedthresholdvalueVec.setName("ThresholdAdjustValue");    // the adjusted value of threshold
+    thresholdVec.setName("RegisterThreshold");    // the threshold value
+
     // ---------------------------------------------------------------------------
     // Initialise variable
     // ---------------------------------------------------------------------------
@@ -68,6 +72,8 @@ void Clock2::initialize()
     FrameDuration = par ("FrameDuration");
     slotDuration = par("slotDuration");
     ScheduleOffset = par("ScheduleOffset");
+    delay = par("delay");
+
 
     // ---------------------------------------------------------------------------
     // Initialise variable
@@ -95,7 +101,7 @@ void Clock2::initialize()
     numPulse = 0;
     LastUpdateTime = SIMTIME_DBL(simTime());
     offsetStore = 0;    // offset is set to zero when PCO time is greater than threshold, store the offset
-    ThresholdAdjustValuePrevious = 0;
+    ThresholdAdjustValue = 0;
     RefTimePreviousPulse = 0;
     offsetTotal = 0;
     ReceivedPulseTime = 0;
@@ -103,6 +109,9 @@ void Clock2::initialize()
     NodeId = (findHost()->getIndex() + 1);
     EV << "Clock: the node id is " << NodeId << endl ;
     // id of relay[0] should be 1; id of relay[1] should be 2;
+
+    ClockOffset = 0;
+    ThresholdOffset = 0;
 
     // ---------------------------------------------------------------------------
     // Initialise variable for Kalman Filter
@@ -356,6 +365,11 @@ void Clock2::recordResult(){
     update_numberVec.record(i);
     noise1Vec.record(noise1);
     noise2Vec.record(noise2);
+
+    adjustedthresholdvalueVec.record(ThresholdAdjustValue);    // the adjusted value of threshold
+    thresholdVec.record(RegisterThreshold);    // the threshold value
+    phyclockVec.record(phyclock);
+
 
 }
 
@@ -1016,45 +1030,30 @@ void Clock2::closefile(){
     outFile.close();
 }*/
 
-/*
 void Clock2::adjustThreshold()
 {
-    ThresholdAdjustValue = (ThresholdAdjustValuePrevious + ThresholdAdjustValue)/2;
-    ev << "the PREVIOUS adjust value of threshold is " << ThresholdAdjustValuePrevious ;
-    ev << ", and NEW adjust value of threshold is " << ThresholdAdjustValue << endl;
+    ev << "Clock: adjust threshold of clock... "<< endl;
 
-    ThresholdAdjustValuePrevious = ThresholdAdjustValue;
-    ev << "based on the adjustment of clock, the RegisterThreshold change from " << RegisterThreshold;
+    ClockOffset = ClockOffset + drift*((ReceivedPulseTime - delay) - LastUpdateTime - ScheduleOffset);
 
-    RegisterThreshold = RegisterThreshold + ThresholdAdjustValue;
-    ev << " to " << RegisterThreshold << endl;
+    double PhysicalClock = (ReceivedPulseTime - delay) - numPulse*FrameDuration - ClockOffset - ScheduleOffset;
+    ev << "Clock: based on the received pulse time, the PhysicalClock is : "<< PhysicalClock << endl;
 
-}
+    ThresholdOffset = ClockOffset;
+    ev << "Clock: the threshold offset is "<< ThresholdOffset << ", and the clock offset is " << ClockOffset << endl;
 
-*/
-
-void Clock2::adjustThreshold(double value)
-{
-    double ThresholdAdjustValue =  value;
-    ThresholdAdjustValue = (ThresholdAdjustValuePrevious + ThresholdAdjustValue)/2;
-    ThresholdAdjustValuePrevious = ThresholdAdjustValue;
-
+    ThresholdAdjustValue = (ThresholdOffset + ThresholdAdjustValue)/2;
     ev << "Clock: based on the threshold adjustment value: "<< ThresholdAdjustValue << ", the RegisterThreshold change from " << RegisterThreshold;
-    RegisterThreshold = RegisterThreshold + ThresholdAdjustValue;
+    RegisterThreshold = RegisterThreshold - ThresholdAdjustValue;
     ev << " to " << RegisterThreshold << endl;
 
+    ev << "Clock: adjust threshold of clock is finished "<< endl;
 }
 
 int Clock2::getnumPulse()
 {
     ev << "Clock: the returned 'numPulse' is " << numPulse << endl;
     return numPulse;
-}
-
-double Clock2::getThreshold()
-{
-    ev << "Clock: the returned 'RegisterThreshold' is " << RegisterThreshold << endl;
-    return RegisterThreshold;
 }
 
 void Clock2::generateSYNC()

@@ -21,6 +21,9 @@ simple Clock2
     	// schedule the second SYNC from node (i.e., rnode[0])
     	// duration between beacon (first SYNC packet) and second SYNC packet
     	double ScheduleOffset @unit(s) = default(0ms);
+    	// @brief this delay consists of transmission delay and propagation delay, see clock.h 
+    	double delay @unit(s) = default(0ms);
+    	
     gates:
         input inclock;
         output outclock;

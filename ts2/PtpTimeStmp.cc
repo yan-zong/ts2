@@ -117,10 +117,11 @@ void PtpTimeStmp::handleMessage(cMessage *msg)
         }
         if (dynamic_cast<PtpPkt *>(pck) != NULL)
         {
-            double driftClock;
-            driftClock = pClk->getTimestamp();
-            pClk->setReceivedTime(driftClock);
-            ev << "Timestamp: SYNC packet is received at " << driftClock << " on Timastamp module. " << endl;
+            double receivedTime;
+            receivedTime = SIMTIME_DBL(simTime());
+            // receivedTime = pClk->getTimestamp();
+            pClk->setReceivedTime(receivedTime);
+            ev << "Timestamp: SYNC packet is received at " << receivedTime << " on Timastamp module. " << endl;
 
             // for PTP
             /*
