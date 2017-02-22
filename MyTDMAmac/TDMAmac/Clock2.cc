@@ -328,9 +328,10 @@ double Clock2::Phyclockupdate()
 
     ev << "Clock: the PREVIOUS physical clock time is " << phyclock << endl;
     ev << "Clock: RegisterThreshold - Tcamp = " << (RegisterThreshold - Tcamp) << endl;
-    ev << "Clock: phyclock - (RegisterThreshold - Tcamp) = " << (phyclock - (RegisterThreshold - Tcamp)) << endl;
+    ev << "Clock: phyclock - RegisterThreshold = " << (phyclock - RegisterThreshold) << endl;
 
-    if (phyclock - (RegisterThreshold - Tcamp) > (-1E-6))
+    // if (phyclock - (RegisterThreshold - Tcamp) > (-1E-6))
+    if ((phyclock - RegisterThreshold) > -4e-005)
     {
         numPulse = numPulse + 1;
         RefTimePreviousPulse = SIMTIME_DBL(simTime());
