@@ -51,6 +51,10 @@ void Clock2::initialize()
     phyclockVec.setName("phyclock");
     adjustedthresholdvalueVec.setName("ThresholdAdjustValue");    // the adjusted value of threshold
     thresholdVec.setName("RegisterThreshold");    // the threshold value
+    ReceivedTimeOffset.setName("ReceivedPulseTimeOffset");
+    thresholdOffsetVec.setName("ThresholdOffset");
+
+
 
     // ---------------------------------------------------------------------------
     // Initialise variable
@@ -106,8 +110,11 @@ void Clock2::initialize()
     offsetTotal = 0;
     ReceivedPulseTime = 0;
 
+    ReceivedPulseTimeOffset = 0;
+    ReceivedPulseTimePrevious = 0;
+
     NodeId = (findHost()->getIndex() + 1);
-    EV << "Clock: the node id is " << NodeId << endl ;
+    EV << "Clock: the node id is " << NodeId << ", and ScheduleOffset*NodeId is "<< ScheduleOffset*NodeId <<endl ;
     // id of relay[0] should be 1; id of relay[1] should be 2;
 
     ClockOffset = 0;
@@ -179,7 +186,11 @@ void Clock2::initialize()
    delta_offsetVec.record(delta_offset);
 
    // Tcamp is clock update period
-   scheduleAt(simTime() + NodeId*slotDuration + ScheduleOffset,new cMessage("CLTimer"));
+   // scheduleAt(simTime() + NodeId*slotDuration + ScheduleOffset,new cMessage("CLTimer"));
+   // scheduleAt(simTime() + ScheduleOffset,new cMessage("CLTimer"));
+   scheduleAt(simTime() + NodeId*ScheduleOffset,new cMessage("CLTimer"));
+   LastUpdateTime = NodeId*ScheduleOffset;
+   RefTimePreviousPulse = LastUpdateTime;
    EV << "Clock: Clock starts at " << (simTime() + NodeId*slotDuration + ScheduleOffset) << endl;
 }
 
@@ -370,6 +381,8 @@ void Clock2::recordResult(){
     adjustedthresholdvalueVec.record(ThresholdAdjustValue);    // the adjusted value of threshold
     thresholdVec.record(RegisterThreshold);    // the threshold value
     phyclockVec.record(phyclock);
+    thresholdOffsetVec.record(ThresholdOffset);
+
 
 
 }
@@ -394,6 +407,9 @@ double Clock2::getPCOTimestamp()
 /* @breif get timestamp of local drifting clock */
 double Clock2::getTimestamp()
 {
+    noise3 = normal(u3,sigma3);
+    noise3Vec.record(noise3);
+    // double clock = getPCOTimestamp() + numPulse * FrameDuration + offsetTotal + noise3;
     double clock = getPCOTimestamp() + numPulse * FrameDuration + offsetTotal;
 
     ev << "Clock: numPulse * FrameDuration = " << numPulse * FrameDuration;
@@ -1035,17 +1051,22 @@ void Clock2::adjustThreshold()
 {
     ev << "Clock: adjust threshold of clock... "<< endl;
 
-    // ClockOffset = ClockOffset + drift*((ReceivedPulseTime - delay) - LastUpdateTime - ScheduleOffset);
-    // ClockOffset = drift*(getPCOTimestamp() - (ReceivedPulseTime - delay) + ScheduleOffset);
-    ClockOffset = ReceivedPulseTime - numPulse*FrameDuration - getPCOTimestamp() - delay - ScheduleOffset;
+    // ClockOffset = ReceivedPulseTime - numPulse*FrameDuration - getPCOTimestamp() - ScheduleOffset*NodeId - delay;
+    ClockOffset = ReceivedPulseTime - numPulse*FrameDuration - getPCOTimestamp() - ScheduleOffset*NodeId;
 
     ThresholdOffset = ClockOffset;
     ev << "Clock: the threshold offset is "<< ThresholdOffset << ", and the clock offset is " << ClockOffset << endl;
 
-    ThresholdAdjustValue = (ThresholdOffset + ThresholdAdjustValue)/2;
+    ThresholdAdjustValue = 0.1*ThresholdOffset;
+    // ThresholdAdjustValue = (ThresholdOffset + ThresholdAdjustValue)/2;
     ev << "Clock: based on the threshold adjustment value: "<< ThresholdAdjustValue << ", the RegisterThreshold change from " << RegisterThreshold;
     RegisterThreshold = RegisterThreshold - ThresholdAdjustValue;
     ev << " to " << RegisterThreshold << endl;
+
+    ReceivedPulseTimeOffset = ReceivedPulseTime - ReceivedPulseTimePrevious;
+    ReceivedPulseTimePrevious = ReceivedPulseTime;
+
+    ReceivedTimeOffset.record(ReceivedPulseTimeOffset);
 
     ev << "Clock: adjust threshold of clock is finished "<< endl;
 }

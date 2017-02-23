@@ -118,8 +118,8 @@ void PtpTimeStmp::handleMessage(cMessage *msg)
         if (dynamic_cast<PtpPkt *>(pck) != NULL)
         {
             double receivedTime;
-            // receivedTime = SIMTIME_DBL(simTime());
-            receivedTime = pClk->getTimestamp();
+            receivedTime = SIMTIME_DBL(simTime());
+            // receivedTime = pClk->getTimestamp();
             pClk->setReceivedTime(receivedTime);
             ev << "Timestamp: SYNC packet is received at " << receivedTime << " on Timastamp module. " << endl;
 

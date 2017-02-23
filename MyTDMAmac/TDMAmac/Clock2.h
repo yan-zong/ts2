@@ -136,6 +136,9 @@ private:
     double RefTimePreviousPulse;
     double ReceivedPulseTime;
 
+    double ReceivedPulseTimeOffset;
+    double ReceivedPulseTimePrevious;
+
     double ThresholdOffset;
 
     /* @brief this delay consists of transmission delay and propagation delay
@@ -184,6 +187,8 @@ private:
     cOutVector adjustedthresholdvalueVec;    // the adjusted value of threshold
     cOutVector thresholdVec;    // the threshold value
     cOutVector phyclockVec;
+    cOutVector thresholdOffsetVec;    // the threshold value
+    cOutVector ReceivedTimeOffset;
 };
 
 
