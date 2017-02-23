@@ -330,8 +330,8 @@ double Clock2::Phyclockupdate()
     ev << "Clock: RegisterThreshold - Tcamp = " << (RegisterThreshold - Tcamp) << endl;
     ev << "Clock: phyclock - RegisterThreshold = " << (phyclock - RegisterThreshold) << endl;
 
-    // if (phyclock - (RegisterThreshold - Tcamp) > (-1E-6))
-    if ((phyclock - RegisterThreshold) > -4e-005)
+    if (phyclock - (RegisterThreshold - Tcamp) > (-1E-6))
+    // if ((phyclock - RegisterThreshold) > -4e-005)
     {
         numPulse = numPulse + 1;
         RefTimePreviousPulse = SIMTIME_DBL(simTime());
@@ -1035,10 +1035,9 @@ void Clock2::adjustThreshold()
 {
     ev << "Clock: adjust threshold of clock... "<< endl;
 
-    ClockOffset = ClockOffset + drift*((ReceivedPulseTime - delay) - LastUpdateTime - ScheduleOffset);
-
-    double PhysicalClock = (ReceivedPulseTime - delay) - numPulse*FrameDuration - ClockOffset - ScheduleOffset;
-    ev << "Clock: based on the received pulse time, the PhysicalClock is : "<< PhysicalClock << endl;
+    // ClockOffset = ClockOffset + drift*((ReceivedPulseTime - delay) - LastUpdateTime - ScheduleOffset);
+    // ClockOffset = drift*(getPCOTimestamp() - (ReceivedPulseTime - delay) + ScheduleOffset);
+    ClockOffset = ReceivedPulseTime - numPulse*FrameDuration - getPCOTimestamp() - delay - ScheduleOffset;
 
     ThresholdOffset = ClockOffset;
     ev << "Clock: the threshold offset is "<< ThresholdOffset << ", and the clock offset is " << ClockOffset << endl;
