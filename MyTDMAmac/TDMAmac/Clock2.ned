@@ -24,6 +24,8 @@ simple Clock2
     	// @brief this delay consists of transmission delay and propagation delay, see clock.h 
     	double delay @unit(s) = default(0ms);
     	
+    	volatile double AdjustParameter;
+    	
     gates:
         input inclock;
         output outclock;

@@ -136,9 +136,6 @@ private:
     double RefTimePreviousPulse;
     double ReceivedPulseTime;
 
-    double ReceivedPulseTimeOffset;
-    double ReceivedPulseTimePrevious;
-
     double ThresholdOffset;
 
     /* @brief this delay consists of transmission delay and propagation delay
@@ -159,6 +156,11 @@ private:
     /* @brief schedule the second SYNC from node (i.e., rnode[0]) */
     /* @brief duration between beacon (first SYNC packet) and second SYNC packet */
     double ScheduleOffset;
+
+    double AdjustParameter;
+
+    /* @brief time of generating pulse (simTime) */
+    double PulseTime;
 
 
     std::ofstream outFile;
@@ -187,8 +189,8 @@ private:
     cOutVector adjustedthresholdvalueVec;    // the adjusted value of threshold
     cOutVector thresholdVec;    // the threshold value
     cOutVector phyclockVec;
-    cOutVector thresholdOffsetVec;    // the threshold value
-    cOutVector ReceivedTimeOffset;
+    cOutVector pulsetimeVec;    // the threshold value
+    cOutVector thresholdOffsetVec;
 };
 
 
