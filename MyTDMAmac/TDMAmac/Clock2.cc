@@ -51,7 +51,7 @@ void Clock2::initialize()
     phyclockVec.setName("phyclock");
     adjustedthresholdvalueVec.setName("ThresholdAdjustValue");    // the adjusted value of threshold
     thresholdVec.setName("RegisterThreshold");    // the threshold value
-    thresholdOffsetVec.setName("ThresholdOffsetVec");
+    thresholdOffsetVec.setName("ThresholdOffset");
     pulsetimeVec.setName("PulseTime");
 
 
