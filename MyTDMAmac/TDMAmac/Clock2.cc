@@ -190,8 +190,9 @@ void Clock2::initialize()
    // Tcamp is clock update period
    // scheduleAt(simTime() + NodeId*slotDuration + ScheduleOffset,new cMessage("CLTimer"));
    // scheduleAt(simTime() + ScheduleOffset,new cMessage("CLTimer"));
-   scheduleAt(simTime() + NodeId*ScheduleOffset,new cMessage("CLTimer"));
-   LastUpdateTime = NodeId*ScheduleOffset;
+   scheduleAt(simTime() + ScheduleOffset + NodeId*slotDuration ,new cMessage("CLTimer"));
+   // LastUpdateTime = NodeId*ScheduleOffset;
+   LastUpdateTime = ScheduleOffset + NodeId*slotDuration;
    RefTimePreviousPulse = LastUpdateTime;
    EV << "Clock: Clock starts at " << (simTime() + NodeId*slotDuration + ScheduleOffset) << endl;
 }
@@ -342,9 +343,10 @@ double Clock2::Phyclockupdate()
     ev << "Clock: the PREVIOUS physical clock time is " << phyclock << endl;
     ev << "Clock: RegisterThreshold - Tcamp = " << (RegisterThreshold - Tcamp) << endl;
     ev << "Clock: phyclock - RegisterThreshold = " << (phyclock - RegisterThreshold) << endl;
+    ev << "(phyclock - (RegisterThreshold - Tcamp)) = " << (phyclock - (RegisterThreshold - Tcamp)) << endl;
 
     // if (phyclock - (RegisterThreshold - Tcamp) > (-1E-6))
-    if ((phyclock - RegisterThreshold) > -4e-005)
+    if (((phyclock - RegisterThreshold) > (-30.51757813E-6)) | ((phyclock - RegisterThreshold) == (-30.51757813E-6)))
     {
         numPulse = numPulse + 1;
         RefTimePreviousPulse = SIMTIME_DBL(simTime());
@@ -1057,7 +1059,7 @@ void Clock2::adjustThreshold()
     ev << "Clock: adjust threshold of clock... "<< endl;
 
     // ClockOffset = ReceivedPulseTime - numPulse*FrameDuration - getPCOTimestamp() - ScheduleOffset*NodeId - delay;
-    ClockOffset = ReceivedPulseTime - numPulse*FrameDuration - getPCOTimestamp() - ScheduleOffset*NodeId - delay;
+    ClockOffset = ReceivedPulseTime - numPulse*FrameDuration - getPCOTimestamp() - delay - ScheduleOffset - slotDuration*NodeId;
 
     ThresholdOffset = ClockOffset;
     ev << "Clock: the threshold offset is "<< ThresholdOffset << ", and the clock offset is " << ClockOffset << endl;

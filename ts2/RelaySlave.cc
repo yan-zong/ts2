@@ -370,6 +370,9 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
         {
             // for PCO (Pulse-Coupled Oscillator)
             ev << "Relay Slave receives SYNC packet from relay node, ignore it\n";
+            // ev << "Relay Slave receives SYNC packet from relay node, process it\n";
+
+            // servo_clock();  // adjust the clock
             break;
 
             // for PTP, there is no need use these in the PCO (Pulse-Coupled Oscillator)
