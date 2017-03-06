@@ -1,67 +1,64 @@
 //***************************************************************************
 // * File:        This file is part of TS2.
-// * Created on:  29 Jan 2014
-// * Author:      Yiwen Huang, Xuweu Dai  (x.dai at ieee.org)
+// * Created on:  07 Dov 2016
+// * Author:      Yan Zong, Xuweu Dai
 // *
-// * Copyright:   (C) 2014 Southwest University, Chongqing, China.
+// * Copyright:   (C) 2016 Northumbria University, UK.
 // *
-// *              TS2 is free software; you can redistribute it  and/or modify
-// *              it under the terms of the GNU General Public License as published
-// *              by the Free Software Foundation; either  either version 3 of
-// *              the License, or (at your option) any later version.
+// *              TS2 is free software; you can redistribute it and/or modify it
+// *              under the terms of the GNU General Public License as published
+// *              by the Free Software Foundation; either version 3 of the
+// *              License, or (at your option) any later version.
 // *
-// *              TS2 is distributed in the hope that it will be useful,
-// *                  but WITHOUT ANY WARRANTY; without even the implied warranty of
-// *                  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// *                  GNU General Public License for more details.
+// *              TS2 is distributed in the hope that it will be useful, but
+// *              WITHOUT ANY WARRANTY; without even the implied warranty of
+// *              MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// *              GNU General Public License for more details.
 // *
-// * Credit:      Yiwen Huang, Taihua Li
-// * Funding:     This work was partially financed by the National Science Foundation China
-// %              _
-// %  \/\ /\ /   /  * _  '
-// % _/\ \/\/ __/__.'(_|_|_
-// **************************************************************************/
+// * Funding:     This work was financed by the Northumbria University Faculty
+//                Funded and RDF funded studentship, UK
+// ****************************************************************************
 
-#include "PtpTimeStmp.h"
+#include "TimeStamp.h"
 #include "omnetpp.h"
 #include "PtpPkt_m.h"
 
 
 
-Define_Module(PtpTimeStmp);
+Define_Module(TimeStamp);
 
-void PtpTimeStmp::initialize()
+void TimeStamp::initialize()
 {
     // Clock source selection
     // by default, if there is a clock module inside the node, use that clock as the time source
     //             if there is no a clock module, use the simTime() as the time source.
-    ev<<"PtpTimeStmp::initialize()"<<endl;
+    ev<<"TimeStamp::initialize()"<<endl;
     pNode=(Node *)(findHost()->getSubmodule("ptpCore"));
     pClk=(PCOClock *)(findHost()->getSubmodule("clock"));
 
     if (pClk==NULL)
     { // no clock is found, force to use simTime() as the node's clock
         useGlobalRefClock=true;
-        ev<<"    PtpTimeStmp::Initilize() No clock module is found. set useGlobalRefClock=true, use simTime() for time stamping\n";
+        ev<<"    TimeStamp::Initilize() No clock module is found. set useGlobalRefClock=true, use simTime() for time stamping\n";
      }
     else
     {  // we have clock module, select time source by
         if (hasPar("useGlobalRefClock"))
         {   useGlobalRefClock=par("useGlobalRefClock");
-            ev<<"    PtpTimeStmp::Initilize() useGlobalRefClock="<<useGlobalRefClock;
+            ev<<"    TimeStamp::Initilize() useGlobalRefClock="<<useGlobalRefClock;
             ev<<" , use parameter to determine clock source or time stamping\n";
         }
         else
         { //find clock module, but no parameter useGlobalRefClock is pscefied,
             useGlobalRefClock=false;
-            ev<<"    PtpTimeStmp::Initilize() useGlobalRefClock= false\n";
+            ev<<"    TimeStamp::Initilize() useGlobalRefClock= false\n";
 
          }
 
     }
 }
 
-void PtpTimeStmp::handleMessage(cMessage *msg)
+void TimeStamp::handleMessage(cMessage *msg)
 {
     /* The getEncapsulatedPacket() function returns
      *   a pointer to the encapsulated packet,
@@ -155,7 +152,7 @@ void PtpTimeStmp::handleMessage(cMessage *msg)
 }
 
 
-cModule *PtpTimeStmp::findHost(void)
+cModule *TimeStamp::findHost(void)
 {
     cModule *parent = getParentModule();
     cModule *node = this;

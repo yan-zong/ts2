@@ -19,7 +19,6 @@
 //                Funded and RDF funded studentship, UK
 // ****************************************************************************
 
-
 package ts2;
 
 import org.mixim.modules.power.battery.BatteryStats;
@@ -27,52 +26,36 @@ import org.mixim.modules.power.battery.SimpleBattery;
 import org.mixim.modules.node.WirelessNode;
 import mytdmamac.TDMAmac.PCOClock;
 
-
 module RelayNode extends HostCC2420a
 {
     parameters:
-
-        // two types of app-net layers
-     //   applicationType = default("");  //type of the application layer
-    //    networkType = "org.mixim.examples.ieee802154Narrow.NetworkStackTrafficGen";
-
-        applicationType = default("BurstApplLayerBattery");  //type of the application layer
+        applicationType = default("BurstApplLayerBattery");	// type of the application layer
         networkType = "BaseNetwLayer";
 
-        mobilityType = default("StationaryMobility"); //type of the mobility module
+        mobilityType = default("StationaryMobility");	// type of the mobility module
         arpType = "ArpHost";
-
-
-		// ####	NIC (CSMA, TDMA), and Hardware TimeStamp ####
-		// for NIC without hardware time stamp, and also for CSMA
-		// nicType = "Nic802154_TI_CC2420";
-      
-		// for NIC with hardware timie stamp, and also for CSMA
-		// nicType = "Nic_CC2420_TmStmp";
-		// nic.tsstmp.useGlobalRefClock = default(false);
-        // set useGlobalRefClock = true to use simTime() for time stamping
-        // set useGlobalRefClock = false to use clock module for time stamping if a node has a clock module
 		
-		// for NIC with hardware timie stamp, and also for TDMA
-		nicType = "Nic_Timestamp_TDMA";
-
-        // ####	End of NIC (CSMA, TDMA), Hardware TimeStamp ####
+		nicType = "Nic_Timestamp_TDMA";	// for NIC with hardware timie stamp, and also for TDMA
 
         ptpCoreType = default("RelayCore");
+        
+        @display("bgb=271,307,white;i=misc/node;i2=status/battery;b=40,40,rect;is=s");
+        
         int numHosts; // total number of hosts in the network
 
-        @display("bgb=271,307,white;i=misc/node;i2=status/battery;b=40,40,rect;is=s");
-
     submodules:
-        batteryStats: BatteryStats {
+        batteryStats: BatteryStats 
+        {
             @display("p=215,253;i=block/table,#FF8040");
         }
-        battery: SimpleBattery {
+        
+        battery: SimpleBattery 
+        {
             @display("p=133,253;i=block/plug,#FF8000");
         }
-        // move clock outside of ptpSlave module
-        clock: PCOClock {
-            parameters:
+        
+        clock: PCOClock 
+        {
                 @display("p=215,101;i=device/clock");
         }
 
@@ -80,6 +63,5 @@ module RelayNode extends HostCC2420a
 
         ptpcore.outclock --> clock.inclock;
         ptpcore.inclock <-- clock.outclock;
-
 
 }

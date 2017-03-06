@@ -94,7 +94,7 @@ module Nic_CC2420_TmStmp like IWirelessNicUpperCtrl
         mac: <macType> like IWirelessMac {
             @display("p=74,46;i=block/layer;is=l");
         }
-        tsstmp: PtpTimeStmp {
+        tsstmp: TimeStamp {
 
             @display("p=29,101;b=,,oval,red;i=device/clock;is=s;tt=Time Stamp ");
         }

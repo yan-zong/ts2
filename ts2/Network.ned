@@ -19,7 +19,6 @@
 //                Funded and RDF funded studentship, UK
 // ****************************************************************************
 
-
 package ts2;
 
 import org.mixim.base.connectionManager.IConnectionManager;
@@ -72,7 +71,7 @@ network Network extends MyBaseNetwork
         @display("bgb=$playgroundSizeX,$playgroundSizeY,white,,;bgp=10,50");
 
     submodules:
-        mnode: MasterCC2420 {
+        mnode: MasterNode {
             parameters:
                 numHosts = numMaster;
                 @display("p=72,82;b=42,42,rect,yellow;i=device/wifilaptop");
