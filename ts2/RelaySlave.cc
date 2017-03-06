@@ -75,7 +75,7 @@ void RelaySlave::initialize()
 	offset_previous=0;
 
 	/* Initialise the pointer to the clock module */
-	pClock = (Clock2 *)getParentModule()->getParentModule()->getSubmodule("clock");
+	pClock = (PCOClock *)getParentModule()->getParentModule()->getSubmodule("clock");
 	if (pClock==NULL)
 	    error("No clock module is found in the module");
 

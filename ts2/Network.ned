@@ -72,13 +72,13 @@ network Network extends MyBaseNetwork
         @display("bgb=$playgroundSizeX,$playgroundSizeY,white,,;bgp=10,50");
 
     submodules:
-        master: MasterCC2420 {
+        mnode: MasterCC2420 {
             parameters:
                 numHosts = numMaster;
                 @display("p=72,82;b=42,42,rect,yellow;i=device/wifilaptop");
         }
 
-        slave[numSlave]: SlaveCC2420 {
+        snode[numSlave]: SlaveCC2420 {
             parameters:
                 numHosts = numSlave;
                 @display("p=146,82;b=42,42,rect,yellow;i=device/wifilaptop");

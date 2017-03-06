@@ -93,7 +93,7 @@ void TDMAmac::initialize(int stage)
         << " bitrate = " << bitrate << endl;
 
         // Initialise the pointer
-        pClock2 = (Clock2 *)findHost()->getSubmodule("clock");
+        pClock2 = (PCOClock *)findHost()->getSubmodule("clock");
         if (pClock2 == NULL)
             error("No clock module is found in the module");
 

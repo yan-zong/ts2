@@ -31,7 +31,7 @@
 #include "PtpPkt_m.h"
 #include "Event_m.h"
 #include "Constant.h"
-#include "Clock2.h"
+#include "PCOClock.h"
 
 class RelayMaster : public cSimpleModule
 {
@@ -62,7 +62,7 @@ protected:
     int lowerGateOut;
     /*@}*/
 
-    Clock2 *pClock; // Yan Zong: pointer to clock module
+    PCOClock *pClock; // Yan Zong: pointer to clock module
 
 
 protected:

@@ -34,7 +34,7 @@
 
 #include "NetwControlInfo.h"
 #include "SimpleAddress.h"
-#include "Clock2.h"
+#include "PCOClock.h"
 
 /**
  * @brief A PTP slave node
@@ -72,7 +72,7 @@ private:
     LAddress::L3Type myL3Addr;
 
     cModule *myMasterNode; // default value (at stage 1) is myself (this)
-    Clock2 *pClock; // pointer to my clock module
+    PCOClock *pClock; // pointer to my clock module
 
     /* Definitions of variable for time synchronization.*/
 	double Tcamp;       //t2、t3之间的处理时延（0,10*Tcamp）

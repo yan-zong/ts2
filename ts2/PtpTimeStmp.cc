@@ -37,7 +37,7 @@ void PtpTimeStmp::initialize()
     //             if there is no a clock module, use the simTime() as the time source.
     ev<<"PtpTimeStmp::initialize()"<<endl;
     pNode=(Node *)(findHost()->getSubmodule("ptpCore"));
-    pClk=(Clock2 *)(findHost()->getSubmodule("clock"));
+    pClk=(PCOClock *)(findHost()->getSubmodule("clock"));
 
     if (pClk==NULL)
     { // no clock is found, force to use simTime() as the node's clock

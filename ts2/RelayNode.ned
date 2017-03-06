@@ -25,7 +25,7 @@ package ts2;
 import org.mixim.modules.power.battery.BatteryStats;
 import org.mixim.modules.power.battery.SimpleBattery;
 import org.mixim.modules.node.WirelessNode;
-import mytdmamac.TDMAmac.Clock2;
+import mytdmamac.TDMAmac.PCOClock;
 
 
 module RelayNode extends HostCC2420a
@@ -71,7 +71,7 @@ module RelayNode extends HostCC2420a
             @display("p=133,253;i=block/plug,#FF8000");
         }
         // move clock outside of ptpSlave module
-        clock: Clock2 {
+        clock: PCOClock {
             parameters:
                 @display("p=215,101;i=device/clock");
         }

@@ -26,7 +26,7 @@
 #define __TSIM_PTPTIMESTMP_H_
 
 #include <omnetpp.h>
-#include "Clock2.h"
+#include "PCOClock.h"
 #include "Node.h"
 
 /**
@@ -36,7 +36,7 @@ class PtpTimeStmp : public cSimpleModule
 {
     private:
      bool useGlobalRefClock;
-     Clock2 *pClk;
+     PCOClock *pClk;
      Node *pNode;
 
   protected:

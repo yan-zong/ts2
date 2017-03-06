@@ -31,7 +31,7 @@
 
 #include "NetwControlInfo.h"
 #include "SimpleAddress.h"
-#include "Clock2.h"
+#include "PCOClock.h"
 #include "RelayMaster.h"
 
 /**
@@ -71,7 +71,7 @@ private:
 
     cModule *myMasterNode; // default value (at stage 1) is myself (this)
     RelayMaster *pRelayMaster; // a pointer to the Relay Master module in my nodes (a boundary clock)
-    Clock2 *pClock; // pointer to my clock module
+    PCOClock *pClock; // pointer to my clock module
 
     /* Definitions of variable for time synchronization.*/
 	double Tcamp;       //t2、t3之间的处理时延（0,10*Tcamp）

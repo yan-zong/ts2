@@ -58,7 +58,7 @@ void Node::initialize(){
 	offset_previous=0;
 
 	/* Intilaize the pointer to the clock module */
-	pClock = (Clock2 *)getParentModule()->getParentModule()->getSubmodule("clock");
+	pClock = (PCOClock *)getParentModule()->getParentModule()->getSubmodule("clock");
 	if (pClock==NULL)
 	    error("No clock module is found in the module");
 	/* Initialize the addresses of slave & master */
@@ -176,7 +176,7 @@ void Node::handleMasterMessage(cMessage *msg){
 
             ev<<"   ts1="<<ts1<<endl;
             ev<<"The arival time of SYNC="<<SIMTIME_DBL(simTime())<<endl;
-            pClock->setT123(ts1,0,0);
+            // pClock->setT123(ts1,0,0);
 
             Tr= ((Packet *)msg)->getByteLength()*8; //包的传输时延,dxw->hyw: what is Tr for?
 
@@ -353,9 +353,9 @@ void Node::servo_clock(){
 	//}
 */
 	//dxw->hyw: see my question in Clock2.cc, line 225
-	pClock->adjtimex(offset, 0);
-	pClock->adjtimex(drift,1);
-	pClock->adj_offset_drift();
+	// pClock->adjtimex(offset, 0);
+	// pClock->adjtimex(drift,1);
+	// pClock->adj_offset_drift();
 
 	recordResult();
 
