@@ -329,7 +329,7 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
 
             // pRelayMaster->startSync();  // broadcast SYNC packet
 
-            servo_clock();  // adjust the clock
+            // servo_clock();  // adjust the clock
             break;
 
             // for PTP, there is no need use these in the PCO (Pulse-Coupled Oscillator)
