@@ -26,17 +26,17 @@
 #include <omnetpp.h>
 #include <BaseMacLayer.h>
 #include <SimpleAddress.h>
-#include <DroppedPacket.h> //Not used yet !aaks
+#include <DroppedPacket.h> //Not used yet
 #include <PCOClock.h>
 
-class TDMAMacPkt; // TDMA Mac packet definition !aaks look at TDMAMacPkt.msg
+class TDMAMacPkt; // TDMA Mac packet definition
 
 class MIXIM_API TDMAmac : public BaseMacLayer
 {
-    /* Parts copied from LMAC definition. !aaks */
+    /* Parts copied from LMAC definition. */
 
     private:
-        /* @brief Copy constructor is not allowed. #LMAC */
+        /* @brief Copy constructor is not allowed.  */
         TDMAmac(const TDMAmac&);
 
         /* @brief Assignment operator is not allowed. #LMAC */
@@ -51,21 +51,18 @@ class MIXIM_API TDMAmac : public BaseMacLayer
      * by nodeID. For all receive a non-existent nodeID to be used.
      * Still in its basic form need better methods for static slot representation.
      * nextEvent - A variable used to store the time for next event calculated
-     * !aaks
      */
 
     public:TDMAmac():BaseMacLayer()
-        , slotDuration(0)
-        , numSlots(0)
         , bitrate(0)
         , macPktQueue()
         , txPower(0)
     {}
 
-       /* Module destructor #LMAC */
+       /* Module destructor */
        virtual ~TDMAmac();
 
-       /* MAC initialization #LMAC and BaseMacLayer definition !aaks */
+       /* MAC initialization #LMAC and BaseMacLayer definition */
        virtual void initialize(int stage);
 
        /* @brief Delete all dynamically allocated objects of the module #LMAC */
@@ -80,7 +77,7 @@ class MIXIM_API TDMAmac : public BaseMacLayer
         */
        virtual void handleUpperMsg(cMessage* msg);
 
-       /* @brief Handle self messages such as timer, to move through slots #LMAC !aaks */
+       /* @brief Handle self messages such as timer, to move through slots #LMAC */
 
        virtual void handleSelfMsg(cMessage*);
 
@@ -103,22 +100,11 @@ protected:
 
     typedef std::list<TDMAMacPkt*> MacPktQueue;
 
-    /* @brief Duration of a slot #LMAC */
-    double slotDuration;
-
-    /* @brief how many slots are there #LMAC */
-    int numSlots;
-
     /*@brief length of the queue #LMAC */
     unsigned queueLength;
 
     /* Self messages for TDMA Frame timer */
-    cMessage* FrameTimer;
-
-    /* Self messages for local drift clock timer */
-    cMessage* OffsetTimer;
-
-    int numNodes;
+    // cMessage* FrameTimer;
 
     /* @brief the bit rate at which we transmit #LMAC */
     double bitrate;
@@ -126,7 +112,7 @@ protected:
     bool gateway;
 
     /* @brief A queue to store packets from upper layer in case another
-    packet is still waiting for transmission #LMAC !aaks */
+    packet is still waiting for transmission #LMAC */
     MacPktQueue macPktQueue;
 
     /* @brief Inspect reasons for dropped packets #LMAC !aaks not used yet */
@@ -142,45 +128,6 @@ protected:
     cOutVector vqLength;
     cStdDev qLength;
     int droppedPackets;
-
-    int MyID = 0;
-
-    /* @brief PCO clock time */
-    double ClockTime;
-
-    /* @brief local drift clock time */
-    double TDMATime;
-
-    /* @brief PCO register threshold */
-    double RegisterThreshold;
-
-    /* @brief threshold of register adjustment value */
-    double ThresholdAdjustValue;
-
-    /* @brief TDMA adjustment value */
-    double TDMAdjustValue;
-
-    /* @brief the number of pulse */
-    int numPulse;
-
-    /* @brief the offset of local drift clock time  */
-    double TDMATimeOffset;
-
-    /* @brief the duration of frame in one packet */
-    double FrameDuration;
-
-    /* @brief guard time */
-    double GuardTime;
-
-    /* @brief maxim offset of local drifting clock */
-    double MaximOffset;
-
-    /* @brief the id of node */
-    int NodeId;
-
-    /* @brief schedule the second SYNC from node (i.e., rnode[0]) */
-    /* @brief duration between beacon (first SYNC packet) and second SYNC packet */
-    double ScheduleOffset;
 
     /* @brief two modes will be used, first mode is the TimeSyncMode
      * (only synchronisation in this mode), and second mode is the

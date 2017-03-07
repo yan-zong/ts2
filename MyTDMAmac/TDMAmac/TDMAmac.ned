@@ -36,19 +36,6 @@ simple TDMAmac extends BaseMacLayer
         double defaultChannel = default(0);
         // bit rate 
         double bitrate @unit(bps) = default(19200bps);
-        // level at which we consider medium busy FIXME not used currently
-		// double busyRSSI;
-		// how long is a guard time?
-        double GuardTime @unit(s) = default(0ms);
-    	// maxim offset of local drifting clock
-    	double MaximOffset @unit(s) = default(0ms);
-    	// how long is a Superframe?
-    	double FrameDuration @unit(s) = default(1000ms);
-    	// schedule the second SYNC from node (i.e., rnode[0])
-    	// duration between beacon (first SYNC packet) and second SYNC packet
-    	double ScheduleOffset @unit(s) = default(0ms);
-    	// threshold value of register of PCO
-    	// double RegisterThreshold @unit(s) = default(1000ms);
 		
 		bool stats = default(false);
 		bool trace = default(false);

@@ -27,43 +27,29 @@
 
 Define_Module(TDMAmac);
 
-/* To set the nodeId #LMAC !aaks */
-#define myId (getParentModule()->getParentModule()->getId()-4)
-
 /* Initialize the mac using omnetpp.ini variables and initializing other necessary variables  */
 
 void TDMAmac::initialize(int stage)
 {
     BaseMacLayer::initialize(stage);
 
-    if(stage == 0){
+    if(stage == 0)
+    {
         macPktQueue.clear();
 
-        /* For droppedpacket code used #LMAC !aaks */
+        /* For droppedpacket code used #LMAC */
         BaseLayer::catDroppedPacketSignal.initialize();
 
-        /* Getting parameters from ini file and setting MAC variables #LMAC !aaks */
+        /* Getting parameters from ini file and setting MAC variables #LMAC */
         queueLength = par("queueLength");
-        slotDuration = par("slotDuration");
         bitrate = par("bitrate");
         headerLength = par("headerLength");
         coreEV << "headerLength is: " << headerLength << endl;
         txPower = par("txPower");
-        GuardTime = par("GuardTime");
-        MaximOffset = par("MaximOffset");
-        FrameDuration = par("FrameDuration");
-        ScheduleOffset = par("ScheduleOffset");
 
-        /* For dropped packets if required !aaks */
+        /* For dropped packets if required */
         droppedPacket.setReason(DroppedPacket::NONE);
 
-        /* For PCO */
-        ClockTime = 0;
-        TDMATime = 0;
-        ThresholdAdjustValue = 0;
-        TDMAdjustValue = 0;
-        numPulse = 0;
-        TDMATimeOffset = 0;
         SyncStatus = true;
 
         trace = par("trace").boolValue();
@@ -71,67 +57,32 @@ void TDMAmac::initialize(int stage)
 
         droppedPackets = 0;
 
-        if(trace && !gateway) {
+        if(trace && !gateway)
+        {
             // record all packet arrivals
             vqLength.setName("Queue_Length_MAC");
         }
-        LAddress::L3Type myNetwAddr = findHost()->getSubmodule("netwl")->getId();
-        // LAddress::L3Type sendTo = findHost()->getParentModule()->getSubmodule("node",0)->getSubmodule("netwl")->getId();
-        LAddress::L3Type sendTo = findHost()->getParentModule()->getSubmodule("mnode")->getSubmodule("netwl")->getId();
-        if(myNetwAddr == sendTo){
-            gateway = true;
-            MyID = 0;
-        }else{
-            gateway = false;
-            MyID = 1;
-        }
     }
-    else if(stage == 1) {
+
+    else if(stage == 1)
+    {
 
         EV << "queueLength = " << queueLength
-        << " slotDuration = " << slotDuration
         << " bitrate = " << bitrate << endl;
 
-        // Initialise the pointer
+        // Initialise the pointer to clock module
         pClock2 = (PCOClock *)findHost()->getSubmodule("clock");
         if (pClock2 == NULL)
             error("No clock module is found in the module");
 
-        cModule* myNode = NULL;
-        numNodes = 0;
-
-        do{
-            numNodes++;
-            myNode = findHost()->getParentModule()->getSubmodule("node",numNodes);
-        }while(myNode);
-
-        numNodes = numNodes + 1;
-
-        EV << "TDMAmac: the slotDuration is " << slotDuration << "s, and number of node is " << numNodes ;
-        EV << ", based on the GuardTime " << GuardTime << "s, the FrameDuration is " << FrameDuration << "s." << endl;
-
-        FrameTimer = new cMessage( "frame-timer", 0 );
-        OffsetTimer = new cMessage( "offset-timer", 1 );
-
-        NodeId = (getParentModule()->getParentModule()->getId()-4);
-        EV << "TDMAmac: the node id is " << NodeId << endl ;
-        // NodeID: mnode - 0; rnode[0] - 1; rnode[1] - 2; ...
-
-        /* Schedule a self-message to start superFrame */
-        // EV<< "I will start at " << simTime() + myId*slotDuration << " s every " << numNodes*slotDuration << " s" << endl;
-        EV<< "TDMA: FrameTimer will start at " << (simTime() + NodeId*slotDuration - MaximOffset + FrameDuration + ScheduleOffset) << " s every " << FrameDuration << " s" << endl;
-
-        // scheduleAt(simTime() + myId*slotDuration, delayTimer);
-        // scheduleAt(simTime() + MyID*slotDuration + FrameDuration, FrameTimer);
-        // scheduleAt(simTime() + NodeId*slotDuration - MaximOffset + FrameDuration + ScheduleOffset, FrameTimer);
+        // FrameTimer = new cMessage( "frame-timer", 0 );
     }
 }
 
-/* Module destructor #LMAC !aaks */
-
-TDMAmac::~TDMAmac() {
-    cancelAndDelete(FrameTimer);
-    cancelAndDelete(OffsetTimer);
+/* Module destructor */
+TDMAmac::~TDMAmac()
+{
+    // cancelAndDelete(FrameTimer);
 
     MacPktQueue::iterator it;
        for(it = macPktQueue.begin(); it != macPktQueue.end(); ++it) {
@@ -140,9 +91,11 @@ TDMAmac::~TDMAmac() {
        macPktQueue.clear();
 }
 
-/* Module destructor #LMAC */
-void TDMAmac::finish() {
+/* Module destructor */
+void TDMAmac::finish()
+{
     BaseMacLayer::finish();
+
     if(stats && !gateway)
     {
         recordScalar("Mean queue length",qLength.getMean());
@@ -172,13 +125,11 @@ void TDMAmac::handleUpperMsg(cMessage* msg){
 
         phy->setRadioState(MiximRadio::TX);
         TDMAMacPkt* data = mac->dup();
-        // TDMAMacPkt* data = macPktQueue.front()->dup();
         data->setKind(1);
         attachSignal(data);
 
-        coreEV << "Sending down data packet\n";
+        EV << "Sending down data packet\n";
         sendDown(data);
-
     }
 
     else
@@ -203,54 +154,28 @@ void TDMAmac::handleUpperMsg(cMessage* msg){
         }
     }
 
-    if(!gateway){
-        if(trace) {
+    if(!gateway)
+    {
+        if(trace)
+        {
             vqLength.record(macPktQueue.size());
         }
         qLength.collect(macPktQueue.size());
     }
 }
 
-/* Handles the messages sent to self-mainly timers !aaks */
-
+/* Handles the messages sent to self-mainly timers */
 void TDMAmac::handleSelfMsg(cMessage* msg)
 {
       switch (msg->getKind())
       {
-          /* SETUP phase enters to start the MAC protocol !aaks */
+          /* SETUP phase enters to start the MAC protocol */
           case 0:
           {
-              // ClockTime = pClock2 -> getPCOTimestamp(); // the PCO clock time
-              TDMATime = pClock2 -> getTimestamp(); // the local drifting clock time
-              numPulse = pClock2 -> getnumPulse();  // the number of pulse
-              // EV << "TDMAmac: the PCO local drifting clock time is " << ClockTime << endl;
-              EV << "TDMAmac: the local drifting clock time is " << TDMATime << endl;
-              EV << "TDMAmac: the number of pulse is " << numPulse << endl;
-
-
-              // ThresholdAdjustValue = ClockTime - RegisterThreshold;
-              TDMAdjustValue = (numPulse + 1) * FrameDuration - TDMATime;
-              // pClock2 -> adjustThreshold(ThresholdAdjustValue);
-              // TDMAdjustValue = (TDMAdjustValue / 2) + (((numPulse + 1) * FrameDuration) - MaximOffset) - TDMAdjustValue;
-              TDMAdjustValue = MaximOffset - (TDMAdjustValue / 2);
-
-
-              TDMATimeOffset = TDMATime - SIMTIME_DBL(simTime());
-              EV << "TDMAmac: the local drifting clock time offset is " << TDMATimeOffset << endl;
-
-              if (TDMATimeOffset > FrameDuration)
-                  error("the TDMA offset is greater than frame duration");
-
-              if ((TDMATimeOffset + MaximOffset) < 0)
-                  error("(ClockTimeOffset + MaximOffset) is less than 0");
-
-              EV << "TDMA: FrameTimer will schedule the next event after " << FrameDuration << " at time: " << (simTime() + FrameDuration) <<endl;
-              scheduleAt(simTime() + FrameDuration, FrameTimer);
-              EV << "TDMA: OffsetTimer will schedule the next event after " << TDMAdjustValue << " at time: " << (simTime() + TDMAdjustValue) <<endl;
-              scheduleAt(simTime() + TDMAdjustValue, OffsetTimer);
-
+              ;
           }
           break;
+
           case 1:
           {
               if(macPktQueue.empty())
@@ -264,9 +189,11 @@ void TDMAmac::handleSelfMsg(cMessage* msg)
               sendDown(data);
           }
           break;
-        default:{
-            EV << "WARNING: unknown timer callback " << msg->getKind() << endl;
-        }
+
+          default:
+          {
+              EV << "WARNING: unknown timer callback " << msg->getKind() << endl;
+          }
     }
 }
 
@@ -300,15 +227,15 @@ TDMAmac::macpkt_ptr_t TDMAmac::encapsMsg(cPacket* msg) {
 
 /*
  * Handles received Mac packets from Physical layer. ASserts the packet
- * was received correct and checks if it was meant for us. #LMAC !aaks
+ * was received correct and checks if it was meant for us. #LMAC
  */
-
-void TDMAmac::handleLowerMsg(cMessage* msg) {
+void TDMAmac::handleLowerMsg(cMessage* msg)
+{
     TDMAMacPkt *const mac  = static_cast<TDMAMacPkt *>(msg);
     const LAddress::L2Type& dest = mac->getDestAddr();
 
     /*
-     * Unused part (Collision tracking) !aaks
+     * Unused part (Collision tracking)
      * bool collision = false;
      * if we are listening to the channel and receive anything, there is a collision in the slot.
      * if (checkChannel->isScheduled())
@@ -318,7 +245,7 @@ void TDMAmac::handleLowerMsg(cMessage* msg) {
      * }
      */
 
-    /* Check if the packet is a broadcast or addressed to this node !aaks */
+    /* Check if the packet is a broadcast or addressed to this node */
     EV << " I have received a data packet.\n";
     if(dest == myMacAddr || LAddress::isL2Broadcast(dest))
     {
@@ -331,7 +258,8 @@ void TDMAmac::handleLowerMsg(cMessage* msg) {
     }
 }
 
-void TDMAmac::handleLowerControl(cMessage* msg) {
+void TDMAmac::handleLowerControl(cMessage* msg)
+{
     switch(msg->getKind()) {
     case MacToPhyInterface::TX_OVER:
            debugEV << "PHY indicated transmission over" << endl;
