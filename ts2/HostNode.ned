@@ -26,12 +26,12 @@ import org.mixim.base.modules.IBaseArp;
 import org.mixim.base.modules.IBaseApplLayer;
 import org.mixim.base.modules.IBaseNetwLayer;
 
-module HostCC2420a
+module HostNode
 {
     parameters:
         string networkType = default("BaseNetwLayer");	// type of the network layer
-        string applicationType = default("BurstApplLayer");	// type of the application layer
-        string mobilityType = default("StationaryMobility");	// type of the mobility module
+        string applicationType = default("BurstApplLayer");  // type of the application layer
+        string mobilityType = default("StationaryMobility"); // type of the mobility module
         string arpType = default("ArpHost");
         string nicType;
         string ptpCoreType;
@@ -40,15 +40,16 @@ module HostCC2420a
 
     gates:
         input radioIn; // gate for sendDirect
-    
+        
     submodules:
         arp: <arpType> like IBaseArp 
         {
             @display("p=212,184;i=block/network2");
         }
+        
         mobility: <mobilityType> like inet.mobility.IMobility 
         {
-            @display("p=212,37;i=block/cogwheel");
+             @display("p=212,37;i=block/cogwheel");
         }
 
         appl: <applicationType> like IBaseApplLayer 

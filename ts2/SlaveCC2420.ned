@@ -80,8 +80,8 @@ module SlaveCC2420 extends HostCC2420a
 
     connections allowunconnected:
 
-        ptpcore.outclock --> clock.inclock;
-        ptpcore.inclock <-- clock.outclock;
+        core.outclock --> clock.inclock;
+        core.inclock <-- clock.outclock;
 
 
 }

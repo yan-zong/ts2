@@ -26,7 +26,7 @@ import org.mixim.modules.power.battery.SimpleBattery;
 import org.mixim.modules.node.WirelessNode;
 import mytdmamac.TDMAmac.PCOClock;
 
-module RelayNode extends HostCC2420a
+module MasterNode extends HostNode
 {
     parameters:
         applicationType = default("BurstApplLayerBattery");	// type of the application layer
@@ -36,32 +36,32 @@ module RelayNode extends HostCC2420a
         arpType = "ArpHost";
 		
 		nicType = "Nic_Timestamp_TDMA";	// for NIC with hardware timie stamp, and also for TDMA
-
-        ptpCoreType = default("RelayCore");
+		
+        ptpCoreType = default("MasterCore");
         
-        @display("bgb=271,307,white;i=misc/node;i2=status/battery;b=40,40,rect;is=s");
-        
-        int numHosts; // total number of hosts in the network
+        @display("bgb=273,307,white;i=misc/node;i2=status/battery;b=40,40,rect;is=s");
 
-    submodules:
+		int numHosts; // total number of hosts in the network
+    
+	submodules:
         batteryStats: BatteryStats 
         {
-            @display("p=215,253;i=block/table,#FF8040");
+            @display("p=212,253;i=block/table,#FF8040");
         }
         
         battery: SimpleBattery 
         {
-            @display("p=133,253;i=block/plug,#FF8000");
+            @display("p=135,253;i=block/plug,#FF8000");
         }
         
         clock: PCOClock 
         {
-                @display("p=215,101;i=device/clock");
+        	@display("p=215,101;i=device/clock");
         }
-
+        
     connections allowunconnected:
-
+        
         core.outclock --> clock.inclock;
         core.inclock <-- clock.outclock;
-
+        
 }

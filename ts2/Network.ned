@@ -83,7 +83,7 @@ network Network extends MyBaseNetwork
                 @display("p=146,82;b=42,42,rect,yellow;i=device/wifilaptop");
         }
 
-        relay[numRelay]: RelayNode {
+        rnode[numRelay]: RelayNode {
             parameters:
                 numHosts = numRelay;
                 @display("p=210,82;b=42,42,rect,yellow;i=device/wifilaptop");

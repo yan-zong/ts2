@@ -107,7 +107,7 @@ void RelaySlave::initialize()
     // Relay Slave: findHost()->getParentModule returns: TSieee802154SM
 
     // find Relay node
-    MasterModule = MasterModule->getSubmodule("relay", (findHost()->getIndex()));
+    MasterModule = MasterModule->getSubmodule("rnode", (findHost()->getIndex()));
 
     if (SinkModule != NULL)
     {
