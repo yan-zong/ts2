@@ -27,9 +27,6 @@ import ts2.im.Manager;
 
 module RelayCore like IPtpCore
 {
-    parameters:
-
-        @display("bgb=270,173,white");
     gates:
         input upperGateIn;	// from net layer
         output upperGateOut;	// to net layer

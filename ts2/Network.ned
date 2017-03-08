@@ -77,7 +77,7 @@ network Network extends MyBaseNetwork
                 @display("p=72,82;b=42,42,rect,yellow;i=device/wifilaptop");
         }
 
-        snode[numSlave]: SlaveCC2420 {
+        snode[numSlave]: SlaveNode {
             parameters:
                 numHosts = numSlave;
                 @display("p=146,82;b=42,42,rect,yellow;i=device/wifilaptop");

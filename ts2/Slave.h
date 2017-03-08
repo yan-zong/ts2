@@ -1,28 +1,23 @@
 //***************************************************************************
 // * File:        This file is part of TS2.
-// * Created on:  29 Jan 2014
-// * Author:      Yiwen Huang, Xuweu Dai  (x.dai at ieee.org)
+// * Created on:  07 Dov 2016
+// * Author:      Yan Zong, Xuweu Dai
 // *
-// * Copyright:   (C) 2014 Southwest University, Chongqing, China.
+// * Copyright:   (C) 2016 Northumbria University, UK.
 // *
-// *              TS2 is free software; you can redistribute it  and/or modify
-// *              it under the terms of the GNU General Public License as published
-// *              by the Free Software Foundation; either  either version 3 of
-// *              the License, or (at your option) any later version.
+// *              TS2 is free software; you can redistribute it and/or modify it
+// *              under the terms of the GNU General Public License as published
+// *              by the Free Software Foundation; either version 3 of the
+// *              License, or (at your option) any later version.
 // *
-// *              TS2 is distributed in the hope that it will be useful,
-// *                  but WITHOUT ANY WARRANTY; without even the implied warranty of
-// *                  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// *                  GNU General Public License for more details.
+// *              TS2 is distributed in the hope that it will be useful, but
+// *              WITHOUT ANY WARRANTY; without even the implied warranty of
+// *              MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// *              GNU General Public License for more details.
 // *
-// * Credit:      Yiwen Huang, Taihua Li
-// * Funding:     This work was partially financed by the National Science Foundation China
-// %              _
-// %  \/\ /\ /   /  * _  '
-// % _/\ \/\/ __/__.'(_|_|_
-// **************************************************************************/
-
-
+// * Funding:     This work was financed by the Northumbria University Faculty
+//                Funded and RDF funded studentship, UK
+// ****************************************************************************
 
 #include <string.h>
 #include <math.h>
@@ -30,42 +25,29 @@
 #include "PtpPkt_m.h"
 #include "Packet_m.h" // for information exchange with manager
 #include "Event_m.h"
-
-
 #include "NetwControlInfo.h"
 #include "SimpleAddress.h"
 #include "PCOClock.h"
 
-/**
- * @brief A PTP slave node
- *
- *
- * @author Xuewu Dai
- */
-class Node: public cSimpleModule{
-protected:
-	virtual void initialize();
-	virtual void handleMessage(cMessage *msg);
-	virtual void finish();
-	virtual void updateDisplay();
-	cModule *findHost(void);
-private:
-	/*Dichiarazione metodi.*/
-	void handleSelfMessage(cMessage *msg);
-	void handleClockMessage(cMessage *msg);
-	void handleMasterMessage(cMessage *msg);
-	void ProduceT3packet();
-	void recordResult();
-	void handleOtherPacket(cMessage *msg);
-	void handleEventMessage(cMessage *msg);
-	void servo_clock();
-	//void update_offset_previous(double value);
+class Slave: public cSimpleModule
+{
+    protected:
+	    virtual void initialize();
+	    virtual void handleMessage(cMessage *msg);
+	    virtual void finish();
+	    virtual void updateDisplay();
+	    cModule *findHost(void);
 
+    private:
+	    void handleSelfMessage(cMessage *msg);
+	    void handleClockMessage(cMessage *msg);
+	    void handleMasterMessage(cMessage *msg);
+	    void ProduceT3packet();
+	    void recordResult();
+	    void handleOtherPacket(cMessage *msg);
+	    void handleEventMessage(cMessage *msg);
+	    void servo_clock();
 
-	/*Metodi ausiliari.*/
-
-	/*Dichiarazione variabili.*/
-	const char *name;
 	int address;
 	int master;
     LAddress::L3Type masterL3Addr;
@@ -89,7 +71,7 @@ private:
 	double drift;		//slave's clock drift (the frequency difference between slave and master clocks)
 	double offset_previous;//前一时刻同步周期offset的观测值
 
-	/* Parameters for clock correction*/
+	/* Parameters for clock correction */
 	double Ts;  //
 	double Ts_correct;
 	double Ts_previous;
@@ -102,11 +84,8 @@ private:
 	double rate;
 	double T;
 	double Tr;
-	/*滑动 filter*/
-   // double alpha;
-    //double  beta;
 
-	/* Vectors recording simulation results for performance analysis*/
+	/* Vectors recording simulation results for performance analysis */
 	cOutVector dpropVec;
 	cOutVector dmsVec;
 	cOutVector dsmVec;

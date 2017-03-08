@@ -31,7 +31,6 @@
 class MasterCore : public cSimpleModule
 {
 private:
-    const char *name;
     int address;
     double Tsync;
 

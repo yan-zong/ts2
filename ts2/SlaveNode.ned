@@ -26,7 +26,7 @@ import org.mixim.modules.power.battery.SimpleBattery;
 import org.mixim.modules.node.WirelessNode;
 import mytdmamac.TDMAmac.PCOClock;
 
-module SlaveCC2420 extends HostCC2420a
+module SlaveNode extends HostNode
 {
     parameters:
         applicationType = default("BurstApplLayerBattery");  //type of the application layer
@@ -34,19 +34,14 @@ module SlaveCC2420 extends HostCC2420a
         mobilityType = default("StationaryMobility"); //type of the mobility module
         arpType = "ArpHost";
 
-		// nicType = "Nic802154_TI_CC2420";	// for NIC without hardware time stamp, and also for CSMA
-       
-        nicType = "Nic_CC2420_TmStmp";	// for NIC with hardware timie stamp, and also for CSMA
-		// nic.tsstmp.useGlobalRefClock = default(false);
-        // set useGlobalRefClock = true to use simTime() for time stamping
-        // set useGlobalRefClock = false to use clock module for time stamping if a node has a clock module
+		nicType = "Nic_Timestamp_TDMA";	// for NIC with hardware timie stamp, and also for TDMA
 
         ptpCoreType = default("SlaveCore");
-
+        
         @display("bgb=271,307,white;i=misc/node;i2=status/battery;b=40,40,rect;is=s");
-
+        
 	    int numHosts; // total number of hosts in the network
-	    
+
     submodules:
         batteryStats: BatteryStats 
         {
