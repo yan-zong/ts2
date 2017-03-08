@@ -24,14 +24,14 @@
 
 #include <omnetpp.h>
 #include "PCOClock.h"
-#include "Node.h"
+#include "Slave.h"
 
 class TimeStamp : public cSimpleModule
 {
     private:
      bool useGlobalRefClock;
      PCOClock *pClk;
-     Node *pNode;
+     Slave *pNode;
 
   protected:
     virtual void initialize();

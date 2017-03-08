@@ -23,9 +23,6 @@ package ts2;
 
 simple RelayBuffer
 {
-    parameters:
-        volatile double rate;
-        volatile double latenza;
     gates:
         input in[3];
         output out[3];

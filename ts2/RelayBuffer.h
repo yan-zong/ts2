@@ -21,24 +21,16 @@
 
 bool isPtpPkt = FALSE;
 
-
 class RelayBuffer:public cSimpleModule{
-protected:
-    virtual void initialize();
-    virtual void handleMessage(cMessage *msg);
-    virtual void finish();
-    virtual void updateDisplay();
-private:
-    cQueue queue;
-    cPacket *tmp;
-    int pacchetti;
-    int byte;
-    double rate;
-    double T;
-    double Tlat;
-    double Ts;
-    cOutVector pckVec;
-    cOutVector byteVec;
-    void handleRelayMessage(cMessage *msg);
+    protected:
+        virtual void initialize();
+        virtual void handleMessage(cMessage *msg);
+        virtual void finish();
+        virtual void updateDisplay();
+
+    private:
+        int package;
+        cOutVector pckVec;
+        void handleRelayMessage(cMessage *msg);
 };
 

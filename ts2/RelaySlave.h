@@ -19,126 +19,83 @@
 //                Funded and RDF funded studentship, UK
 // ****************************************************************************
 
-
-
 #include <string.h>
 #include <math.h>
 #include <omnetpp.h>
 #include "PtpPkt_m.h"
 #include "Packet_m.h" // for information exchange with manager
 #include "Event_m.h"
-
-
 #include "NetwControlInfo.h"
 #include "SimpleAddress.h"
 #include "PCOClock.h"
 #include "RelayMaster.h"
 
-/**
- * @brief A PTP slave node
- *
- *
- * @author Xuewu Dai
- */
-class RelaySlave: public cSimpleModule{
-protected:
-	virtual void initialize();
-	virtual void handleMessage(cMessage *msg);
-	virtual void finish();
-	virtual void updateDisplay();
-	cModule *findHost(void);
-private:
-	/*Dichiarazione metodi.*/
-	void handleSelfMessage(cMessage *msg);
-	void handleClockMessage(cMessage *msg);
-	void handleMasterMessage(cMessage *msg);
-	void ProduceT3packet();
-	void recordResult();
-	void handleOtherPacket(cMessage *msg);
-	void handleEventMessage(cMessage *msg);
-	void servo_clock();
-	//void update_offset_previous(double value);
+class RelaySlave: public cSimpleModule
+{
+    protected:
+	    virtual void initialize();
+	    virtual void handleMessage(cMessage *msg);
+	    virtual void finish();
+	    virtual void updateDisplay();
+	    cModule *findHost(void);
 
+    private:
+	    void handleSelfMessage(cMessage *msg);
+	    void handleClockMessage(cMessage *msg);
+	    void handleMasterMessage(cMessage *msg);
+	    void ProduceT3packet();
+	    void recordResult();
+	    void handleOtherPacket(cMessage *msg);
+	    void handleEventMessage(cMessage *msg);
+	    void servo_clock();
 
-	/*Metodi ausiliari.*/
+	    const char *name;
+	    int myAddress;          // the variable is used in the multi-hop network
+	    int myMasterAddress;    // the variable is used in the multi-hop network
+	    LAddress::L3Type masterL3Addr;
+	    LAddress::L3Type myL3Addr;
 
-	/*Dichiarazione variabili.*/
-	const char *name;
-	int myAddress;          // the variable is used in the multi-hop network
-	int myMasterAddress;    // the variable is used in the multi-hop network
-    LAddress::L3Type masterL3Addr;
-    LAddress::L3Type myL3Addr;
+	    cModule *myMasterNode; // default value (at stage 1) is myself (this)
+	    RelayMaster *pRelayMaster; // a pointer to the Relay Master module in my nodes (a boundary clock)
+	    PCOClock *pClock; // pointer to my clock module
 
-    cModule *myMasterNode; // default value (at stage 1) is myself (this)
-    RelayMaster *pRelayMaster; // a pointer to the Relay Master module in my nodes (a boundary clock)
-    PCOClock *pClock; // pointer to my clock module
-
-    /* Definitions of variable for time synchronization.*/
-	double Tcamp;       //t2、t3之间的处理时延（0,10*Tcamp）
-	//double Tsync;       //比较为Tsync和10Tcamp
-	double ts2;	//Timestamp T2 stamped on receiving SYNC packet by slave
-	double ts1;	//Timestamp T1 stamped on transmission SYNC packet by master
-	double ts3;	//Timestamp T3 stamped on transmission DREQ packet by slave
-	double ts4;	//Timestamp T4 stamped on receiving DRES packet by master
-	double dprop;		//propogation delay
-	double dms;			//master-to-slave delay for SYNC packet, dms = ts2-ts1
+	    /* Definitions of variable for time synchronization.*/
+	    double Tcamp;       //t2、t3之间的处理时延（0,10*Tcamp）
+	    //double Tsync;       //比较为Tsync和10Tcamp
+	    double ts2;	//Timestamp T2 stamped on receiving SYNC packet by slave
+	    double ts1;	//Timestamp T1 stamped on transmission SYNC packet by master
+	    double ts3;	//Timestamp T3 stamped on transmission DREQ packet by slave
+	    double ts4;	//Timestamp T4 stamped on receiving DRES packet by master
+	    double dprop;		//propogation delay
+	    double dms;			//master-to-slave delay for SYNC packet, dms = ts2-ts1
 	                    //t2-t1，计算包的传输延迟，uniform(0,a),a=t2-t1
-	double dsm;			//slave-to-master delay for DREQ packet, dsm=t4-t3
-	double offset;		//slave's clock Offset (the difference between slave and master clocks)
-	double drift;		//slave's clock drift (the frequency difference between slave and master clocks)
-	double offset_previous;//前一时刻同步周期offset的观测值
+	    double dsm;			//slave-to-master delay for DREQ packet, dsm=t4-t3
+	    double offset;		//slave's clock Offset (the difference between slave and master clocks)
+	    double drift;		//slave's clock drift (the frequency difference between slave and master clocks)
+	    double offset_previous;//前一时刻同步周期offset的观测值
 
-	/* Parameters for clock correction*/
-	double Ts;  // slave (drifting) clock time
-	double Ts_correct;
-	double Ts_previous;
-	double Tm;  // master (perfect) clock time
-	double Tm_previous;
-	double  delay;//t2、t3之间的时延
-	//t4-t1，(t4-t1)<Tcamp<Tsync，保证同步过程在一个Tcamp内完成，这样与PTP假设条件一致，在一个同步过程中，drift和offset不变
-	double delta_t41;
-	/* 计算包的传输时延的变量*/
-	double rate;
-	double T;
-	double Tr;
+	    /* Parameters for clock correction*/
+	    double Ts;  // slave (drifting) clock time
+	    double Ts_correct;
+	    double Ts_previous;
+	    double Tm;  // master (perfect) clock time
+	    double Tm_previous;
+	    double  delay;//t2、t3之间的时延
+	    //t4-t1，(t4-t1)<Tcamp<Tsync，保证同步过程在一个Tcamp内完成，这样与PTP假设条件一致，在一个同步过程中，drift和offset不变
+	    double delta_t41;
+	    /* 计算包的传输时延的变量*/
+	    double rate;
+	    double T;
+	    double Tr;
 
-	// for PCO
-	double ThresholdAdjustValue;
-
-	/* @brief PCO clock time */
-	double ClockTime;
-
-	/* @brief PCO register threshold */
-    double RegisterThreshold;
-
-	double nbSentDelayRequests;  // count the total number of sent DelayRequest
-	double nbReceivedSyncsFromMaster;  // count the total number of received Sync from Master
-	double nbReceivedDelayResponsesFromMaster;  // count the total number of received DelayResponse from Master
-	double nbReceivedSyncsFromRelay;  // count the total number of received Sync from Relay
-	double nbReceivedDelayResponsesFromRelay;  // count the total number of received DelayResponse from Relay
-
-    /* @brief the id of node */
-	// int NodeId;
-
-    /* @brief Duration of a slot #LMAC */
-    // double slotDuration;
-
-    /* @brief schedule the second SYNC from node (i.e., rnode[0]) */
-    /* @brief duration between beacon (first SYNC packet) and second SYNC packet */
-    // double ScheduleOffset;
-
-	/*滑动 filter*/
-   // double alpha;
-    //double  beta;
-
-	/* Vectors recording simulation results for performance analysis*/
-	cOutVector dpropVec;
-	cOutVector dmsVec;
-	cOutVector dsmVec;
-	cOutVector offsetVec;
-	cOutVector driftVec;
-	cOutVector delayVec;
-	cOutVector delta_t41Vec;
-	cOutVector TrVec; //计录包的传输时延
+	    /* Vectors recording simulation results for performance analysis*/
+	    cOutVector dpropVec;
+	    cOutVector dmsVec;
+	    cOutVector dsmVec;
+	    cOutVector offsetVec;
+	    cOutVector driftVec;
+	    cOutVector delayVec;
+	    cOutVector delta_t41Vec;
+	    cOutVector TrVec; //计录包的传输时延
 
 };

@@ -24,34 +24,17 @@ package ts2;
 simple RelaySlave
 {
     parameters:
-       @class(RelaySlave);
-      //volatile double Tsync;
-      //  volatile double nsync;
-      volatile double Tcamp;
-      volatile double rate;
-    //  volatile double alpha;
-      //volatile double  beta;
-      //volatile double Tsync;
-      //volatile double s1;
-	//  volatile double s2;
-	//  volatile double s3;
-       int slaveAddrOffset;
-       
-		// how long is a slot?
-        // double slotDuration @unit(s) = default(100ms);
-    	// schedule the second SYNC from node (i.e., rnode[0])
-    	// duration between beacon (first SYNC packet) and second SYNC packet
-    	// double ScheduleOffset @unit(s) = default(0ms);
-		
-		
-       
+       	@class(RelaySlave);
+      	volatile double Tcamp;
+      	volatile double rate;
+       	int slaveAddrOffset;
+ 
     gates:
         input in;
         input inclock;
         input inevent;
         output out;
         output outclock;
-        
         input upperGateIn; 
         output upperGateOut;
 }

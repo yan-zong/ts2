@@ -21,7 +21,6 @@
 
 package ts2;
 
-import ts2.im.Nodo;
 import ts2.im.Buffer3;
 import ts2.im.Manager;
 
@@ -55,18 +54,11 @@ module RelayCore like IPtpCore
             parameters:
                 @display("p=201,53;i=block/cogwheel");
         }
-    // move clock outside of ptpSlave module
-    //        clock: Clock {
-    //            parameters:
-    //                @display("p=85,112;i=device/clock");
-    //        }
+        
     connections allowunconnected:
         RelaySlave.upperGateIn <-- { @display("ls=blue,1"); } <-- upperGateIn;
         RelaySlave.upperGateOut --> { @display("ls=blue,1"); } --> upperGateOut;
 
-        // node.outclock --> clock.inclock;
-        // node.inclock <-- clock.outclock;
-        // ptpslave.outclock -->{ @display("ls=black,1"); }--> outclock;
         RelaySlave.inclock <-- { @display("ls=red,4"); } <-- inclock;
 
         RelaySlave.inevent <-- manager.out;
