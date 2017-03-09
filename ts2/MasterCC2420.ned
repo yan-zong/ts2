@@ -36,7 +36,7 @@ module MasterCC2420 extends HostCC2420a
         arpType = "ArpHost";
 
       	// nicType = "Nic802154_TI_CC2420";	// for NIC without hardware time stamp, and also for CSMA
- 		nicType = "Nic_CC2420_TmStmp";	// for NIC with hardware timie stamp, and also for CSMA
+ 		nicType = "Nic_CC2420_TimeStamp";	// for NIC with hardware timie stamp, and also for CSMA
 		
         ptpCoreType = default("MasterCore");
         

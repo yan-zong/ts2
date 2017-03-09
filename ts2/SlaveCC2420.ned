@@ -36,7 +36,7 @@ module SlaveCC2420 extends HostCC2420a
 
 		// nicType = "Nic802154_TI_CC2420";	// for NIC without hardware time stamp, and also for CSMA
        
-        nicType = "Nic_CC2420_TmStmp";	// for NIC with hardware timie stamp, and also for CSMA
+        nicType = "Nic_CC2420_TimeStamp";	// for NIC with hardware timie stamp, and also for CSMA
 		// nic.tsstmp.useGlobalRefClock = default(false);
         // set useGlobalRefClock = true to use simTime() for time stamping
         // set useGlobalRefClock = false to use clock module for time stamping if a node has a clock module

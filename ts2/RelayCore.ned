@@ -21,7 +21,6 @@
 
 package ts2;
 
-import ts2.im.Buffer3;
 import ts2.im.Manager;
 
 module RelayCore like IPtpCore

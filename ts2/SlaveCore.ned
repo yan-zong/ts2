@@ -21,7 +21,7 @@
 
 package ts2;
 
-import ts2.im.Buffer3;
+//import ts2.im.Buffer3;
 import ts2.im.Manager;
 
 module SlaveCore like IPtpCore
@@ -40,12 +40,12 @@ module SlaveCore like IPtpCore
         	@display("p=130,85;i=device/drive");
         }
 
-        buffertx: Buffer3 
+        buffertx: Buffer
         {
         	@display("p=52,118;i=block/buffer");
         }
         
-        bufferrx: Buffer3 
+        bufferrx: Buffer 
         {
         	@display("p=52,53;i=block/buffer");
         }
