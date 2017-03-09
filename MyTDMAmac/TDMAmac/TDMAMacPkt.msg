@@ -23,12 +23,9 @@ cplusplus {{
 #include "MiXiMMacPkt.h"
 }}
 
-
 class MacPkt;
 
-//
 // Defines all fields of an 802.11 MAC frame
-//
 packet TDMAMacPkt extends MacPkt
 {
     int address3;

@@ -23,7 +23,6 @@
 
 #define MAX_SLAVE 100
 
-
 // in IEEE 1588 PTP
 // SYNC packet length is 44 bytes
 // DREQ packet length is 44 bytes
@@ -33,7 +32,6 @@
 // phy.headerLength = 8 bit
 // mac.headerLength = 8 bit
 // netwl.headerLength = 16 bit
-
 
 /* Constants for PTP  */
 /* Packet length  */
