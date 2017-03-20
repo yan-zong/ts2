@@ -347,7 +347,7 @@ void PCOClock::generateSYNC()
 
     PtpPkt *pck = new PtpPkt("SYNC");
     pck->setPtpType(SYNC);
-    pck->setByteLength(40);
+    pck->setByteLength(44);
     send(pck,"outclock");
 
     EV << "PCOClock transmits SYNC packet to Core module" << endl;

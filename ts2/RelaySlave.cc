@@ -197,7 +197,7 @@ void RelaySlave::handleSelfMessage(cMessage *msg)
 {
     PtpPkt *pck = new PtpPkt("SYNC");
     pck->setPtpType(SYNC);
-    pck->setByteLength(40);
+    pck->setByteLength(44);
 
     pck->setTimestamp(simTime());
 

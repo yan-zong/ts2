@@ -181,7 +181,7 @@ void RelayMaster::handleSelfMessage(cMessage *msg)
 {
     PtpPkt *pck = new PtpPkt("SYNC");
     pck->setPtpType(SYNC);
-    pck->setByteLength(40);
+    pck->setByteLength(44);
 
     pck->setTimestamp(simTime());
 
@@ -354,7 +354,7 @@ void RelayMaster::startSync()
 
     PtpPkt *pck = new PtpPkt("SYNC");
     pck->setPtpType(SYNC);
-    pck->setByteLength(40); // SYNC_BYTE = 40
+    pck->setByteLength(44); // SYNC_BYTE = 40
 
     pck->setTimestamp(simTime());
 
