@@ -53,6 +53,8 @@ void PCOClock::initialize()
     thresholdOffsetVec.setName("ThresholdOffset");
     pulsetimeVec.setName("PulseTime");
 
+    offsetTotalVec.setName("OffsetTotal");
+
     // ---------------------------------------------------------------------------
     // Initialise variable
     // ---------------------------------------------------------------------------
@@ -216,6 +218,10 @@ double PCOClock::Phyclockupdate()
     // if (((phyclock - RegisterThreshold) > (-30.51757813E-6)) | ((phyclock - RegisterThreshold) == (-30.51757813E-6)))
     if ((phyclock - RegisterThreshold) > -4e-005)
     {
+
+        EV << "Yan: the 'offsetTotal' is "<< offsetTotal <<endl;
+        EV << "Yan: the 'offset' is "<< offset <<endl;
+
         numPulse = numPulse + 1;
         RefTimePreviousPulse = SIMTIME_DBL(simTime());
         offsetTotal = offsetTotal + offset; // record the offset
@@ -255,9 +261,9 @@ void PCOClock::recordResult()
     noise1Vec.record(noise1);
     noise2Vec.record(noise2);
     adjustedthresholdvalueVec.record(ThresholdAdjustValue);
-    thresholdVec.record(RegisterThreshold);
+    //thresholdVec.record(RegisterThreshold);
     phyclockVec.record(phyclock);
-    thresholdOffsetVec.record(ThresholdOffset);
+    // thresholdOffsetVec.record(ThresholdOffset);
 
 }
 
@@ -267,8 +273,15 @@ double PCOClock::getPCOTimestamp()
     ev << "PCOClock: Timestamp... " << endl;
     ev << "PCOClock: simTime = " << SIMTIME_DBL(simTime()) << ", LastUpdateTime = "<< LastUpdateTime << endl;
 
-    double PCOClock = phyclock + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime);
+    noise3 = normal(u3,sigma3);
+    noise3Vec.record(noise3);
+
+    double PCOClock = phyclock + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + noise3;
     ev << "PCOClock = " << PCOClock << endl;
+
+    ev << "Yan: noise3 is " << noise3 <<endl;
+    ev << "Yan: getPCOTimestamp includes noise3 is " << PCOClock <<endl;
+    ev << "Yan: getPCOTimestamp excludes noise3 is " << phyclock + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) <<endl;
 
     softclock = PCOClock;
     ev << "softclock = " << softclock << endl;
@@ -281,10 +294,18 @@ double PCOClock::getPCOTimestamp()
 /* @breif get timestamp of local drifting clock */
 double PCOClock::getTimestamp()
 {
-    noise3 = normal(u3,sigma3);
-    noise3Vec.record(noise3);
+    // noise3 = normal(u3,sigma3);
+    // noise3Vec.record(noise3);
     // double clock = getPCOTimestamp() + numPulse * FrameDuration + offsetTotal + noise3;
-    double clock = getPCOTimestamp() + numPulse * FrameDuration + offsetTotal;
+    // double clock = getPCOTimestamp() + numPulse * FrameDuration + offsetTotal;
+    // double clock = softclock + numPulse * FrameDuration + offsetTotal;
+    double clock = getPCOTimestamp() + numPulse * FrameDuration;
+
+    ev << "Yan: numPulse * FrameDuration is " << numPulse * FrameDuration <<endl;
+    ev << "Yan: numPulse is " << numPulse <<endl;
+    ev << "Yan: FrameDuration is " << FrameDuration <<endl;
+    ev << "Yan: offsetTotal is " << offsetTotal <<endl;
+    ev << "Yan: getTimestamp is " << clock <<endl;
 
     ev << "PCOClock: numPulse * FrameDuration = " << numPulse * FrameDuration;
     ev << ", the variable 'offsetTotal' is " << offsetTotal <<endl;
@@ -319,20 +340,45 @@ void PCOClock::updateDisplay()
     getDisplayString().setTagArg("t",0,buf);
 }
 
-void PCOClock::adjustThreshold()
+void PCOClock::getThresholdOffset()
 {
     ev << "PCOClock: adjust threshold of clock... "<< endl;
 
     // ClockOffset = ReceivedPulseTime - numPulse*FrameDuration - getPCOTimestamp() - ScheduleOffset*NodeId - delay;
-    ClockOffset = ReceivedPulseTime - numPulse*FrameDuration - getPCOTimestamp() - delay - ScheduleOffset - slotDuration*NodeId;
+    // ClockOffset = ReceivedPulseTime - delay - numPulse*FrameDuration - getPCOTimestamp() - ScheduleOffset - slotDuration*NodeId;
+    // ClockOffset = ReceivedPulseTime - delay - numPulse*FrameDuration - softclock - ScheduleOffset - slotDuration*NodeId;
+    ClockOffset = ReceivedPulseTime - numPulse*FrameDuration - softclock;
     ThresholdOffset = ClockOffset;
     ev << "PCOClock: the threshold offset is "<< ThresholdOffset << ", and the clock offset is " << ClockOffset << endl;
 
-    ThresholdAdjustValue = AdjustParameter*ThresholdOffset;
+    thresholdOffsetVec.record(ThresholdOffset);
+    offsetTotalVec.record(offsetTotal);
+
+    ev << "Yan: ReceivedPulseTime is " << ReceivedPulseTime <<endl;
+    ev << "Yan: delay is " << delay <<endl;
+    ev << "Yan: numPulse*FrameDuration is " << numPulse*FrameDuration <<endl;
+    ev << "Yan: numPulse is " << numPulse <<endl;
+    ev << "Yan: FrameDuration is " << FrameDuration <<endl;
+    ev << "Yan: softclock is " << softclock <<endl;
+    ev << "Yan: ScheduleOffset is " << ScheduleOffset <<endl;
+    ev << "Yan: slotDuration*NodeId is " << slotDuration*NodeId <<endl;
+    ev << "Yan: slotDurationis " << slotDuration<<endl;
+    ev << "Yan: NodeId is " << NodeId <<endl;
+    ev << "Yan: ClockOffset is " << ClockOffset <<endl;
+
+    ev << "PCOClock: threshold adjustment value is obtained "<< endl;
+}
+
+
+void PCOClock::adjustThreshold()
+{
+    // ThresholdAdjustValue = AdjustParameter*ThresholdOffset;
+    ThresholdAdjustValue = ThresholdOffset;
     ev << "PCOClock: based on the threshold adjustment value: "<< ThresholdAdjustValue << ", the RegisterThreshold change from " << RegisterThreshold;
     RegisterThreshold = RegisterThreshold - ThresholdAdjustValue;
     ev << " to " << RegisterThreshold << endl;
-    ev << "PCOClock: adjust threshold of clock is finished "<< endl;
+
+    thresholdVec.record(RegisterThreshold);
 }
 
 int PCOClock::getnumPulse()

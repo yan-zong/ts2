@@ -31,6 +31,7 @@
 class PCOClock:public cSimpleModule
 {
     public:
+        void getThresholdOffset();
         void adjustThreshold();
         int getnumPulse();
         double getPCOTimestamp();
@@ -149,6 +150,8 @@ class PCOClock:public cSimpleModule
         cOutVector phyclockVec;
         cOutVector pulsetimeVec;    // the threshold value
         cOutVector thresholdOffsetVec;
+
+        cOutVector offsetTotalVec;
 };
 
 #endif /* PCOClock_H_ */
