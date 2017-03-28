@@ -47,7 +47,8 @@ void PCOClock::initialize()
     delta_offsetVec.setName("delta_offset");
     drift_adj_valueVec.setName("drift_adj_value");
     offset_adj_valueVec.setName("offset_adj_value");
-    phyclockVec.setName("phyclock");
+    // phyclockVec.setName("phyclock");
+    physicalClockVec.setName("PhysicalClock");
     adjustedthresholdvalueVec.setName("ThresholdAdjustValue");
     thresholdVec.setName("RegisterThreshold");
     thresholdOffsetVec.setName("ThresholdOffset");
@@ -67,7 +68,10 @@ void PCOClock::initialize()
     u3 = par("u3");
     Tcamp  = par("Tcamp");
     Tsync = par("Tsync");
-    RegisterThreshold = par("RegisterThreshold");
+    // RegisterThreshold = par("RegisterThreshold");
+
+    Threshold = par("RegisterThreshold");
+
     FrameDuration = par ("FrameDuration");
     slotDuration = par("slotDuration");
     ScheduleOffset = par("ScheduleOffset");
@@ -77,8 +81,8 @@ void PCOClock::initialize()
 
     error_drift = offset;
     error_offset = drift;
-    lastupdatetime = SIMTIME_DBL(simTime());
-    phyclock = softclock = offset;
+    // lastupdatetime = SIMTIME_DBL(simTime());
+    // phyclock = softclock = offset;
     drift_previous = drift;
     offset_previous = offset;
     i = 0;
@@ -94,7 +98,7 @@ void PCOClock::initialize()
     // (RegisterThreshold). The clock time reset to zero, and a pulse is generated
     // and broadcasted at the same time
     // ---------------------------------------------------------------------------
-    ev << "Clock: the threshold of register is " << RegisterThreshold << "s." << endl;
+    ev << "Clock: the threshold of register is " << Threshold << "s." << endl;
     PulseTimePrevious = 0;
     numPulse = 0;
     LastUpdateTime = SIMTIME_DBL(simTime());
@@ -103,9 +107,19 @@ void PCOClock::initialize()
     offsetTotal = 0;
     ReceivedPulseTime = 0;
 
-    NodeId = (findHost()->getIndex() + 1);
+
+    ReferenceClock = 0;
+    PhysicalClock = 0;
+    ThresholdTotal = 0;
+    PCOClock = 0;
+
+    NodeId = (findHost()->getId() - 4);
     EV << "PCOClock: the node id is " << NodeId << ", and 'ScheduleOffset+slotDuration*NodeId' is "<< ScheduleOffset+slotDuration*NodeId <<endl ;
+    // id of master should be 0;
     // id of relay[0] should be 1; id of relay[1] should be 2;
+
+    EV << "yan: findHost()->getIndex() is " << findHost()->getIndex() << endl ;
+    EV << "yan: findHost()->getId() is " << findHost()->getId() << endl ;
 
     ClockOffset = 0;
     ThresholdOffset = 0;
@@ -130,8 +144,8 @@ void PCOClock::handleMessage(cMessage *msg)
 {
     if(msg->isSelfMessage())
     {
-        Phyclockupdate();   // update physical clock by clock offset and drift
-        EV << "PCOClock: phyclock = " << phyclock << endl;
+        physicalClockUpdate();   // update physical clock by clock offset and drift
+        EV << "PCOClock: Physical Clock is " << PhysicalClock << endl;
 
         i = i + 1;
         ev << "i = "<< i << endl;
@@ -198,59 +212,58 @@ void PCOClock::handleMessage(cMessage *msg)
     }
 }
 
+
+
+
 /* when the clock time reach the threshold value, the clock time will be reset to zero */
-double PCOClock::Phyclockupdate()
+double PCOClock::physicalClockUpdate()
 {
-    ev << "PCOClock: update clock, the PREVIOUS offset is "<< offset << ", and PREVIOUS drift is "<< drift <<endl;
-
-    noise1 =  normal(0,sigma1,1);
-    drift = drift + noise1;
-    ev << "PCOClock: the UPDATED drift is "<< drift <<endl;
-
+    ev << "PCOClock: the PREVIOUS offset is "<< offset << endl;
     noise2 =  normal(0,sigma2,1);
     offset = offset + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime)+ noise2;
     ev << "PCOClock: the UPDATED offset is "<< offset << endl;
 
-    ev << "PCOClock: the PREVIOUS physical clock time is " << phyclock << endl;
-    ev << "PCOClock: phyclock - RegisterThreshold = " << (phyclock - RegisterThreshold) << endl;
+    ev << "PCOClock: the PREVIOUS drift is "<< drift <<endl;
+    noise1 =  normal(0,sigma1,1);
+    drift = drift + noise1;
+    ev << "PCOClock: the UPDATED drift is "<< drift <<endl;
 
-    // if (phyclock - (RegisterThreshold - Tcamp) > (-1E-6))
-    // if (((phyclock - RegisterThreshold) > (-30.51757813E-6)) | ((phyclock - RegisterThreshold) == (-30.51757813E-6)))
-    if ((phyclock - RegisterThreshold) > -4e-005)
+    if ( NodeId == 0)   // master node
     {
+        ev << "PCOClock: the PREVIOUS Reference clock is "<< ReferenceClock << endl;
+        ReferenceClock = offset + SIMTIME_DBL(simTime());
+        ev << "PCOClock: the UPDATED Reference clock is "<< ReferenceClock << endl;
+    }
+    else    // relay node
+    {
+        ev << "PCOClock: the PREVIOUS Reference clock is "<< ReferenceClock << endl;
+        ReferenceClock = offset + SIMTIME_DBL(simTime()) - (ScheduleOffset + NodeId*slotDuration);
+        ev << "PCOClock: the UPDATED Reference clock is "<< ReferenceClock << endl;
+    }
 
-        EV << "Yan: the 'offsetTotal' is "<< offsetTotal <<endl;
-        EV << "Yan: the 'offset' is "<< offset <<endl;
+    if ((PhysicalClock - Threshold) > -4e-005)
+    {
+        ev << "PCOClock: the PREVIOUS 'ThresholdTotal' is "<< ThresholdTotal <<endl;
+        ThresholdTotal = ThresholdTotal + Threshold;
+        ev << "PCOClock: the UPDATED 'ThresholdTotal' is "<< ThresholdTotal <<endl;
 
-        numPulse = numPulse + 1;
-        RefTimePreviousPulse = SIMTIME_DBL(simTime());
-        offsetTotal = offsetTotal + offset; // record the offset
-        EV << "PCOClock: the 'numPulse' is "<< numPulse <<endl;
-        EV << "PCOClock: the 'RefTimePreviousPulse' is "<< RefTimePreviousPulse <<endl;
-        EV << "PCOClock: the 'offsetTotal' is "<< offsetTotal <<endl;
-
-        PulseTime = SIMTIME_DBL(simTime());
-        pulsetimeVec.record(PulseTime);
-
-        phyclock = 0;
-        offset = 0;
-        EV << "Clock: because the clock time is greater than threshold value " << RegisterThreshold;
-        EV << ", the clock time is RESET to " << phyclock;
-        EV << ", and the offset is also RESET to " << offset << endl;
+        ev << "PCOClock: the PREVIOUS 'PhysicalClock' is "<< PhysicalClock <<endl;
+        PhysicalClock = ReferenceClock - ThresholdTotal;
+        ev << "PCOClock: the UPDATED 'PhysicalClock' is "<< PhysicalClock <<endl;
 
         generateSYNC();
         EV << "PCOClock: generate and sent SYNC packet to Core module. " << endl;
-
     }
     else
     {
-        phyclock = offset + (SIMTIME_DBL(simTime()) - RefTimePreviousPulse);
-        ev << "PCOClock: based on the UPDATED offset: "<< offset << ", the UPDATED physical clock time is " << phyclock << endl;
+        ev << "PCOClock: the PREVIOUS 'PhysicalClock' is "<< PhysicalClock <<endl;
+        PhysicalClock = ReferenceClock - ThresholdTotal;
+        ev << "PCOClock: the UPDATED 'PhysicalClock' is "<< PhysicalClock <<endl;
     }
 
     LastUpdateTime = SIMTIME_DBL(simTime());
-    ev << "PCOClock: the variable 'LastUpdateTime' is "<< SIMTIME_DBL(simTime()) <<endl;
-    return phyclock;
+    ev << "PCOClock: the 'LastUpdateTime' is "<< SIMTIME_DBL(simTime()) <<endl;
+    return PhysicalClock;
 }
 
 void PCOClock::recordResult()
@@ -262,7 +275,7 @@ void PCOClock::recordResult()
     noise2Vec.record(noise2);
     adjustedthresholdvalueVec.record(ThresholdAdjustValue);
     //thresholdVec.record(RegisterThreshold);
-    phyclockVec.record(phyclock);
+    physicalClockVec.record(PhysicalClock);
     // thresholdOffsetVec.record(ThresholdOffset);
 
 }
@@ -270,25 +283,16 @@ void PCOClock::recordResult()
 /* @breif get timestamp of PCO */
 double PCOClock::getPCOTimestamp()
 {
-    ev << "PCOClock: Timestamp... " << endl;
+    ev << "PCOClock: PCOTimestamp... " << endl;
     ev << "PCOClock: simTime = " << SIMTIME_DBL(simTime()) << ", LastUpdateTime = "<< LastUpdateTime << endl;
 
     noise3 = normal(u3,sigma3);
     noise3Vec.record(noise3);
 
-    double PCOClock = phyclock + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + noise3;
-    ev << "PCOClock = " << PCOClock << endl;
+    PCOClock = PhysicalClock+ drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + noise3;
+    ev << "PCOClock: 'PCOClock' is " << PCOClock << endl;
 
-    ev << "Yan: noise3 is " << noise3 <<endl;
-    ev << "Yan: getPCOTimestamp includes noise3 is " << PCOClock <<endl;
-    ev << "Yan: getPCOTimestamp excludes noise3 is " << phyclock + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) <<endl;
-
-    softclock = PCOClock;
-    ev << "softclock = " << softclock << endl;
-
-    softclockVec.record(softclock);
-    ev << "PCOClock: the returned Clock time is " << softclock <<endl;
-    return softclock;
+    return PCOClock;
 }
 
 /* @breif get timestamp of local drifting clock */
@@ -336,7 +340,8 @@ void PCOClock::updateDisplay()
 {
     char buf[100];
     sprintf(buf, "offset [msec]: %3.2f   \ndrift [ppm]: %3.2f \norigine: %3.2f",
-        offset,drift*1E6,lastupdatetime);
+        // offset,drift*1E6,lastupdatetime);
+           offset,drift*1E6,LastUpdateTime);
     getDisplayString().setTagArg("t",0,buf);
 }
 
@@ -374,11 +379,11 @@ void PCOClock::adjustThreshold()
 {
     // ThresholdAdjustValue = AdjustParameter*ThresholdOffset;
     ThresholdAdjustValue = ThresholdOffset;
-    ev << "PCOClock: based on the threshold adjustment value: "<< ThresholdAdjustValue << ", the RegisterThreshold change from " << RegisterThreshold;
-    RegisterThreshold = RegisterThreshold - ThresholdAdjustValue;
-    ev << " to " << RegisterThreshold << endl;
+    ev << "PCOClock: based on the threshold adjustment value: "<< ThresholdAdjustValue << ", the RegisterThreshold change from " << Threshold;
+    Threshold = Threshold - ThresholdAdjustValue;
+    ev << " to " << Threshold << endl;
 
-    thresholdVec.record(RegisterThreshold);
+    thresholdVec.record(Threshold);
 }
 
 int PCOClock::getnumPulse()

@@ -46,12 +46,12 @@ class PCOClock:public cSimpleModule
         cModule *findHost(void);
 
     private:
-        double Phyclockupdate();
+        double physicalClockUpdate();
         void   recordResult();
         void generateSYNC();
 
-        double lastupdatetime;
-        double phyclock;
+        // double lastupdatetime;
+        // double phyclock;
         double softclock;
         double softclock_t2;
         double softclock_t3;
@@ -85,11 +85,24 @@ class PCOClock:public cSimpleModule
 
 
         /*PCO Parameter*/
-        double RegisterThreshold;   // the threshold value of register
+
+
+        double ReferenceClock;
+        double PhysicalClock;
+        double Threshold;
+        double ThresholdTotal;
+        double LastUpdateTime;
+        double PCOClock;
+
+
+        //_____________________
+
+
+        // double RegisterThreshold;   // the threshold value of register
         double PulseTimePrevious;    // used to reset the clock
         int numPulse;
         double FrameDuration;
-        double LastUpdateTime;
+        // double LastUpdateTime;
         double ThresholdAdjustValue;
         double offsetTotal;
         double RefTimePreviousPulse;
@@ -147,10 +160,11 @@ class PCOClock:public cSimpleModule
 
         cOutVector adjustedthresholdvalueVec;    // the adjusted value of threshold
         cOutVector thresholdVec;    // the threshold value
-        cOutVector phyclockVec;
+        // cOutVector phyclockVec;
         cOutVector pulsetimeVec;    // the threshold value
         cOutVector thresholdOffsetVec;
 
+        cOutVector physicalClockVec;
         cOutVector offsetTotalVec;
 };
 
