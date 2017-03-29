@@ -31,10 +31,12 @@
 class PCOClock:public cSimpleModule
 {
     public:
-        void getThresholdOffset();
-        void adjustThreshold();
+        void getThresholdOffsetWithMaster();
+        void getThresholdOffsetWithRelay();
+        void adjustThresholdBasedMaster();
+        void adjustThresholdBasedRelay();
         int getnumPulse();
-        double getPCOTimestamp();
+        // double getPCOTimestamp();
         double getTimestamp();  // timestamp clock
         double setReceivedTime(double value);
 
@@ -103,12 +105,16 @@ class PCOClock:public cSimpleModule
         int numPulse;
         double FrameDuration;
         // double LastUpdateTime;
-        double ThresholdAdjustValue;
+
         double offsetTotal;
         double RefTimePreviousPulse;
         double ReceivedPulseTime;
 
-        double ThresholdOffset;
+        double ThresholdOffsetBasedMaster;
+        double ThresholdOffsetBasedRelay;
+
+        double ThresholdAdjustValueBasedMaster;
+        double ThresholdAdjustValueBasedRelay;
 
         /* @brief this delay consists of transmission delay and propagation delay
          * for propagation delay, the time for 50m is 1/6us
@@ -117,7 +123,7 @@ class PCOClock:public cSimpleModule
         double delay;
 
         /* @breif the offset between the PCO drifting clock and standard clock */
-        double ClockOffset;
+        // double ClockOffset;
 
         /* @brief the id of node */
         int NodeId;

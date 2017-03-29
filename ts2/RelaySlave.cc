@@ -344,7 +344,7 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
                 ev << "Relay Slave receives SYNC packet from relay node, ignore it\n";
                 ev << "Relay Slave: adjust the threshold of clock...\n";
 
-                servo_clock();  // adjust the clock
+                // servo_clock();  // adjust the clock
                 break;
 
                 // ---------------------------------------------------------------------------
@@ -480,9 +480,12 @@ void RelaySlave::updateDisplay()
 // ---------------------------------------------------------------------------
 void RelaySlave::servo_clock()
 {
-    pClock -> getThresholdOffset();
 
-    pClock -> adjustThreshold();
+    pClock -> getThresholdOffsetWithMaster();
+
+    pClock -> adjustThresholdBasedMaster();
+
+    // pClock -> adjustThresholdBasedRelay();
 }
 
 cModule *RelaySlave::findHost(void)
