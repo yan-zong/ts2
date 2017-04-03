@@ -229,17 +229,20 @@ double PCOClock::physicalClockUpdate()
     ev << "PCOClock: the PREVIOUS offset is "<< offset << endl;
     noise2 =  normal(0,sigma2,1);
     offset = offset + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime)+ noise2;
+    // offset = 0;
     ev << "PCOClock: the UPDATED offset is "<< offset << endl;
 
     ev << "PCOClock: the PREVIOUS drift is "<< drift <<endl;
     noise1 =  normal(0,sigma1,1);
     drift = drift + noise1;
+    // drift = 0;
     ev << "PCOClock: the UPDATED drift is "<< drift <<endl;
 
     if ( NodeId == 0)   // master node
     {
         ev << "PCOClock: the PREVIOUS Reference clock is "<< ReferenceClock << endl;
         ReferenceClock = offset + SIMTIME_DBL(simTime());
+        // ReferenceClock = SIMTIME_DBL(simTime());
         ev << "PCOClock: the UPDATED Reference clock is "<< ReferenceClock << endl;
     }
     else    // relay node
@@ -247,11 +250,11 @@ double PCOClock::physicalClockUpdate()
         ev << "PCOClock: the PREVIOUS Reference clock is "<< ReferenceClock << endl;
         ReferenceClock = offset + SIMTIME_DBL(simTime()) - (ScheduleOffset + NodeId*slotDuration);
         // ReferenceClock = offset + SIMTIME_DBL(simTime());
+        // ReferenceClock = SIMTIME_DBL(simTime()) - (ScheduleOffset + NodeId*slotDuration);
         ev << "PCOClock: the UPDATED Reference clock is "<< ReferenceClock << endl;
     }
 
-//    if ((PhysicalClock - Threshold) > -4e-005)
-    if ((PhysicalClock - Threshold + Tcamp + Tcamp) > 0)
+    if ((PhysicalClock - Threshold + Tcamp + Tcamp) > 0 )
     {
         ev << "PCOClock: the PREVIOUS 'ThresholdTotal' is "<< ThresholdTotal <<endl;
         ThresholdTotal = ThresholdTotal + Threshold;
@@ -263,6 +266,7 @@ double PCOClock::physicalClockUpdate()
 
         generateSYNC();
         EV << "PCOClock: generate and sent SYNC packet to Core module. " << endl;
+
     }
     else
     {
@@ -312,13 +316,14 @@ double PCOClock::getPCOTimestamp()
 double PCOClock::getTimestamp()
 {
     ev << "PCOClock: PCOTimestamp... " << endl;
-    ev << "PCOClock: simTime = " << SIMTIME_DBL(simTime()) << ", LastUpdateTime = "<< LastUpdateTime << endl;
-
     noise3 = normal(u3,sigma3);
     noise3Vec.record(noise3);
 
+    double tempTime = SIMTIME_DBL(simTime());
+    ev << "PCOClock: simTime = " << tempTime << ", LastUpdateTime = "<< LastUpdateTime << endl;
+
     // PCOClock = PhysicalClock+ drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + noise3;
-    PCOClock = PhysicalClock+ drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) ;
+    PCOClock = PhysicalClock+ drift * (tempTime - LastUpdateTime) ;
     ev << "PCOClock: 'PCOClock' is " << PCOClock << endl;
 
     return PCOClock;
@@ -380,8 +385,9 @@ double PCOClock::getThresholdOffsetWithMaster()
     // 1.82E-4 is for physical layer to check the SYNC packet
     // 2.176E-3 = 2.368E-3 - 1.82E-4
     // ThresholdOffsetBasedMaster = Threshold - ReceivedPulseTime - ScheduleOffset - slotDuration*NodeId - slotDuration;
-    ThresholdOffsetBasedMaster = (ReceivedPulseTime - 2.176E-3) - Threshold + ScheduleOffset + slotDuration*NodeId ;
-    // ThresholdOffsetBasedMaster = Threshold - ReceivedPulseTime - 2.176E-3;
+    ThresholdOffsetBasedMaster = Threshold - (ReceivedPulseTime  - 2.176E-3)- ScheduleOffset - slotDuration*NodeId;
+    ThresholdOffsetBasedMaster = - ThresholdOffsetBasedMaster;
+    // ThresholdOffsetBasedMaster = Threshold - ReceivedPulseTime - ScheduleOffset - 2.176E-3;
     // ThresholdOffset = ClockOffset;
 
     thresholdOffsetWithMasterVec.record(ThresholdOffsetBasedMaster);
@@ -405,7 +411,7 @@ void PCOClock::adjustThresholdBasedMaster()
     // ThresholdAdjustValue = AdjustParameter*ThresholdOffset;
     ThresholdAdjustValueBasedMaster = ThresholdOffsetBasedMaster;
     ev << "PCOClock: based on the threshold adjustment value: "<< ThresholdAdjustValueBasedMaster << ", the RegisterThreshold change from " << Threshold;
-    Threshold = Threshold - ThresholdAdjustValueBasedMaster;
+    Threshold = Threshold + ThresholdAdjustValueBasedMaster;
     ev << " to " << Threshold << endl;
 
     thresholdVec.record(Threshold);
@@ -418,9 +424,9 @@ double PCOClock::getThresholdOffsetWithRelay()
     if (NodeId == 1)
     {
         // ThresholdOffsetBasedRelay = ReceivedPulseTime - 0 - slotDuration - slotDuration;
-        ThresholdOffsetBasedRelay = (ReceivedPulseTime - 2.176E-3) - 0 - slotDuration;
+        // ThresholdOffsetBasedRelay = ReceivedPulseTime - 0 - slotDuration - 2.176E-3;
         // ThresholdOffsetBasedRelay = ReceivedPulseTime - 0;
-        // ThresholdOffsetBasedRelay = ReceivedPulseTime - 0 - 2.176E-3;
+        ThresholdOffsetBasedRelay = (ReceivedPulseTime  - 2.176E-3) - 0 - slotDuration ;
 
         ev << "PCOClock: ReceivedPulseTime is " << ReceivedPulseTime <<endl;
         ev << "PCOClock: slotDuration is " << slotDuration <<endl;
@@ -432,9 +438,10 @@ double PCOClock::getThresholdOffsetWithRelay()
     if (NodeId == 2)
     {
         // ThresholdOffsetBasedRelay = Threshold - ReceivedPulseTime - slotDuration - slotDuration;
-        ThresholdOffsetBasedRelay = (ReceivedPulseTime - 2.176E-3) - Threshold + slotDuration;
+        // ThresholdOffsetBasedRelay = Threshold - ReceivedPulseTime - slotDuration - 2.176E-3;
         // ThresholdOffsetBasedRelay = Threshold - ReceivedPulseTime - slotDuration;
-        // ThresholdOffsetBasedRelay = Threshold - ReceivedPulseTime;
+        ThresholdOffsetBasedRelay = Threshold - (ReceivedPulseTime  - 2.176E-3) - slotDuration ;
+        ThresholdOffsetBasedRelay = - ThresholdOffsetBasedRelay;
 
         ev << "PCOClock: ReceivedPulseTime is " << ReceivedPulseTime <<endl;
         ev << "PCOClock: Threshold is " << Threshold <<endl;
@@ -452,7 +459,7 @@ void PCOClock::adjustThresholdBasedRelay()
     // ThresholdAdjustValue = AdjustParameter*ThresholdOffset;
     ThresholdAdjustValueBasedRelay = ThresholdOffsetBasedRelay;
     ev << "PCOClock: based on the threshold adjustment value: "<< ThresholdAdjustValueBasedRelay << ", the RegisterThreshold change from " << Threshold;
-    Threshold = Threshold - ThresholdAdjustValueBasedRelay;
+    Threshold = Threshold + ThresholdAdjustValueBasedRelay;
     ev << " to " << Threshold << endl;
 
     thresholdVec.record(Threshold);
