@@ -297,12 +297,7 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
                 ev << "Relay Slave receives SYNC packet from master node, process it\n";
                 ev << "Relay Slave: adjust the threshold of clock...\n";
 
-                // servo_clock();  // adjust the clock
-
-                pClock -> getThresholdOffsetWithMaster();
-
-                pClock -> adjustThresholdBasedMaster();
-
+                servo_clock();  // adjust the clock
                 break;
 
                 // ---------------------------------------------------------------------------
@@ -353,7 +348,7 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
 
                 pClock -> getThresholdOffsetWithRelay();
 
-                pClock -> adjustThresholdBasedRelay();
+                // pClock -> adjustThresholdBasedRelay();
 
                 break;
 
@@ -493,7 +488,7 @@ void RelaySlave::servo_clock()
 
     pClock -> getThresholdOffsetWithMaster();
 
-    pClock -> adjustThresholdBasedMaster();
+    // pClock -> adjustThresholdBasedMaster();
 
     // pClock -> adjustThresholdBasedRelay();
 }

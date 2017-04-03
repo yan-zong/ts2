@@ -141,6 +141,7 @@ void PCOClock::initialize()
 
     // Tcamp is clock update period
     scheduleAt(simTime() + ScheduleOffset + NodeId*slotDuration ,new cMessage("CLTimer"));
+    // scheduleAt(simTime(),new cMessage("CLTimer"));
     LastUpdateTime = ScheduleOffset + NodeId*slotDuration;
     RefTimePreviousPulse = LastUpdateTime;
 
@@ -228,23 +229,28 @@ double PCOClock::physicalClockUpdate()
     ev << "PCOClock: the PREVIOUS offset is "<< offset << endl;
     noise2 =  normal(0,sigma2,1);
     offset = offset + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime)+ noise2;
+    // offset = 0;
     ev << "PCOClock: the UPDATED offset is "<< offset << endl;
 
     ev << "PCOClock: the PREVIOUS drift is "<< drift <<endl;
     noise1 =  normal(0,sigma1,1);
     drift = drift + noise1;
+    // drift = 0;
     ev << "PCOClock: the UPDATED drift is "<< drift <<endl;
 
     if ( NodeId == 0)   // master node
     {
         ev << "PCOClock: the PREVIOUS Reference clock is "<< ReferenceClock << endl;
         ReferenceClock = offset + SIMTIME_DBL(simTime());
+        // ReferenceClock = SIMTIME_DBL(simTime());
         ev << "PCOClock: the UPDATED Reference clock is "<< ReferenceClock << endl;
     }
     else    // relay node
     {
         ev << "PCOClock: the PREVIOUS Reference clock is "<< ReferenceClock << endl;
         ReferenceClock = offset + SIMTIME_DBL(simTime()) - (ScheduleOffset + NodeId*slotDuration);
+        // ReferenceClock = offset + SIMTIME_DBL(simTime());
+        // ReferenceClock = SIMTIME_DBL(simTime()) - (ScheduleOffset + NodeId*slotDuration);
         ev << "PCOClock: the UPDATED Reference clock is "<< ReferenceClock << endl;
     }
 
@@ -289,6 +295,23 @@ void PCOClock::recordResult()
 
 }
 
+/* @breif get timestamp of PCO */
+/*
+double PCOClock::getPCOTimestamp()
+{
+    ev << "PCOClock: PCOTimestamp... " << endl;
+    ev << "PCOClock: simTime = " << SIMTIME_DBL(simTime()) << ", LastUpdateTime = "<< LastUpdateTime << endl;
+
+    noise3 = normal(u3,sigma3);
+    noise3Vec.record(noise3);
+
+    PCOClock = PhysicalClock+ drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + noise3;
+    ev << "PCOClock: 'PCOClock' is " << PCOClock << endl;
+
+    return PCOClock;
+}
+*/
+
 /* @breif get timestamp of local drifting clock */
 double PCOClock::getTimestamp()
 {
@@ -296,13 +319,34 @@ double PCOClock::getTimestamp()
     noise3 = normal(u3,sigma3);
     noise3Vec.record(noise3);
 
-    ev << "PCOClock: simTime = " << SIMTIME_DBL(simTime()) << ", LastUpdateTime = "<< LastUpdateTime << endl;
+    double tempTime = SIMTIME_DBL(simTime());
+    ev << "PCOClock: simTime = " << tempTime << ", LastUpdateTime = "<< LastUpdateTime << endl;
 
     // PCOClock = PhysicalClock+ drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + noise3;
-    PCOClock = PhysicalClock+ drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) ;
+    PCOClock = PhysicalClock+ drift * (tempTime - LastUpdateTime) ;
     ev << "PCOClock: 'PCOClock' is " << PCOClock << endl;
 
     return PCOClock;
+
+/*
+    // noise3 = normal(u3,sigma3);
+    // noise3Vec.record(noise3);
+    // double clock = getPCOTimestamp() + numPulse * FrameDuration + offsetTotal + noise3;
+    // double clock = getPCOTimestamp() + numPulse * FrameDuration + offsetTotal;
+    // double clock = softclock + numPulse * FrameDuration + offsetTotal;
+    double clock = getPCOTimestamp() + numPulse * FrameDuration;
+
+    ev << "Yan: numPulse * FrameDuration is " << numPulse * FrameDuration <<endl;
+    ev << "Yan: numPulse is " << numPulse <<endl;
+    ev << "Yan: FrameDuration is " << FrameDuration <<endl;
+    ev << "Yan: offsetTotal is " << offsetTotal <<endl;
+    ev << "Yan: getTimestamp is " << clock <<endl;
+
+    ev << "PCOClock: numPulse * FrameDuration = " << numPulse * FrameDuration;
+    ev << ", the variable 'offsetTotal' is " << offsetTotal <<endl;
+    ev << ", the returned clock time is " << clock <<endl;
+    return clock;
+*/
 }
 
 void PCOClock::finish()
@@ -340,14 +384,11 @@ double PCOClock::getThresholdOffsetWithMaster()
     // Note: 2.176E-3 means the time for receiver to recept the SYNC packet from the sender,
     // 1.82E-4 is for physical layer to check the SYNC packet
     // 2.176E-3 = 2.368E-3 - 1.82E-4
-
     // ThresholdOffsetBasedMaster = Threshold - ReceivedPulseTime - ScheduleOffset - slotDuration*NodeId - slotDuration;
-    // ThresholdOffsetBasedMaster = Threshold - (ReceivedPulseTime  - 2.176E-3)- ScheduleOffset - slotDuration*NodeId;
-    // ThresholdOffsetBasedMaster = - ThresholdOffsetBasedMaster;
+    ThresholdOffsetBasedMaster = Threshold - (ReceivedPulseTime  - 2.176E-3)- ScheduleOffset - slotDuration*NodeId;
+    ThresholdOffsetBasedMaster = - ThresholdOffsetBasedMaster;
     // ThresholdOffsetBasedMaster = Threshold - ReceivedPulseTime - ScheduleOffset - 2.176E-3;
     // ThresholdOffset = ClockOffset;
-
-    ThresholdOffsetBasedMaster = (ReceivedPulseTime  - 2.176E-3)- Threshold + ScheduleOffset + slotDuration*NodeId;
 
     thresholdOffsetWithMasterVec.record(ThresholdOffsetBasedMaster);
     // offsetTotalVec.record(offsetTotal);
@@ -399,10 +440,8 @@ double PCOClock::getThresholdOffsetWithRelay()
         // ThresholdOffsetBasedRelay = Threshold - ReceivedPulseTime - slotDuration - slotDuration;
         // ThresholdOffsetBasedRelay = Threshold - ReceivedPulseTime - slotDuration - 2.176E-3;
         // ThresholdOffsetBasedRelay = Threshold - ReceivedPulseTime - slotDuration;
-        // ThresholdOffsetBasedRelay = Threshold - (ReceivedPulseTime  - 2.176E-3) - slotDuration ;
-        // ThresholdOffsetBasedRelay = - ThresholdOffsetBasedRelay;
-
-        ThresholdOffsetBasedRelay = (ReceivedPulseTime - 2.176E-3) - Threshold + slotDuration ;
+        ThresholdOffsetBasedRelay = Threshold - (ReceivedPulseTime  - 2.176E-3) - slotDuration ;
+        ThresholdOffsetBasedRelay = - ThresholdOffsetBasedRelay;
 
         ev << "PCOClock: ReceivedPulseTime is " << ReceivedPulseTime <<endl;
         ev << "PCOClock: Threshold is " << Threshold <<endl;
