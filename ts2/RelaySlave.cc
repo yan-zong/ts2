@@ -291,101 +291,26 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
         {
             if (myMasterAddress == 1000)
             {
-                // ---------------------------------------------------------------------------
-                // for PCO
-                // ---------------------------------------------------------------------------
                 ev << "Relay Slave receives SYNC packet from master node, process it\n";
                 ev << "Relay Slave: adjust the threshold of clock...\n";
 
-                servo_clock();  // adjust the clock
+                pClock -> getThresholdOffsetWithMaster();
+
+                pClock -> adjustThresholdBasedMaster();
                 break;
 
-                // ---------------------------------------------------------------------------
-                // for PCO
-                // ---------------------------------------------------------------------------
-                /*
-                ev << "Relay Slave receives SYNC packet from master node, process it\n";
-                ts1 = ((PtpPkt *)msg)->getTsTx();
-
-                ev << " Relay Slave: ts1 = "<< ts1 <<endl;
-                ev << " Relay Slave: the arrival time of SYNC = "<< SIMTIME_DBL(simTime()) <<endl;
-                pClock->setT123(ts1,0,0);
-
-                Tr = ((Packet *)msg)->getByteLength()*8; //包的传输时延,dxw->hyw: what is Tr for?
-
-                // update the address of master according the received SYNC
-                ev << "my master address is updated to "<< myMasterAddress <<endl;
-
-                // New codes that call public function clock::getTimeStamp()
-                ts2 = pClock->getTimestamp();  //DXW20150129: TODO: shall we use the packet's getTsRx()
-                                                // to get the packet's Rx timestamp by the ptpStmp module
-                                                //  or use the timestamp at higher layer (e.g. ptpSlave.Node)
-                ev << " Relay Slave: ts2 = "<< ts2 <<endl;
-                T= 1/rate;
-                // delay = uniform(0,Tcamp/10);//t2包和t3包间的处理时延
-                delay = uniform(0,1E-5);
-                // delay=1E-5;
-                // ToDo: double check whether need scheduleAt (Done by Yan Zong).
-                // this scheduleAt use to generate the DREQ packet.
-                scheduleAt(simTime()+delay, new cMessage("SLtimer"));
-                delayVec.record(delay); //记录t2,t3间的时延
-
-                ev << "delay (t2 to t3)= " << delay <<endl;
-
-                nbReceivedSyncsFromMaster = nbReceivedSyncsFromMaster + 1;  // count the number of the received SYNC packet.
-                break;
-                */
             }
             else if (myMasterAddress == 2000 || myMasterAddress > 2000)
             {
-                // ---------------------------------------------------------------------------
-                // for PCO
-                // ---------------------------------------------------------------------------
                 ev << "Relay Slave receives SYNC packet from relay node, ignore it\n";
                 ev << "Relay Slave: adjust the threshold of clock...\n";
 
-                // servo_clock();  // adjust the clock
-
                 pClock -> getThresholdOffsetWithRelay();
 
-                // pClock -> adjustThresholdBasedRelay();
+                pClock -> adjustThresholdBasedRelay();
 
                 break;
 
-                // ---------------------------------------------------------------------------
-                // for PTP
-                // ---------------------------------------------------------------------------
-                /*
-                ev << "Relay Slave receives SYNC packet from relay node, process it\n";
-                ts1 = ((PtpPkt *)msg)->getTsTx();
-
-                ev << " Relay Slave: ts1 = "<< ts1 <<endl;
-                ev << " Relay Slave: the arrival time of SYNC = "<< SIMTIME_DBL(simTime()) <<endl;
-                pClock->setT123(ts1,0,0);
-
-                Tr= ((Packet *)msg)->getByteLength()*8; //包的传输时延,dxw->hyw: what is Tr for?
-
-                // update the address of master according the received SYNC
-                ev << "my master address is updated to "<< myMasterAddress <<endl;
-
-                // New codes that call public function clock::getTimeStamp()
-                ts2 = pClock->getTimestamp();  //DXW20150129: TODO: shall we use the packet's getTsRx()
-                                                        // to get the packet's Rx timestamp by the ptpStmp module
-                                                        //  or use the timestamp at higher layer (e.g. ptpSlave.Node)
-                ev << " Relay Slave: ts2 = "<< ts2 <<endl;
-                T= 1/rate;
-                // delay = uniform(0,Tcamp/10);//t2包和t3包间的处理时延
-                delay = uniform(0,1E-5);
-                // delay=1E-5;
-                // ToDo: double check whether need scheduleAt (Done by Yan Zong).
-                // this scheduleAt use to generate the DREQ packet.
-                scheduleAt(simTime()+delay, new cMessage("SLtimer"));
-                delayVec.record(delay); //记录t2,t3间的时延
-
-                ev << "delay (t2 to t3)= " << delay <<endl;
-
-                break;
-                */
             }
             else
             {
@@ -402,7 +327,7 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
                 ts4 = ((PtpPkt *)msg)->getData();
                 ev << " Relay Slave: ts4 = "<< ts4 <<endl;
                 delta_t41 = SIMTIME_DBL(simTime()) - ts1;
-                servo_clock();
+                // servo_clock();
 
                 // activate the second-hop time sync immediately.
                 // pRelayMaster->startSync();
@@ -414,7 +339,7 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
                 ts4 = ((PtpPkt *)msg)->getData();
                 ev << " Relay Slave: ts4 = "<< ts4 <<endl;
                 delta_t41 = SIMTIME_DBL(simTime()) - ts1;
-                servo_clock();
+                // servo_clock();
 
                 // activate the second-hop time sync immediately.
                 // pRelayMaster->startSync();
@@ -478,19 +403,6 @@ void RelaySlave::updateDisplay()
 	sprintf(buf, "dms [ms]: %3.2f \ndsm [ms]: %3.2f \ndpr [ms]: %3.2f \noffset [ms]: %3.2f\n ",
 		dms*1000,dsm*1000,dprop*1000,offset*1000);
 	getDisplayString().setTagArg("t",0,buf);
-}
-
-// ---------------------------------------------------------------------------
-// this function is used to adjust the clock
-// ---------------------------------------------------------------------------
-void RelaySlave::servo_clock()
-{
-
-    pClock -> getThresholdOffsetWithMaster();
-
-    // pClock -> adjustThresholdBasedMaster();
-
-    // pClock -> adjustThresholdBasedRelay();
 }
 
 cModule *RelaySlave::findHost(void)

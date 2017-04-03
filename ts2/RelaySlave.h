@@ -47,7 +47,6 @@ class RelaySlave: public cSimpleModule
 	    void recordResult();
 	    void handleOtherPacket(cMessage *msg);
 	    void handleEventMessage(cMessage *msg);
-	    void servo_clock();
 
 	    const char *name;
 	    int myAddress;          // the variable is used in the multi-hop network
