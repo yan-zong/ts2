@@ -345,6 +345,11 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
                 ev << "Relay Slave: adjust the threshold of clock...\n";
 
                 // servo_clock();  // adjust the clock
+
+                pClock -> getThresholdOffsetWithRelay();
+
+                // pClock -> adjustThresholdBasedRelay();
+
                 break;
 
                 // ---------------------------------------------------------------------------
@@ -483,7 +488,7 @@ void RelaySlave::servo_clock()
 
     pClock -> getThresholdOffsetWithMaster();
 
-    pClock -> adjustThresholdBasedMaster();
+    // pClock -> adjustThresholdBasedMaster();
 
     // pClock -> adjustThresholdBasedRelay();
 }
