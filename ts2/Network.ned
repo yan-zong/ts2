@@ -22,8 +22,7 @@
 package ts2;
 
 import org.mixim.base.connectionManager.IConnectionManager;
-import org.mixim.base.modules.IWorldUtility;
-import org.mixim.examples.ieee802154Narrow.WorldUtilityStats;
+import ts2.im.WorldUtilityStats;
 
 // base network 
 network MyBaseNetwork
@@ -39,16 +38,19 @@ network MyBaseNetwork
         **.mobility.constraintAreaMaxY = default(playgroundSizeY);
         **.mobility.constraintAreaMaxZ = default(playgroundSizeZ);
         string cmType = default("org.mixim.base.connectionManager.ConnectionManager"); // connection manager to use
-        string wuType = default("org.mixim.base.modules.BaseWorldUtility");            // world utility to use
+        string wuType = default("WorldUtilityStats");            // world utility to use, from 'org.mixim.examples.ieee802154Narrow.WorldUtilityStats' 
 
 		@display("bgb=$playgroundSizeX,$playgroundSizeY,white;bgp=0,0");
 
     submodules:
-        connectionManager: <cmType> like IConnectionManager {
+        connectionManager: <cmType> like IConnectionManager 
+        {
             parameters:
                 @display("p=201,0;i=abstract/multicast;is=s");
         }
-        world: <wuType> like IWorldUtility {
+        
+        world: WorldUtilityStats 
+        {
             parameters:
                 playgroundSizeX = playgroundSizeX;
                 playgroundSizeY = playgroundSizeY;
@@ -67,7 +69,6 @@ network Network extends MyBaseNetwork
         int numSlave; // number of slave in the network
         int numMaster; // number of master in the network
         cmType = default("org.mixim.base.connectionManager.ConnectionManager");	// connection manager to use
-        wuType = default("org.mixim.examples.ieee802154Narrow.WorldUtilityStats"); // world untility to use
         @display("bgb=$playgroundSizeX,$playgroundSizeY,white,,;bgp=10,50");
 
     submodules:
