@@ -25,6 +25,7 @@ import org.mixim.modules.power.battery.BatteryStats;
 import org.mixim.modules.power.battery.SimpleBattery;
 import org.mixim.modules.node.WirelessNode;
 import mytdmamac.TDMAmac.PCOClock;
+import mytdmamac.TDMAmac.IIRFilter;
 
 module SlaveNode extends HostNode
 {
@@ -34,28 +35,29 @@ module SlaveNode extends HostNode
         mobilityType = default("StationaryMobility"); //type of the mobility module
         arpType = "ArpHost";
 
-		nicType = "Nic_Timestamp_TDMA";	// for NIC with hardware timie stamp, and also for TDMA
+        nicType = "Nic_Timestamp_TDMA";	// for NIC with hardware timie stamp, and also for TDMA
 
         ptpCoreType = default("SlaveCore");
-        
+
         @display("bgb=271,307,white;i=misc/node;i2=status/battery;b=40,40,rect;is=s");
-        
-	    int numHosts; // total number of hosts in the network
+
+        int numHosts; // total number of hosts in the network
 
     submodules:
-        batteryStats: BatteryStats 
-        {
+        batteryStats: BatteryStats {
             @display("p=215,253;i=block/table,#FF8040");
         }
-        
-        battery: SimpleBattery 
-        {
+
+        battery: SimpleBattery {
             @display("p=133,253;i=block/plug,#FF8000");
         }
-        
-        clock: PCOClock 
-        {
-        	@display("p=215,101;i=device/clock");
+
+        clock: PCOClock {
+            @display("p=215,101;i=device/clock");
+        }
+
+        iir: IIRFilter {
+            @display("p=251,102;i=status/execute");
         }
 
     connections allowunconnected:

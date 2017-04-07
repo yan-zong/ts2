@@ -27,6 +27,7 @@
 #include <omnetpp.h>
 #include <fstream>
 #include "Packet_m.h"
+#include "IIRFilter.h"
 
 class PCOClock:public cSimpleModule
 {
@@ -96,6 +97,8 @@ class PCOClock:public cSimpleModule
         double LastUpdateTime;
         double PCOClock;
 
+        IIRFilter *pIIRFilter; // pointer to my clock module
+
 
         //_____________________
 
@@ -112,6 +115,8 @@ class PCOClock:public cSimpleModule
 
         double ThresholdOffsetBasedMaster;
         double ThresholdOffsetBasedRelay;
+        double ThresholdOffsetBasedMasterIIR;
+        double ThresholdOffsetBasedRelayIIR;
 
         double ThresholdAdjustValueBasedMaster;
         double ThresholdAdjustValueBasedRelay;
@@ -172,6 +177,9 @@ class PCOClock:public cSimpleModule
 
         cOutVector thresholdOffsetWithMasterVec;
         cOutVector thresholdOffsetWithrelayVec;
+
+        cOutVector thresholdOffsetWithMasterIIRVec;
+        cOutVector thresholdOffsetWithrelayIIRVec;
 
         cOutVector physicalClockVec;
         // cOutVector offsetTotalVec;

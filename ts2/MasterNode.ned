@@ -25,6 +25,7 @@ import org.mixim.modules.power.battery.BatteryStats;
 import org.mixim.modules.power.battery.SimpleBattery;
 import org.mixim.modules.node.WirelessNode;
 import mytdmamac.TDMAmac.PCOClock;
+import mytdmamac.TDMAmac.IIRFilter;
 
 module MasterNode extends HostNode
 {
@@ -57,6 +58,10 @@ module MasterNode extends HostNode
         clock: PCOClock 
         {
         	@display("p=215,101;i=device/clock");
+        }
+        
+        iir: IIRFilter {
+            @display("p=251,102;i=status/execute");
         }
         
     connections allowunconnected:

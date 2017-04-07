@@ -57,6 +57,9 @@ void PCOClock::initialize()
     thresholdOffsetWithMasterVec.setName("ThresholdOffsetBasedMaster");
     thresholdOffsetWithrelayVec.setName("ThresholdOffsetBasedRelay");
 
+    thresholdOffsetWithMasterIIRVec.setName("ThresholdOffsetBasedMasterIIR");
+    thresholdOffsetWithrelayIIRVec.setName("ThresholdOffsetBasedRelayIIR");
+
     // offsetTotalVec.setName("OffsetTotal");
 
     // ---------------------------------------------------------------------------
@@ -111,6 +114,11 @@ void PCOClock::initialize()
     PhysicalClock = 0;
     ThresholdTotal = 0;
     PCOClock = 0;
+
+    /* Initialise the pointer to the IIR Filter module */
+    pIIRFilter = (IIRFilter *)getParentModule()->getSubmodule("iir");
+    if (pIIRFilter == NULL)
+        error("No IIF Filter module is found in the module");
 
     NodeId = (findHost()->getId() - 4);
     EV << "PCOClock: the node id is " << NodeId << ", and 'ScheduleOffset+slotDuration*NodeId' is "<< ScheduleOffset+slotDuration*NodeId <<endl ;
@@ -341,9 +349,12 @@ double PCOClock::getThresholdOffsetWithMaster()
 
 void PCOClock::adjustThresholdBasedMaster()
 {
+    ThresholdOffsetBasedMasterIIR = pIIRFilter->mainIIR(ThresholdOffsetBasedMaster);
+    thresholdOffsetWithMasterIIRVec.record(ThresholdOffsetBasedMasterIIR);
+
     ThresholdAdjustValueBasedMaster = AdjustParameter * ThresholdOffsetBasedMaster;
     ev << "PCOClock: based on the threshold adjustment value: "<< ThresholdAdjustValueBasedMaster << ", the RegisterThreshold change from " << Threshold;
-    Threshold = Threshold + ThresholdAdjustValueBasedMaster;
+    // Threshold = Threshold + ThresholdAdjustValueBasedMaster;
     ev << " to " << Threshold << endl;
 
     thresholdVec.record(Threshold);
@@ -370,9 +381,12 @@ double PCOClock::getThresholdOffsetWithRelay()
 
 void PCOClock::adjustThresholdBasedRelay()
 {
+    ThresholdOffsetBasedRelayIIR = pIIRFilter->mainIIR(ThresholdOffsetBasedRelay);
+    thresholdOffsetWithrelayIIRVec.record(ThresholdOffsetBasedRelayIIR);
+
     ThresholdAdjustValueBasedRelay = AdjustParameter * ThresholdOffsetBasedRelay;
     ev << "PCOClock: based on the threshold adjustment value: "<< ThresholdAdjustValueBasedRelay << ", the RegisterThreshold change from " << Threshold;
-    Threshold = Threshold + ThresholdAdjustValueBasedRelay;
+    // Threshold = Threshold + ThresholdAdjustValueBasedRelay;
     ev << " to " << Threshold << endl;
 
     thresholdVec.record(Threshold);
