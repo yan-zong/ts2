@@ -24,6 +24,18 @@ simple PCOClock
     	double ScheduleOffset @unit(s) = default(0ms);
     	// @brief this delay consists of transmission delay and propagation delay, see clock.h 
     	double delay @unit(s) = default(0ms);
+    	// the parameter of numerator of IIR filter
+    	double IIRnum1;
+    	double IIRnum2;
+    	double IIRnum3;
+    	double IIRnum4;
+    	double IIRnum5;
+    	// the parameter of denominator of IIR filter
+    	double IIRden1;
+    	double IIRden2;
+    	double IIRden3;
+    	double IIRden4;
+    	double IIRden5;
     	
     gates:
         input inclock;
