@@ -137,6 +137,8 @@ void PCOClock::initialize()
     EV << "PCOClock: the denominator parameter of IIR Filter is "<<endl;
     EV << "IIRden1: " << IIRden1 << " IIRden2: " << IIRden2 << " IIRden3: " << IIRden3 << " IIRden4: " << IIRden4 << " IIRden5: " << IIRden5 << endl;
 
+    EV << "PCOClock: AdjustParameter: " << AdjustParameter << endl;
+
     IIRInputMaster1 = 0;
     IIRInputMaster2 = 0;
     IIRInputMaster3 = 0;
@@ -341,8 +343,8 @@ double PCOClock::getTimestamp()
 
     ev << "PCOClock: simTime = " << SIMTIME_DBL(simTime()) << ", LastUpdateTime = "<< LastUpdateTime << endl;
 
-    // PCOClock = PhysicalClock+ drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + noise3;
-    PCOClock = PhysicalClock+ drift * (SIMTIME_DBL(simTime()) - LastUpdateTime);
+    PCOClock = PhysicalClock+ drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + noise3;
+    // PCOClock = PhysicalClock+ drift * (SIMTIME_DBL(simTime()) - LastUpdateTime);
     ev << "PCOClock: 'PCOClock' is " << PCOClock << endl;
 
     return PCOClock;
@@ -398,6 +400,7 @@ void PCOClock::adjustThresholdBasedMaster()
 
     ev << "PCOClock: based on the threshold adjustment value: "<< ThresholdAdjustValueBasedMaster << ", the RegisterThreshold change from " << Threshold;
     Threshold = Threshold + ThresholdAdjustValueBasedMaster;
+    // Threshold = Threshold + ThresholdAdjustValueBasedMasterIIR;
     ev << " to " << Threshold << endl;
 
     thresholdVec.record(Threshold);
@@ -431,6 +434,7 @@ void PCOClock::adjustThresholdBasedRelay()
 
     ev << "PCOClock: based on the threshold adjustment value: "<< ThresholdAdjustValueBasedRelay << ", the RegisterThreshold change from " << Threshold;
     Threshold = Threshold + ThresholdAdjustValueBasedRelay;
+    // Threshold = Threshold + ThresholdAdjustValueBasedRelayIIR;
     ev << " to " << Threshold << endl;
 
     thresholdVec.record(Threshold);
