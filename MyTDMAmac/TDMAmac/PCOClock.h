@@ -53,6 +53,7 @@ class PCOClock:public cSimpleModule
         void generateSYNC();
         double IIRFilterMaster(double IIRFilterInput);
         double IIRFilterRelay(double IIRFilterInput);
+        double AbsoluteValue(double AbsoultValueInput);
 
         // double lastupdatetime;
         // double phyclock;
@@ -102,14 +103,10 @@ class PCOClock:public cSimpleModule
         double IIRnum1;
         double IIRnum2;
         double IIRnum3;
-        double IIRnum4;
-        double IIRnum5;
         // the parameter of denominator of IIR filter
         double IIRden1;
         double IIRden2;
         double IIRden3;
-        double IIRden4;
-        double IIRden5;
 
         double IIRFilterOutputMaster;
         double IIRFilterOutputRelay;
@@ -117,24 +114,16 @@ class PCOClock:public cSimpleModule
         double IIRInputMaster1 = 0;
         double IIRInputMaster2 = 0;
         double IIRInputMaster3 = 0;
-        double IIRInputMaster4 = 0;
-        double IIRInputMaster5 = 0;
         double IIROutputMaster1 = 0;
         double IIROutputMaster2 = 0;
         double IIROutputMaster3 = 0;
-        double IIROutputMaster4 = 0;
-        double IIROutputMaster5 = 0;
 
         double IIRInputRelay1 = 0;
         double IIRInputRelay2 = 0;
         double IIRInputRelay3 = 0;
-        double IIRInputRelay4 = 0;
-        double IIRInputRelay5 = 0;
         double IIROutputRelay1 = 0;
         double IIROutputRelay2 = 0;
         double IIROutputRelay3 = 0;
-        double IIROutputRelay4 = 0;
-        double IIROutputRelay5 = 0;
 
 
         //_____________________
@@ -153,11 +142,16 @@ class PCOClock:public cSimpleModule
         double ThresholdOffsetBasedMaster;
         double ThresholdOffsetBasedRelay;
 
+        double ThresholdOffsetPreviousBasedMaster;
+        double ThresholdOffsetPreviousBasedRelay;
+
         double ThresholdAdjustValueBasedMaster;
         double ThresholdAdjustValueBasedRelay;
 
         double ThresholdAdjustValueBasedMasterIIR;
         double ThresholdAdjustValueBasedRelayIIR;
+
+        int CorrectionAlgorithm;
 
         /* @brief this delay consists of transmission delay and propagation delay
          * for propagation delay, the time for 50m is 1/6us

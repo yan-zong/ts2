@@ -118,48 +118,38 @@ void PCOClock::initialize()
     ThresholdAdjustValueBasedMasterIIR = 0;
     ThresholdAdjustValueBasedRelayIIR = 0;
 
+    CorrectionAlgorithm = par("CorrectionAlgorithm");
+
     // the parameter of numerator of IIR filter
     IIRnum1 = par("IIRnum1");
     IIRnum2 = par("IIRnum2");
     IIRnum3 = par("IIRnum3");
-    IIRnum4 = par("IIRnum4");
-    IIRnum5 = par("IIRnum5");
     // the parameter of denominator of IIR filter
     IIRden1 = par("IIRden1");
     IIRden2 = par("IIRden2");
     IIRden3 = par("IIRden3");
-    IIRden4 = par("IIRden4");
-    IIRden5 = par("IIRden5");
 
     EV << "PCOClock: the numerator parameter of IIR Filter is "<<endl;
-    EV << "IIRnum1: " << IIRnum1 << " IIRnum2: " << IIRnum2 << " IIRnum3: " << IIRnum3 << " IIRnum4: " << IIRnum4 << " IIRnum5: " << IIRnum5 << endl;
+    EV << "IIRnum1: " << IIRnum1 << " IIRnum2: " << IIRnum2 << " IIRnum3: " << IIRnum3 << endl;
 
     EV << "PCOClock: the denominator parameter of IIR Filter is "<<endl;
-    EV << "IIRden1: " << IIRden1 << " IIRden2: " << IIRden2 << " IIRden3: " << IIRden3 << " IIRden4: " << IIRden4 << " IIRden5: " << IIRden5 << endl;
+    EV << "IIRden1: " << IIRden1 << " IIRden2: " << IIRden2 << " IIRden3: " << IIRden3 << endl;
 
     EV << "PCOClock: AdjustParameter: " << AdjustParameter << endl;
 
     IIRInputMaster1 = 0;
     IIRInputMaster2 = 0;
     IIRInputMaster3 = 0;
-    IIRInputMaster4 = 0;
-    IIRInputMaster5 = 0;
     IIROutputMaster1 = 0;
     IIROutputMaster2 = 0;
     IIROutputMaster3 = 0;
-    IIROutputMaster4 = 0;
-    IIROutputMaster5 = 0;
 
     IIRInputRelay1 = 0;
     IIRInputRelay2 = 0;
     IIRInputRelay3 = 0;
-    IIRInputRelay4 = 0;
-    IIRInputRelay5 = 0;
     IIROutputRelay1 = 0;
     IIROutputRelay2 = 0;
     IIROutputRelay3 = 0;
-    IIROutputRelay4 = 0;
-    IIROutputRelay5 = 0;
 
     IIRFilterOutputMaster = 0;
     IIRFilterOutputRelay = 0;
@@ -177,6 +167,12 @@ void PCOClock::initialize()
 
     ThresholdAdjustValueBasedMaster = 0;
     ThresholdAdjustValueBasedRelay = 0;
+
+    ThresholdAdjustValueBasedMasterIIR = 0;
+    ThresholdAdjustValueBasedRelayIIR = 0;
+
+    ThresholdOffsetPreviousBasedMaster = 0;
+    ThresholdOffsetPreviousBasedRelay = 0;
 
     if(ev.isGUI())
     {
@@ -385,9 +381,24 @@ double PCOClock::getThresholdOffsetWithMaster()
     // Note: 2.176E-3 means the time for receiver to recept the SYNC packet from the sender,
     // 1.82E-4 is for physical layer to check the SYNC packet
     // 2.176E-3 = 2.368E-3 - 1.82E-4
-
     ThresholdOffsetBasedMaster = (ReceivedPulseTime  - 2.176E-3) - Threshold + ScheduleOffset + slotDuration*NodeId;
+
+    ev << "PCOClock: 'ThresholdOffsetBasedMaster' is " << ThresholdOffsetBasedMaster << endl;
+    ev << "PCOClock: 'ThresholdOffsetPreviousBasedMaster' is " << ThresholdOffsetPreviousBasedMaster << endl;
+
+    /*
+    if (AbsoluteValue(ThresholdOffsetBasedMaster) > ( 0.002 + AbsoluteValue(ThresholdOffsetPreviousBasedMaster)))
+    {
+        ThresholdOffsetBasedMaster = 0;
+    }
+    */
+
+    ev << "PCOClock: 'ThresholdOffsetBasedMaster' is " << ThresholdOffsetBasedMaster << endl;
+
     thresholdOffsetWithMasterVec.record(ThresholdOffsetBasedMaster);
+
+    ThresholdOffsetPreviousBasedMaster = ThresholdOffsetBasedMaster;
+
     return ThresholdOffsetBasedMaster;
 }
 
@@ -398,10 +409,23 @@ void PCOClock::adjustThresholdBasedMaster()
     ThresholdAdjustValueBasedMasterIIR = IIRFilterMaster(ThresholdOffsetBasedMaster);
     thresholdOffsetWithMasterIIRVec.record(ThresholdAdjustValueBasedMasterIIR);
 
-    ev << "PCOClock: based on the threshold adjustment value: "<< ThresholdAdjustValueBasedMaster << ", the RegisterThreshold change from " << Threshold;
-    Threshold = Threshold + ThresholdAdjustValueBasedMaster;
-    // Threshold = Threshold + ThresholdAdjustValueBasedMasterIIR;
-    ev << " to " << Threshold << endl;
+    if (CorrectionAlgorithm == 0)
+    {
+        ev << "PCOClock: based on the threshold adjustment value: "<< ThresholdAdjustValueBasedMaster << ", the RegisterThreshold change from " << Threshold;
+        Threshold = Threshold + ThresholdAdjustValueBasedMaster;
+        ev << " to " << Threshold << endl;
+    }
+    else if (CorrectionAlgorithm == 1)
+    {
+        ev << "PCOClock: based on the threshold adjustment value: "<< ThresholdAdjustValueBasedMasterIIR << ", the RegisterThreshold change from " << Threshold;
+        Threshold = Threshold + AdjustParameter * ThresholdAdjustValueBasedMasterIIR;
+        ev << " to " << Threshold << endl;
+    }
+    else if (CorrectionAlgorithm == 2)
+    {
+        ;
+    }
+
 
     thresholdVec.record(Threshold);
 }
@@ -413,14 +437,59 @@ double PCOClock::getThresholdOffsetWithRelay()
     if (NodeId == 1)
     {
         ThresholdOffsetBasedRelay = (ReceivedPulseTime  - 2.176E-3) - 0 - slotDuration ;
+
+        ev << "PCOClock: 'ThresholdOffsetBasedRelay' is " << ThresholdOffsetBasedRelay << endl;
+        ev << "PCOClock: 'ThresholdOffsetPreviousBasedRelay' is " << ThresholdOffsetPreviousBasedRelay << endl;
+
+        ev << "debug: 'abs(ThresholdOffsetBasedRelay)' is " << AbsoluteValue(ThresholdOffsetBasedRelay) << endl;
+        ev << "debug: 'abs(ThresholdOffsetPreviousBasedRelay)' is " << AbsoluteValue(ThresholdOffsetPreviousBasedRelay) << endl;
+
+        if (AbsoluteValue(ThresholdOffsetBasedRelay) > 0.5)
+        {
+            ThresholdOffsetBasedRelay = (ReceivedPulseTime  - 2.176E-3) - Threshold + slotDuration;
+        }
+        /*
+        if (AbsoluteValue(ThresholdOffsetBasedRelay) > (0.002 + AbsoluteValue(ThresholdOffsetPreviousBasedRelay)))
+        {
+            ThresholdOffsetBasedRelay = 0;
+        }
+        */
+
+        ev << "PCOClock: 'ThresholdOffsetBasedRelay' is " << ThresholdOffsetBasedRelay << endl;
+
         thresholdOffsetWithrelayVec.record(ThresholdOffsetBasedRelay);
+
+        ThresholdOffsetPreviousBasedRelay = ThresholdOffsetBasedRelay;
     }
 
     if (NodeId == 2)
     {
         ThresholdOffsetBasedRelay = (ReceivedPulseTime  - 2.176E-3) - Threshold + slotDuration;
+
+        ev << "PCOClock: 'ThresholdOffsetBasedRelay' is " << ThresholdOffsetBasedRelay << endl;
+        ev << "PCOClock: 'ThresholdOffsetPreviousBasedRelay' is " << ThresholdOffsetPreviousBasedRelay << endl;
+
+        ev << "debug: 'abs(ThresholdOffsetBasedRelay)' is " << AbsoluteValue(ThresholdOffsetBasedRelay) << endl;
+        ev << "debug: 'abs(ThresholdOffsetPreviousBasedRelay)' is " << AbsoluteValue(ThresholdOffsetPreviousBasedRelay) << endl;
+
+        if (AbsoluteValue(ThresholdOffsetBasedRelay) > 0.5 )
+        {
+            ThresholdOffsetBasedRelay = (ReceivedPulseTime  - 2.176E-3) - 0 - slotDuration ;
+        }
+        /*
+        if (AbsoluteValue(ThresholdOffsetBasedRelay) > (0.002 + AbsoluteValue(ThresholdOffsetPreviousBasedRelay)))
+        {
+            ThresholdOffsetBasedRelay = 0;
+        }
+        */
+
+        ev << "PCOClock: 'ThresholdOffsetBasedRelay' is " << ThresholdOffsetBasedRelay << endl;
+
         thresholdOffsetWithrelayVec.record(ThresholdOffsetBasedRelay);
+
+        ThresholdOffsetPreviousBasedRelay = ThresholdOffsetBasedRelay;
     }
+
     return ThresholdOffsetBasedRelay;
 
 }
@@ -432,10 +501,23 @@ void PCOClock::adjustThresholdBasedRelay()
     ThresholdAdjustValueBasedRelayIIR = IIRFilterRelay(ThresholdOffsetBasedRelay);
     thresholdOffsetWithrelayIIRVec.record(ThresholdAdjustValueBasedRelayIIR);
 
-    ev << "PCOClock: based on the threshold adjustment value: "<< ThresholdAdjustValueBasedRelay << ", the RegisterThreshold change from " << Threshold;
-    Threshold = Threshold + ThresholdAdjustValueBasedRelay;
-    // Threshold = Threshold + ThresholdAdjustValueBasedRelayIIR;
-    ev << " to " << Threshold << endl;
+    if (CorrectionAlgorithm == 0)
+    {
+        ev << "PCOClock: based on the threshold adjustment value: "<< ThresholdAdjustValueBasedRelay << ", the RegisterThreshold change from " << Threshold;
+        Threshold = Threshold + ThresholdAdjustValueBasedRelay;
+        ev << " to " << Threshold << endl;
+    }
+    else if (CorrectionAlgorithm == 1)
+    {
+        ev << "PCOClock: based on the threshold adjustment value: "<< ThresholdAdjustValueBasedRelayIIR << ", the RegisterThreshold change from " << Threshold;
+        Threshold = Threshold + AdjustParameter * ThresholdAdjustValueBasedRelayIIR;
+        ev << " to " << Threshold << endl;
+    }
+    else if (CorrectionAlgorithm == 2)
+    {
+        ;
+    }
+
 
     thresholdVec.record(Threshold);
 }
@@ -481,27 +563,23 @@ cModule *PCOClock::findHost(void)
 double PCOClock::IIRFilterMaster(double IIRFilterInput)
 {
     EV << "IIRFilterMaster..." << endl;
-    EV << "PREVIOUS IIRInput1: " << IIRInputMaster1 << " PREVIOUS IIRInput2: " << IIRInputMaster2 << " PREVIOUS IIRInput3: " << IIRInputMaster3 << " PREVIOUS IIRInput4: " << IIRInputMaster4 << " PREVIOUS IIRInput5: " << IIRInputMaster5 << endl;
+    EV << "PREVIOUS IIRInput1: " << IIRInputMaster1 << " PREVIOUS IIRInput2: " << IIRInputMaster2 << " PREVIOUS IIRInput3: " << IIRInputMaster3 << endl;
 
-    EV << "PREVIOUS IIROutput1: " << IIROutputMaster1 << " PREVIOUS IIROutput2: " << IIROutputMaster2 << " PREVIOUS IIROutput3: " << IIROutputMaster3 << " PREVIOUS IIROutput4: " << IIROutputMaster4 << " PREVIOUS IIROutput5: " << IIROutputMaster5 << endl;
+    EV << "PREVIOUS IIROutput1: " << IIROutputMaster1 << " PREVIOUS IIROutput2: " << IIROutputMaster2 << " PREVIOUS IIROutput3: " << IIROutputMaster3 << endl;
 
-    IIRInputMaster5 = IIRInputMaster4;
-    IIRInputMaster4 = IIRInputMaster3;
     IIRInputMaster3 = IIRInputMaster2;
     IIRInputMaster2 = IIRInputMaster1;
     IIRInputMaster1 = IIRFilterInput;
 
-    IIROutputMaster5 = IIROutputMaster4;
-    IIROutputMaster4 = IIROutputMaster3;
     IIROutputMaster3 = IIROutputMaster2;
     IIROutputMaster2 = IIROutputMaster1;
-    IIROutputMaster1 = (1/IIRden1) * ((IIRnum1 * IIRInputMaster1) + (IIRnum2 * IIRInputMaster2) + (IIRnum3 * IIRInputMaster3) + (IIRnum4 * IIRInputMaster4) + (IIRnum5 * IIRInputMaster5) - (IIRden2 * IIROutputMaster2) - (IIRden3 * IIROutputMaster3) - (IIRden4 * IIROutputMaster4) - (IIRden5 * IIROutputMaster5));
+    IIROutputMaster1 = (1/IIRden1) * ((IIRnum1 * IIRInputMaster1) + (IIRnum2 * IIRInputMaster2) + (IIRnum3 * IIRInputMaster3) - (IIRden2 * IIROutputMaster2) - (IIRden3 * IIROutputMaster3));
 
     IIRFilterOutputMaster = IIROutputMaster1;
 
-    EV << "UPDATED IIRInput1: " << IIRInputMaster1 << " UPDATED IIRInput2: " << IIRInputMaster2 << " UPDATED IIRInput3: " << IIRInputMaster3 << " UPDATED IIRInput4: " << IIRInputMaster4 << " UPDATED IIRInput5: " << IIRInputMaster5 << endl;
+    EV << "UPDATED IIRInput1: " << IIRInputMaster1 << " UPDATED IIRInput2: " << IIRInputMaster2 << " UPDATED IIRInput3: " << IIRInputMaster3 << endl;
 
-    EV << "UPDATED IIROutput1: " << IIROutputMaster1 << " UPDATED IIROutput2: " << IIROutputMaster2 << " UPDATED IIROutput3: " << IIROutputMaster3 << " UPDATED IIROutput4: " << IIROutputMaster4 << " UPDATED IIROutput5: " << IIROutputMaster5 << endl;
+    EV << "UPDATED IIROutput1: " << IIROutputMaster1 << " UPDATED IIROutput2: " << IIROutputMaster2 << " UPDATED IIROutput3: " << IIROutputMaster3 << endl;
 
     return IIRFilterOutputMaster;
 }
@@ -509,29 +587,36 @@ double PCOClock::IIRFilterMaster(double IIRFilterInput)
 double PCOClock::IIRFilterRelay(double IIRFilterInput)
 {
     EV << "IIRFilterRelay..." << endl;
-    EV << "PREVIOUS IIRInput1: " << IIRInputRelay1 << " PREVIOUS IIRInput2: " << IIRInputRelay2 << " PREVIOUS IIRInput3: " << IIRInputRelay3 << " PREVIOUS IIRInput4: " << IIRInputRelay4 << " PREVIOUS IIRInput5: " << IIRInputRelay5 << endl;
+    EV << "PREVIOUS IIRInput1: " << IIRInputRelay1 << " PREVIOUS IIRInput2: " << IIRInputRelay2 << " PREVIOUS IIRInput3: " << IIRInputRelay3 << endl;
 
-    EV << "PREVIOUS IIROutput1: " << IIROutputRelay1 << " PREVIOUS IIROutput2: " << IIROutputRelay2 << " PREVIOUS IIROutput3: " << IIROutputRelay3 << " PREVIOUS IIROutput4: " << IIROutputRelay4 << " PREVIOUS IIROutput5: " << IIROutputRelay5 << endl;
+    EV << "PREVIOUS IIROutput1: " << IIROutputRelay1 << " PREVIOUS IIROutput2: " << IIROutputRelay2 << " PREVIOUS IIROutput3: " << IIROutputRelay3 << endl;
 
-    IIRInputRelay5 = IIRInputRelay4;
-    IIRInputRelay4 = IIRInputRelay3;
     IIRInputRelay3 = IIRInputRelay2;
     IIRInputRelay2 = IIRInputRelay1;
     IIRInputRelay1 = IIRFilterInput;
 
-    IIROutputRelay5 = IIROutputRelay4;
-    IIROutputRelay4 = IIROutputRelay3;
     IIROutputRelay3 = IIROutputRelay2;
     IIROutputRelay2 = IIROutputRelay1;
-    IIROutputRelay1 = (1/IIRden1) * ((IIRnum1 * IIRInputRelay1) + (IIRnum2 * IIRInputRelay2) + (IIRnum3 * IIRInputRelay3) + (IIRnum4 * IIRInputRelay4) + (IIRnum5 * IIRInputRelay5) - (IIRden2 * IIROutputRelay2) - (IIRden3 * IIROutputRelay3) - (IIRden4 * IIROutputRelay4) - (IIRden5 * IIROutputRelay5));
+    IIROutputRelay1 = (1/IIRden1) * ((IIRnum1 * IIRInputRelay1) + (IIRnum2 * IIRInputRelay2) + (IIRnum3 * IIRInputRelay3) - (IIRden2 * IIROutputRelay2) - (IIRden3 * IIROutputRelay3));
 
     IIRFilterOutputRelay = IIROutputRelay1;
 
-    EV << "UPDATED IIRInput1: " << IIRInputRelay1 << " UPDATED IIRInput2: " << IIRInputRelay2 << " UPDATED IIRInput3: " << IIRInputRelay3 << " UPDATED IIRInput4: " << IIRInputRelay4 << " UPDATED IIRInput5: " << IIRInputRelay5 << endl;
+    EV << "UPDATED IIRInput1: " << IIRInputRelay1 << " UPDATED IIRInput2: " << IIRInputRelay2 << " UPDATED IIRInput3: " << IIRInputRelay3 << endl;
 
-    EV << "UPDATED IIROutput1: " << IIROutputRelay1 << " UPDATED IIROutput2: " << IIROutputRelay2 << " UPDATED IIROutput3: " << IIROutputRelay3 << " UPDATED IIROutput4: " << IIROutputRelay4 << " UPDATED IIROutput5: " << IIROutputRelay5 << endl;
+    EV << "UPDATED IIROutput1: " << IIROutputRelay1 << " UPDATED IIROutput2: " << IIROutputRelay2 << " UPDATED IIROutput3: " << IIROutputRelay3 << endl;
 
     return IIRFilterOutputRelay;
+}
+
+double PCOClock::AbsoluteValue(double AbsoluteValueInput)
+{
+    double AbsoluteValueOutput;
+    if (AbsoluteValueInput > 0 )
+        AbsoluteValueOutput = AbsoluteValueInput;
+    else
+        AbsoluteValueOutput = 0 - AbsoluteValueInput;
+
+    return AbsoluteValueOutput;
 }
 
 

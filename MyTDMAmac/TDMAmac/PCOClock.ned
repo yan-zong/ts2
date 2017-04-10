@@ -28,14 +28,12 @@ simple PCOClock
     	double IIRnum1;
     	double IIRnum2;
     	double IIRnum3;
-    	double IIRnum4;
-    	double IIRnum5;
     	// the parameter of denominator of IIR filter
     	double IIRden1;
     	double IIRden2;
     	double IIRden3;
-    	double IIRden4;
-    	double IIRden5;
+    	// Clock Correction Algorithm
+    	int CorrectionAlgorithm;
     	
     gates:
         input inclock;
