@@ -103,7 +103,7 @@ void PCOClock::initialize()
     // ---------------------------------------------------------------------------
     ev << "Clock: the threshold of register is " << Threshold << "s." << endl;
     PulseTimePrevious = 0;
-    numPulse = 0;
+    // numPulse = 0;
     LastUpdateTime = SIMTIME_DBL(simTime());
     RefTimePreviousPulse = 0;
     offsetTotal = 0;
@@ -117,6 +117,9 @@ void PCOClock::initialize()
 
     ThresholdAdjustValueBasedMasterIIR = 0;
     ThresholdAdjustValueBasedRelayIIR = 0;
+
+    NormalizedReceivedPulseTime = 0;
+    NormalizedThreshold = 0;
 
     CorrectionAlgorithm = par("CorrectionAlgorithm");
 
@@ -381,13 +384,33 @@ double PCOClock::getThresholdOffsetWithMaster()
     // Note: 2.176E-3 means the time for receiver to recept the SYNC packet from the sender,
     // 1.82E-4 is for physical layer to check the SYNC packet
     // 2.176E-3 = 2.368E-3 - 1.82E-4
-    ThresholdOffsetBasedMaster = (ReceivedPulseTime  - 2.176E-3) - Threshold + ScheduleOffset + slotDuration*NodeId;
 
-    ev << "PCOClock: 'ThresholdOffsetBasedMaster' is " << ThresholdOffsetBasedMaster << endl;
-    ev << "PCOClock: 'ThresholdOffsetPreviousBasedMaster' is " << ThresholdOffsetPreviousBasedMaster << endl;
+    // to obtain the value of offset, we need normalise the 'ReceivedPulseTime', 'Threshold'
+    // because '2.176E-3', 'ScheduleOffset', 'slotDuration*NodeId' is the normalized value in the system.
+
+    NormalizedReceivedPulseTime = ReceivedPulseTime/Threshold;
+    NormalizedThreshold = Threshold/Threshold;
+
+    ThresholdOffsetBasedMaster = (NormalizedReceivedPulseTime  - 2.176E-3) - NormalizedThreshold + ScheduleOffset + slotDuration*NodeId;
+
+    ev << "debug: 'ReceivedPulseTime' is " << ReceivedPulseTime << endl;
+    ev << "debug: 'NormalizedReceivedPulseTime' is " << NormalizedReceivedPulseTime << endl;
+    ev << "debug: 'Threshold' is " << Threshold << endl;
+    ev << "debug: 'NormalizedThreshold' is " << NormalizedThreshold << endl;
+    ev << "debug: 'ScheduleOffset' is " << ScheduleOffset << endl;
+    ev << "debug: 'slotDuration*NodeId' is " << slotDuration*NodeId << endl;
+    ev << "debug: 'ThresholdOffsetBasedMaster' is " << ThresholdOffsetBasedMaster << endl;
+    ev << "debug: 'AbsoluteValue(ThresholdOffsetBasedMaster)' is " << AbsoluteValue(ThresholdOffsetBasedMaster) << endl;
+    ev << "debug: 'AbsoluteValue(ThresholdOffsetPreviousBasedMaster)' is " << AbsoluteValue(ThresholdOffsetPreviousBasedMaster) << endl;
 
     /*
-    if (AbsoluteValue(ThresholdOffsetBasedMaster) > ( 0.002 + AbsoluteValue(ThresholdOffsetPreviousBasedMaster)))
+    if (AbsoluteValue(ThresholdOffsetBasedMaster) > (0.0008 + AbsoluteValue(ThresholdOffsetPreviousBasedMaster)))
+    {
+        ThresholdOffsetBasedMaster = (ReceivedPulseTime  - 2.176E-3) - 0 - ScheduleOffset - slotDuration*NodeId;
+    }
+    */
+    /*
+    if (AbsoluteValue(ThresholdOffsetBasedMaster) > (0.0008 + AbsoluteValue(ThresholdOffsetPreviousBasedMaster)))
     {
         ThresholdOffsetBasedMaster = 0;
     }
@@ -409,23 +432,26 @@ void PCOClock::adjustThresholdBasedMaster()
     ThresholdAdjustValueBasedMasterIIR = IIRFilterMaster(ThresholdOffsetBasedMaster);
     thresholdOffsetWithMasterIIRVec.record(ThresholdAdjustValueBasedMasterIIR);
 
+    ev << "debug: 'ThresholdOffsetBasedMaster' is " << ThresholdOffsetBasedMaster << endl;
+    ev << "debug: 'ThresholdAdjustValueBasedMasterIIR' is " << ThresholdAdjustValueBasedMasterIIR << endl;
+
     if (CorrectionAlgorithm == 0)
     {
         ev << "PCOClock: based on the threshold adjustment value: "<< ThresholdAdjustValueBasedMaster << ", the RegisterThreshold change from " << Threshold;
-        Threshold = Threshold + ThresholdAdjustValueBasedMaster;
+        Threshold = Threshold * (1 + ThresholdAdjustValueBasedMaster);
         ev << " to " << Threshold << endl;
     }
     else if (CorrectionAlgorithm == 1)
     {
         ev << "PCOClock: based on the threshold adjustment value: "<< ThresholdAdjustValueBasedMasterIIR << ", the RegisterThreshold change from " << Threshold;
-        Threshold = Threshold + AdjustParameter * ThresholdAdjustValueBasedMasterIIR;
+        Threshold = Threshold * (1 + ThresholdAdjustValueBasedMasterIIR);
         ev << " to " << Threshold << endl;
     }
     else if (CorrectionAlgorithm == 2)
     {
+        // do nothing
         ;
     }
-
 
     thresholdVec.record(Threshold);
 }
@@ -436,20 +462,30 @@ double PCOClock::getThresholdOffsetWithRelay()
 
     if (NodeId == 1)
     {
-        ThresholdOffsetBasedRelay = (ReceivedPulseTime  - 2.176E-3) - 0 - slotDuration ;
+        NormalizedReceivedPulseTime = ReceivedPulseTime/Threshold;
+        NormalizedThreshold = Threshold/Threshold;
+
+        ThresholdOffsetBasedRelay = (NormalizedReceivedPulseTime  - 2.176E-3) - 0 - slotDuration ;
 
         ev << "PCOClock: 'ThresholdOffsetBasedRelay' is " << ThresholdOffsetBasedRelay << endl;
         ev << "PCOClock: 'ThresholdOffsetPreviousBasedRelay' is " << ThresholdOffsetPreviousBasedRelay << endl;
 
-        ev << "debug: 'abs(ThresholdOffsetBasedRelay)' is " << AbsoluteValue(ThresholdOffsetBasedRelay) << endl;
-        ev << "debug: 'abs(ThresholdOffsetPreviousBasedRelay)' is " << AbsoluteValue(ThresholdOffsetPreviousBasedRelay) << endl;
+        ev << "debug: 'ReceivedPulseTime' is " << ReceivedPulseTime << endl;
+        ev << "debug: 'NormalizedReceivedPulseTime' is " << NormalizedReceivedPulseTime << endl;
+        ev << "debug: 'slotDuration' is " << slotDuration << endl;
+        ev << "debug: 'ThresholdOffsetBasedRelay' is " << ThresholdOffsetBasedRelay << endl;
+        ev << "debug: 'AbsoluteValue(ThresholdOffsetBasedRelay)' is " << AbsoluteValue(ThresholdOffsetBasedRelay) << endl;
+        ev << "debug: 'AbsoluteValue(ThresholdOffsetPreviousBasedRelay)' is " << AbsoluteValue(ThresholdOffsetPreviousBasedRelay) << endl;
 
-        if (AbsoluteValue(ThresholdOffsetBasedRelay) > 0.5)
+        /*
+        if (AbsoluteValue(ThresholdOffsetBasedRelay) > (0.0008 + AbsoluteValue(ThresholdOffsetPreviousBasedRelay)))
         {
             ThresholdOffsetBasedRelay = (ReceivedPulseTime  - 2.176E-3) - Threshold + slotDuration;
         }
+        */
         /*
-        if (AbsoluteValue(ThresholdOffsetBasedRelay) > (0.002 + AbsoluteValue(ThresholdOffsetPreviousBasedRelay)))
+
+        if (AbsoluteValue(ThresholdOffsetBasedRelay) > (0.0008 + AbsoluteValue(ThresholdOffsetPreviousBasedRelay)))
         {
             ThresholdOffsetBasedRelay = 0;
         }
@@ -464,20 +500,29 @@ double PCOClock::getThresholdOffsetWithRelay()
 
     if (NodeId == 2)
     {
-        ThresholdOffsetBasedRelay = (ReceivedPulseTime  - 2.176E-3) - Threshold + slotDuration;
+        NormalizedReceivedPulseTime = ReceivedPulseTime/Threshold;
+        NormalizedThreshold = Threshold/Threshold;
+
+        ThresholdOffsetBasedRelay = (NormalizedReceivedPulseTime  - 2.176E-3) - NormalizedThreshold + slotDuration;
 
         ev << "PCOClock: 'ThresholdOffsetBasedRelay' is " << ThresholdOffsetBasedRelay << endl;
         ev << "PCOClock: 'ThresholdOffsetPreviousBasedRelay' is " << ThresholdOffsetPreviousBasedRelay << endl;
 
-        ev << "debug: 'abs(ThresholdOffsetBasedRelay)' is " << AbsoluteValue(ThresholdOffsetBasedRelay) << endl;
-        ev << "debug: 'abs(ThresholdOffsetPreviousBasedRelay)' is " << AbsoluteValue(ThresholdOffsetPreviousBasedRelay) << endl;
+        ev << "debug: 'ReceivedPulseTime' is " << ReceivedPulseTime << endl;
+        ev << "debug: 'Threshold' is " << Threshold << endl;
+        ev << "debug: 'slotDuration' is " << slotDuration << endl;
+        ev << "debug: 'ThresholdOffsetBasedRelay' is " << ThresholdOffsetBasedRelay << endl;
+        ev << "debug: 'AbsoluteValue(ThresholdOffsetBasedRelay)' is " << AbsoluteValue(ThresholdOffsetBasedRelay) << endl;
+        ev << "debug: 'AbsoluteValue(ThresholdOffsetPreviousBasedRelay)' is " << AbsoluteValue(ThresholdOffsetPreviousBasedRelay) << endl;
 
-        if (AbsoluteValue(ThresholdOffsetBasedRelay) > 0.5 )
+        /*
+        if (AbsoluteValue(ThresholdOffsetBasedRelay) > (0.0008 + AbsoluteValue(ThresholdOffsetPreviousBasedRelay)))
         {
             ThresholdOffsetBasedRelay = (ReceivedPulseTime  - 2.176E-3) - 0 - slotDuration ;
         }
+        */
         /*
-        if (AbsoluteValue(ThresholdOffsetBasedRelay) > (0.002 + AbsoluteValue(ThresholdOffsetPreviousBasedRelay)))
+        if (AbsoluteValue(ThresholdOffsetBasedRelay) > (0.0008 + AbsoluteValue(ThresholdOffsetPreviousBasedRelay)))
         {
             ThresholdOffsetBasedRelay = 0;
         }
@@ -501,32 +546,37 @@ void PCOClock::adjustThresholdBasedRelay()
     ThresholdAdjustValueBasedRelayIIR = IIRFilterRelay(ThresholdOffsetBasedRelay);
     thresholdOffsetWithrelayIIRVec.record(ThresholdAdjustValueBasedRelayIIR);
 
+    ev << "debug: 'ThresholdOffsetBasedRelay' is " << ThresholdOffsetBasedRelay << endl;
+    ev << "debug: 'ThresholdAdjustValueBasedRelayIIR' is " << ThresholdAdjustValueBasedRelayIIR << endl;
+
     if (CorrectionAlgorithm == 0)
     {
         ev << "PCOClock: based on the threshold adjustment value: "<< ThresholdAdjustValueBasedRelay << ", the RegisterThreshold change from " << Threshold;
-        Threshold = Threshold + ThresholdAdjustValueBasedRelay;
+        Threshold = Threshold * (1 + ThresholdAdjustValueBasedRelay);
         ev << " to " << Threshold << endl;
     }
     else if (CorrectionAlgorithm == 1)
     {
         ev << "PCOClock: based on the threshold adjustment value: "<< ThresholdAdjustValueBasedRelayIIR << ", the RegisterThreshold change from " << Threshold;
-        Threshold = Threshold + AdjustParameter * ThresholdAdjustValueBasedRelayIIR;
+        Threshold = Threshold * (1 + ThresholdAdjustValueBasedRelayIIR);
         ev << " to " << Threshold << endl;
     }
     else if (CorrectionAlgorithm == 2)
     {
+        // do nothing
         ;
     }
-
 
     thresholdVec.record(Threshold);
 }
 
+/*
 int PCOClock::getnumPulse()
 {
     ev << "PCOClock: the returned 'numPulse' is " << numPulse << endl;
     return numPulse;
 }
+*/
 
 void PCOClock::generateSYNC()
 {

@@ -35,7 +35,7 @@ class PCOClock:public cSimpleModule
         double getThresholdOffsetWithRelay();
         void adjustThresholdBasedMaster();
         void adjustThresholdBasedRelay();
-        int getnumPulse();
+        // int getnumPulse();
         // double getPCOTimestamp();
         double getTimestamp();  // timestamp clock
         double setReceivedTime(double value);
@@ -131,13 +131,16 @@ class PCOClock:public cSimpleModule
 
         // double RegisterThreshold;   // the threshold value of register
         double PulseTimePrevious;    // used to reset the clock
-        int numPulse;
+        // int numPulse;
         double FrameDuration;
         // double LastUpdateTime;
 
         double offsetTotal;
         double RefTimePreviousPulse;
         double ReceivedPulseTime;
+
+        double NormalizedReceivedPulseTime;
+        double NormalizedThreshold;
 
         double ThresholdOffsetBasedMaster;
         double ThresholdOffsetBasedRelay;
