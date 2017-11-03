@@ -1,6 +1,6 @@
 //***************************************************************************
 // * File:        This file is part of TS2.
-// * Created on:  07 Dov 2016
+// * Created on:  07 Nov 2016
 // * Author:      Yan Zong, Xuweu Dai
 // *
 // * Copyright:   (C) 2016 Northumbria University, UK.
@@ -29,7 +29,7 @@ module Nic_Timestamp_TDMA like IWirelessNicUpperCtrl
 {
     parameters:
         string connectionManagerName = default("");	// name of the ConnectionManager module
-        string phyType = default("org.mixim.modules.phy.PhyLayer");
+        string phyType = default("org.mixim.modules.phy.PhyLayer");	// 'PhyLayerBattery' extends the 'PhyLayer' with battery module
         string macType = default("TDMAmac");
         
 	gates:

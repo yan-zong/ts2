@@ -1,6 +1,6 @@
 //***************************************************************************
 // * File:        This file is part of TS2.
-// * Created on:  07 Dov 2016
+// * Created on:  07 Nov 2016
 // * Author:      Yan Zong, Xuweu Dai
 // *
 // * Copyright:   (C) 2016 Northumbria University, UK.
@@ -30,30 +30,15 @@ Define_Module(RelaySlave);
 void RelaySlave::initialize()
 {
     ev << "RelaySlave Initialisation \n";
-	dpropVec.setName("prop");
-	dmsVec.setName("dms");
-	dsmVec.setName("dsm");
-	offsetVec.setName("nodo_offset");
-	driftVec.setName("nodo_drift");
-	delayVec.setName("delay");
-	delta_t41Vec.setName("delta_t41");
-	TrVec.setName("Tr");
-	Tcamp  = par("Tcamp");
-
-	ts2 = ts1 =	ts3 = ts4 = 0;
-	dprop  = dms = dsm  = 0;
-	drift = 0;
-	Ts = Ts_correct = Tm = Tm_previous = Ts_previous = 0;
-	offset_previous = 0;
 
 	if(ev.isGUI())
 	{
 	    updateDisplay();
 	}
 
-	/* Initialise the pointer to the clock module */
-	pClock = (PCOClock *)getParentModule()->getParentModule()->getSubmodule("clock");
-	if (pClock==NULL)
+	/* Initialize the pointer to the clock module */
+	pClock = (PCOClock *)getParentModule() -> getParentModule() -> getSubmodule("clock");
+	if (pClock == NULL)
 	    error("No clock module is found in the module");
 
 	// ---------------------------------------------------------------------------
@@ -68,41 +53,42 @@ void RelaySlave::initialize()
 
     ev << "Relay Slave address is "<< myAddress <<endl;
 
-	// find Sink node (or Master node), and Relay node, and their respective address
-    cModule *MasterModule = findHost()->getParentModule();
-    ev<<"Relay Slave: MasterModule: findHost()->getParentModule returns: "<< MasterModule->getName() <<endl;
+	// find Master node, and Relay node, and their respective address
+    cModule *MasterModule = findHost() -> getParentModule();
+    ev<<"Relay Slave: MasterModule: findHost() -> getParentModule returns: "<< MasterModule -> getName() <<endl;
     // Relay Slave: findHost()->getParentModule returns: TSieee802154SM
 
+    /*
     // find master node
-    MasterModule = MasterModule->getSubmodule("mnode");
+    MasterModule = MasterModule -> getSubmodule("mnode");
 
-    cModule *RelayModule = findHost()->getParentModule();
-    ev<<"Relay Slave: RelayModule: findHost()->getParentModule returns: "<< RelayModule->getName() <<endl;
+    cModule *RelayModule = findHost() -> getParentModule();
+    ev<<"Relay Slave: RelayModule: findHost() -> getParentModule returns: "<< RelayModule -> getName() <<endl;
     // Relay Slave: findHost()->getParentModule returns: TSieee802154SM
 
-    // find Relay node
-    RelayModule = RelayModule->getSubmodule("rnode", (findHost()->getIndex()));
+    // find relay node
+    RelayModule = RelayModule -> getSubmodule("rnode", (findHost()->getIndex()));
 
     if (MasterModule != NULL)
     {
-        myMasterAddress = 1000;
-        ev<<"Relay Slave: Master default address is "<< myMasterAddress <<endl;
-        ev<<"Relay Slave: my master node is "<< MasterModule->getName() <<endl;
+        // myMasterAddress = 1000;
+        // ev<<"Relay Slave: Master default address is "<< myMasterAddress <<endl;
+        ev<<"Relay Slave: my master node is "<< MasterModule -> getName() <<endl;
     }
     else if (RelayModule != NULL)
     {
-        myMasterAddress = 2000 + (RelayModule->getIndex());
-        ev<<"Relay Slave: Master default address is "<< myMasterAddress <<endl;
-        ev<<"Relay Slave: my master node is "<< RelayModule->getName() <<endl;
+        // myMasterAddress = 2000 + (RelayModule->getIndex());
+        // ev<<"Relay Slave: Master default address is "<< myMasterAddress <<endl;
+        ev<<"Relay Slave: my master node is "<< RelayModule -> getName() <<endl;
     }
     else
     {
         error("No Sink node or RelayMaster are found");
     }
+    */
 
 	// Find the Relay Master, and Relay Master pointer
-	// ToDo: need to change the getSubmodule from ptpM2 to RelayMaster (Done by Yan Zong)
-	pRelayMaster = (RelayMaster *)getParentModule()->getSubmodule("RelayMaster");
+	pRelayMaster = (RelayMaster *)getParentModule() -> getSubmodule("RelayMaster");
 	ev<<"Relay Master: Relay Master pointer is "<< pRelayMaster <<endl;
     if (pRelayMaster == NULL)
     {
@@ -110,12 +96,12 @@ void RelaySlave::initialize()
     }
 
 	PtpPkt * temp = new PtpPkt("REGISTER");
-	temp->setPtpType(REG);
-	temp->setByteLength(0);
+	temp -> setPtpType(REG);
+	temp -> setByteLength(0);
 
     // use the host modules findHost() as a appl address
-    temp->setSource(myAddress);
-    temp->setDestination(PTP_BROADCAST_ADDR); //PTP_BROADCAST_ADDR = -1
+    temp -> setSource(myAddress);
+    temp -> setDestination(PTP_BROADCAST_ADDR); //PTP_BROADCAST_ADDR = -1
 
     // set SrcAddr, DestAddr with LAddress::L3Type values for MiXiM
     temp->setDestAddr(LAddress::L3BROADCAST);
@@ -153,9 +139,9 @@ void RelaySlave::handleMessage(cMessage *msg)
         if (dynamic_cast<PtpPkt *>(msg) != NULL)
         {
             EV << "Relay Slave receives a PtpPkt packet. ";
-            if(((PtpPkt*)msg)->getSource()!=myAddress  &
-                     (((PtpPkt*)msg)->getDestination()==myAddress  |
-                             ((PtpPkt*)msg)->getDestination()==PTP_BROADCAST_ADDR))  // PTP_BROADCAST_ADDR = -1
+            if(((PtpPkt*)msg) -> getSource() != myAddress  &
+                     (((PtpPkt*)msg) -> getDestination() == myAddress  |
+                             ((PtpPkt*)msg) -> getDestination() == PTP_BROADCAST_ADDR))
             {
                 EV << "the PtpPkt packet is for me, Relay Slave is processing it\n";
                 handleMasterMessage(msg);
@@ -167,7 +153,6 @@ void RelaySlave::handleMessage(cMessage *msg)
         else
         {
             EV << "the PtpPkt packet is not for me, send it up to higher layer\n"<<endl;
-            // send(((ApplPkt *)msg)->dup(),"upperGateOut");
             send(msg, "upperGateOut");
          }
 	}
@@ -175,7 +160,6 @@ void RelaySlave::handleMessage(cMessage *msg)
     if (msg->arrivedOn("upperGateIn"))   // data packet from upper layer
     {
          EV << "receive a PtpPkt packet from higher layer"<<endl;
-         // send(((ApplPkt *)msg)->dup(),"out");
          send(msg, "out");
     }
 
@@ -184,8 +168,6 @@ void RelaySlave::handleMessage(cMessage *msg)
 	    handleEventMessage(msg);
 	    delete msg;
 	}
-
-	// delete msg;
 
 	if(ev.isGUI())
 	{
@@ -196,20 +178,20 @@ void RelaySlave::handleMessage(cMessage *msg)
 void RelaySlave::handleSelfMessage(cMessage *msg)
 {
     PtpPkt *pck = new PtpPkt("SYNC");
-    pck->setPtpType(SYNC);
-    pck->setByteLength(44);
+    pck -> setPtpType(SYNC);
+    pck -> setByteLength(44);
 
-    pck->setTimestamp(simTime());
+    // pck -> setTimestamp(simTime());
 
-    pck->setSource(myAddress);
-    pck->setDestination(PTP_BROADCAST_ADDR);
+    pck -> setSource(myAddress);
+    pck -> setDestination(PTP_BROADCAST_ADDR);
 
-    pck->setData(SIMTIME_DBL(simTime()));
-    pck->setTsTx(SIMTIME_DBL(simTime())); // set transmission time stamp ts1 on SYNC
+    // pck -> setData(SIMTIME_DBL(simTime()));
+    // pck -> setTsTx(SIMTIME_DBL(simTime())); // set transmission time stamp ts1 on SYNC
 
     // set SrcAddr, DestAddr with LAddress::L3Type values for MiXiM
-    pck->setSrcAddr( LAddress::L3Type(myAddress));
-    pck->setDestAddr(LAddress::L3BROADCAST);
+    pck -> setSrcAddr( LAddress::L3Type(myAddress));
+    pck -> setDestAddr(LAddress::L3BROADCAST);
 
     // set the control info to tell the network layer (layer 3) address
     NetwControlInfo::setControlInfo(pck, LAddress::L3BROADCAST );
@@ -217,7 +199,6 @@ void RelaySlave::handleSelfMessage(cMessage *msg)
     EV << "Relay Slave broadcasts SYNC packet" << endl;
     send(pck,"out");
 
-    // ProduceT3packet();
 }
 
 void RelaySlave::handleOtherPacket(cMessage *msg)
@@ -250,9 +231,9 @@ void RelaySlave::handleClockMessage(cMessage *msg)
 
 void RelaySlave::handleMasterMessage(cMessage *msg)
 {
-    myMasterAddress = (((PtpPkt *)msg)->getSource());
+    myMasterAddress = (((PtpPkt *)msg) -> getSource());
 
-    switch(((PtpPkt *)msg)->getPtpType())
+    switch(((PtpPkt *)msg) -> getPtpType())
     {
         case REG:
         {
@@ -260,7 +241,7 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
             break;
         }
 
-        case REGRELAYMASTER:
+        case REGRELAY:
         {
             ev << "receive REGISTER package, slave node does nothing. returns\n";
             break;
@@ -292,22 +273,24 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
             if (myMasterAddress == 1000)
             {
                 ev << "Relay Slave receives SYNC packet from master node, process it\n";
-                ev << "Relay Slave: adjust the threshold of clock...\n";
+                ev << "Relay Slave: adjust clock...\n";
 
-                pClock -> getThresholdOffsetWithMaster();
+                // ToDo: yan zong
+                // pClock -> getThresholdOffsetWithMaster();
 
-                pClock -> adjustThresholdBasedMaster();
+                // pClock -> adjustThresholdBasedMaster();
                 break;
 
             }
             else if (myMasterAddress == 2000 || myMasterAddress > 2000)
             {
                 ev << "Relay Slave receives SYNC packet from relay node, ignore it\n";
-                ev << "Relay Slave: adjust the threshold of clock...\n";
+                ev << "Relay Slave: adjust clock...\n";
 
-                pClock -> getThresholdOffsetWithRelay();
+                // ToDo: yan Zong
+                // pClock -> getThresholdOffsetWithRelay();
 
-                pClock -> adjustThresholdBasedRelay();
+                //  pClock -> adjustThresholdBasedRelay();
 
                 break;
 
@@ -324,10 +307,6 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
             if (myMasterAddress == 1000)
             {
                 ev << "Relay Slave handleMasterMesage() is processing DRES Packet from Master.\n";
-                ts4 = ((PtpPkt *)msg)->getData();
-                ev << " Relay Slave: ts4 = "<< ts4 <<endl;
-                delta_t41 = SIMTIME_DBL(simTime()) - ts1;
-                // servo_clock();
 
                 // activate the second-hop time sync immediately.
                 // pRelayMaster->startSync();
@@ -336,10 +315,6 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
             else if (myMasterAddress == 2000 || myMasterAddress > 2000)
             {
                 ev << "Relay Slave handleMasterMesage() is processing DRES Packet from relay node.\n";
-                ts4 = ((PtpPkt *)msg)->getData();
-                ev << " Relay Slave: ts4 = "<< ts4 <<endl;
-                delta_t41 = SIMTIME_DBL(simTime()) - ts1;
-                // servo_clock();
 
                 // activate the second-hop time sync immediately.
                 // pRelayMaster->startSync();
@@ -360,37 +335,9 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
     }
 }
 
-void RelaySlave::ProduceT3packet()
-{
-    ts3 = pClock->getTimestamp();
-    ev << "ts3 = "<< ts3 <<endl;
-    PtpPkt *pck = new PtpPkt("DREQ");
-    pck->setByteLength(40);
-    pck->setPtpType(DREQ);
-
-    pck->setDestination(myMasterAddress);
-    pck->setSource(myAddress);
-
-    // set SrcAddr, DestAddr with LAddress::L3Type values for MiXiM
-    pck->setDestAddr(LAddress::L3Type(myMasterAddress));
-    pck->setSrcAddr(LAddress::L3Type(myAddress));
-
-    // set the control info to tell the network layer (layer 3) address
-    NetwControlInfo::setControlInfo(pck, LAddress::L3Type(myMasterAddress));
-
-    send((cMessage *)pck,"out");
-    ev<<"Relay Slave: transmit DREQ packet \n";
-}
-
 void RelaySlave::recordResult()
 {
-	dsmVec.record(dsm);
-	dpropVec.record(dprop);
-	dmsVec.record(dms);
-	offsetVec.record(offset);
-	driftVec.record(drift);
-	delta_t41Vec.record(delta_t41);
-	TrVec.record(Tr);
+
 }
 
 void RelaySlave::finish()
@@ -400,8 +347,8 @@ void RelaySlave::finish()
 void RelaySlave::updateDisplay()
 {
 	char buf[100];
-	sprintf(buf, "dms [ms]: %3.2f \ndsm [ms]: %3.2f \ndpr [ms]: %3.2f \noffset [ms]: %3.2f\n ",
-		dms*1000,dsm*1000,dprop*1000,offset*1000);
+	// sprintf(buf, "dms [ms]: %3.2f \ndsm [ms]: %3.2f \ndpr [ms]: %3.2f \noffset [ms]: %3.2f\n ",
+	// 	dms*1000,dsm*1000,dprop*1000,offset*1000);
 	getDisplayString().setTagArg("t",0,buf);
 }
 

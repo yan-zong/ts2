@@ -1,6 +1,6 @@
 //***************************************************************************
 // * File:        This file is part of TS2.
-// * Created on:  07 Dov 2016
+// * Created on:  07 Nov 2016
 // * Author:      Yan Zong, Xuweu Dai
 // *
 // * Copyright:   (C) 2016 Northumbria University, UK.
@@ -21,11 +21,15 @@
 
 package ts2;
 
-//import ts2.im.Buffer3;
-import ts2.im.Manager;
-
-module SlaveCore like IPtpCore
+simple SlaveCore like IPtpCore
 {
+   	parameters:
+       	@class("SlaveCore");
+       	
+      	// volatile double Tcamp; yan zong
+      	// volatile double rate; yan zong
+       	int slaveAddrOffset;
+    
     gates:
         input upperGateIn; // from net layer
         output upperGateOut; // to net layer
@@ -33,42 +37,7 @@ module SlaveCore like IPtpCore
         output lowerGateOut; // to mac
 		input inclock;
         output outclock;
-
-    submodules:
-        slave: Slave 
-        {
-        	@display("p=130,85;i=device/drive");
-        }
-
-        buffertx: Buffer
-        {
-        	@display("p=52,118;i=block/buffer");
-        }
-        
-        bufferrx: Buffer 
-        {
-        	@display("p=52,53;i=block/buffer");
-        }
-        
-        manager: Manager 
-        {
-        	@display("p=201,53;i=block/cogwheel");
-        }
-        
-    connections allowunconnected:
-        slave.upperGateIn <-- { @display("ls=blue,1"); } <-- upperGateIn;
-        slave.upperGateOut --> { @display("ls=blue,1"); } --> upperGateOut;
-
-        slave.inclock <-- { @display("ls=red,4"); } <-- inclock;
-
-        slave.inevent <-- manager.out;
-
-        slave.out --> buffertx.in;
-        slave.in <-- bufferrx.out;
-
-        buffertx.out --> lowerGateOut;
-        bufferrx.in <-- lowerGateIn;
-
+        // input inevent;
 
 }
 

@@ -1,6 +1,6 @@
 //***************************************************************************
 // * File:        This file is part of TS2.
-// * Created on:  07 Dov 2016
+// * Created on:  07 Nov 2016
 // * Author:      Yan Zong, Xuweu Dai
 // *
 // * Copyright:   (C) 2016 Northumbria University, UK.
@@ -31,6 +31,7 @@ module SlaveNode extends HostNode
     parameters:
         applicationType = default("BurstApplLayerBattery");  //type of the application layer
         networkType = "BaseNetwLayer";
+        
         mobilityType = default("StationaryMobility"); //type of the mobility module
         arpType = "ArpHost";
 

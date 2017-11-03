@@ -56,11 +56,11 @@
 enum PtpPacket_types
 {
     SYNC = 0,
-    DREQ = 1,
-    DRES = 2,
-    REG = 3,
-    REGREPLY = 4,
-    REGRELAYMASTER = 5
+    REG = 1,
+    REGREPLY = 2,
+    REGRELAY = 3,
+    DREQ = 4,
+    DRES = 5
 };
 
 /** @brief Values for PtpPkt.pckType

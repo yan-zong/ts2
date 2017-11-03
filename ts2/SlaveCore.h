@@ -1,6 +1,6 @@
 //***************************************************************************
 // * File:        This file is part of TS2.
-// * Created on:  07 Dov 2016
+// * Created on:  07 Nov 2016
 // * Author:      Yan Zong, Xuweu Dai
 // *
 // * Copyright:   (C) 2016 Northumbria University, UK.
@@ -19,19 +19,39 @@
 //                Funded and RDF funded studentship, UK
 // ****************************************************************************
 
+#ifndef SLAVE_H_
+#define SLAVE_H_
+
 #include <string.h>
 #include <math.h>
 #include <omnetpp.h>
 #include "PtpPkt_m.h"
-#include "Packet_m.h" // for information exchange with manager
+// #include "Packet_m.h" // for information exchange with manager
 #include "Event_m.h"
 #include "NetwControlInfo.h"
 #include "SimpleAddress.h"
 #include "PCOClock.h"
-#include "RelayMaster.h"
 
-class RelaySlave: public cSimpleModule
+class SlaveCore: public cSimpleModule
 {
+    private:
+        int address;
+        int myMasterAddress;
+        int myRelayAddress;
+        LAddress::L3Type masterL3Addr;
+        LAddress::L3Type myL3Addr;
+
+        PCOClock *pClock; // pointer to my clock module
+
+    protected:
+        int upperGateIn;
+        int upperGateOut;
+        int lowerGateIn;
+        int lowerGateOut;
+        int inclock;
+        // int outclock;
+        // int inevent;
+
     protected:
 	    virtual void initialize();
 	    virtual void handleMessage(cMessage *msg);
@@ -46,15 +66,8 @@ class RelaySlave: public cSimpleModule
 	    void recordResult();
 	    void handleOtherPacket(cMessage *msg);
 	    void handleEventMessage(cMessage *msg);
-
-	    const char *name;
-	    int myAddress;          // the variable is used in the multi-hop network
-	    int myMasterAddress;    // the variable is used in the multi-hop network
-	    LAddress::L3Type masterL3Addr;
-	    LAddress::L3Type myL3Addr;
-
-	    cModule *myMasterNode; // default value (at stage 1) is myself (this)
-	    RelayMaster *pRelayMaster; // a pointer to the Relay Master module in my nodes (a boundary clock)
-	    PCOClock *pClock; // pointer to my clock module
+	    void servo_clock();
 
 };
+
+#endif /* SLAVE_H_ */

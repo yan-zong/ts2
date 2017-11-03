@@ -1,6 +1,6 @@
 //***************************************************************************
 // * File:        This file is part of TS2.
-// * Created on:  07 Dov 2016
+// * Created on:  07 Nov 2016
 // * Author:      Yan Zong, Xuweu Dai
 // *
 // * Copyright:   (C) 2016 Northumbria University, UK.
@@ -32,12 +32,12 @@ network MyBaseNetwork
         double playgroundSizeX @unit(m); // x size of the area the nodes are in (in meters)
         double playgroundSizeY @unit(m); // y size of the area the nodes are in (in meters)
         double playgroundSizeZ @unit(m); // z size of the area the nodes are in (in meters)
-        **.mobility.constraintAreaMinX = default(0m);
-        **.mobility.constraintAreaMinY = default(0m);
-        **.mobility.constraintAreaMinZ = default(0m);
-        **.mobility.constraintAreaMaxX = default(playgroundSizeX);
-        **.mobility.constraintAreaMaxY = default(playgroundSizeY);
-        **.mobility.constraintAreaMaxZ = default(playgroundSizeZ);
+        // **.mobility.constraintAreaMinX = default(0m);
+        // **.mobility.constraintAreaMinY = default(0m);
+        // **.mobility.constraintAreaMinZ = default(0m);
+        // **.mobility.constraintAreaMaxX = default(playgroundSizeX);
+        // **.mobility.constraintAreaMaxY = default(playgroundSizeY);
+        // **.mobility.constraintAreaMaxZ = default(playgroundSizeZ);
         string cmType = default("org.mixim.base.connectionManager.ConnectionManager"); // connection manager to use
         string wuType = default("org.mixim.base.modules.BaseWorldUtility");            // world utility to use
 

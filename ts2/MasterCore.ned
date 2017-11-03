@@ -27,7 +27,6 @@ simple MasterCore like IPtpCore
     parameters:
         @class("MasterCore");
        
-    	double Tsync = default(1);
         int masterAddrOffset;
             
     gates:

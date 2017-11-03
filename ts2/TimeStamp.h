@@ -1,6 +1,6 @@
 //***************************************************************************
 // * File:        This file is part of TS2.
-// * Created on:  07 Dov 2016
+// * Created on:  07 Nov 2016
 // * Author:      Yan Zong, Xuweu Dai
 // *
 // * Copyright:   (C) 2016 Northumbria University, UK.
@@ -24,14 +24,12 @@
 
 #include <omnetpp.h>
 #include "PCOClock.h"
-#include "Slave.h"
 
 class TimeStamp : public cSimpleModule
 {
     private:
      bool useGlobalRefClock;
      PCOClock *pClk;
-     Slave *pNode;
 
   protected:
     virtual void initialize();

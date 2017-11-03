@@ -1,6 +1,6 @@
 //***************************************************************************
 // * File:        This file is part of TS2.
-// * Created on:  07 Dov 2016
+// * Created on:  07 Nov 2016
 // * Author:      Yan Zong, Xuweu Dai
 // *
 // * Copyright:   (C) 2016 Northumbria University, UK.
@@ -36,18 +36,14 @@ void MasterCore::initialize()
         inclock = findGate ("inclock");
         // outclock = findGate ("outclock");
 
-        Tsync = par("Tsync");
-
         if (hasPar("masterAddrOffset"))
             address = findHost()->getIndex()+(int)par("masterAddrOffset"); // ->getId(); for compatible with MiXiM, see BaseAppLayer.cc
         else
             address = findHost()->getIndex();
 
-        // scheduleAt(simTime()+Tsync, new cMessage("MStimer"));
-
         PtpPkt * temp = new PtpPkt("REGISTER");
         // we use the host modules findHost() as a appl address
-        temp->setDestination(PTP_BROADCAST_ADDR); //PTP_BROADCAST_ADDR = -1
+        temp->setDestination(PTP_BROADCAST_ADDR);
         temp->setSource(address);
         temp->setPtpType(REG);
 
@@ -101,8 +97,8 @@ void MasterCore::handleMessage(cMessage* msg)
         {
             EV<<"This ia a PtpPkt packet, MasterCore is processing it now"<<endl;
             PtpPkt *pck= static_cast<PtpPkt *>(msg);
-            if(pck->getSource()!=address &
-               (pck->getDestination()==address | pck->getDestination()==PTP_BROADCAST_ADDR))
+            if(pck->getSource() != address &
+               (pck->getDestination() == address | pck->getDestination() == PTP_BROADCAST_ADDR))
              {
                 EV << "the packet is for me, process it\n";
                 handleSlaveMessage(pck); // handelSlaveMessage() does not delete msg
@@ -152,20 +148,17 @@ void MasterCore::handleMessage(cMessage* msg)
 
 void MasterCore::handleSelfMessage(cMessage *msg)
 {
-    // ---------------------------------------------------------------------------
-    // for PCO
-    // ---------------------------------------------------------------------------
     PtpPkt *pck = new PtpPkt("SYNC");
     pck->setPtpType(SYNC);
 
     pck->setByteLength(44);
-    pck->setTimestamp(simTime());
+    // pck->setTimestamp(simTime());
 
     pck->setSource(address);
-    pck->setDestination(-1);
+    pck->setDestination(PTP_BROADCAST_ADDR);
 
-    pck->setData(SIMTIME_DBL(simTime()));
-    pck->setTsTx(SIMTIME_DBL(simTime())); // set transmission timie stamp ts1 on SYNC
+    // pck->setData(SIMTIME_DBL(simTime()));
+    // pck->setTsTx(SIMTIME_DBL(simTime())); // set transmission timie stamp ts1 on SYNC
 
     // set SrcAddr, DestAddr with LAddress::L3Type values for MiXiM
     pck->setSrcAddr( LAddress::L3Type(address));
@@ -176,38 +169,8 @@ void MasterCore::handleSelfMessage(cMessage *msg)
     EV << "Master broadcasts SYNC packet" << endl;
     send(pck,"lowerGateOut");
 
-    // ---------------------------------------------------------------------------
-    // for PTP
-    // ---------------------------------------------------------------------------
-    /*
-    PtpPkt *pck = new PtpPkt("SYNC");
-    pck->setPtpType(SYNC);
-
-    pck->setByteLength(40);
-    pck->setTimestamp(simTime());
-
-    pck->setSource(address);
-    pck->setDestination(-1);
-
-    pck->setData(SIMTIME_DBL(simTime()));
-    pck->setTsTx(SIMTIME_DBL(simTime())); // set transmission timie stamp ts1 on SYNC
-
-    // set SrcAddr, DestAddr with LAddress::L3Type values for MiXiM
-    pck->setSrcAddr( LAddress::L3Type(address));
-    pck->setDestAddr(LAddress::L3BROADCAST);
-
-    NetwControlInfo::setControlInfo(pck, LAddress::L3BROADCAST );
-
-    EV << "MasterCore broadcasts SYNC packet!" << endl;
-    send(pck,"lowerGateOut");
-    scheduleAt(simTime()+Tsync, new cMessage("MStimer"));
-    */
 }
 
-
-// ---------------------------------------------------------------------------
-// for PTP
-// ---------------------------------------------------------------------------
 void MasterCore::handleSlaveMessage(PtpPkt *msg)
 {
     switch (msg->getPtpType())
@@ -215,30 +178,6 @@ void MasterCore::handleSlaveMessage(PtpPkt *msg)
         case SYNC:
         {
             ev << "MasterCore receives a SYNC packet, ignore it.\n";
-            break;
-        }
-        case DRES:
-        {
-            error("Invalid slave message");
-            break;
-        }
-        case DREQ:
-        {
-            PtpPkt *pck = new PtpPkt("DRES");
-            pck->setByteLength(50);
-
-            pck->setDestination(((PtpPkt *)msg)->getSource());
-            pck->setSource(address);
-
-            pck->setPtpType(DRES);
-            pck->setData(SIMTIME_DBL(simTime()));
-
-            pck->setSrcAddr(LAddress::L3Type(address));
-            pck->setDestAddr(LAddress::L3Type(pck->getDestination()));
-
-            NetwControlInfo::setControlInfo(pck, LAddress::L3Type(pck->getDestination()));
-
-            send(pck,"lowerGateOut");
             break;
         }
         case REG:
@@ -258,7 +197,7 @@ void MasterCore::handleSlaveMessage(PtpPkt *msg)
              send(rplPkt, "lowerGateOut");
              break;
         }
-        case REGRELAYMASTER:
+        case REGRELAY:
         {
             ev << " Register packet from relay node, ignore it\n";
             break;

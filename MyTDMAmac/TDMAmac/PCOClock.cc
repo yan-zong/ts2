@@ -1,6 +1,6 @@
 //***************************************************************************
 // * File:        This file is part of TS2.
-// * Created on:  07 Dov 2016
+// * Created on:  07 Nov 2016
 // * Author:      Yan Zong, Xuweu Dai
 // *
 // * Copyright:   (C) 2016 Northumbria University, UK.
@@ -30,62 +30,43 @@ void PCOClock::initialize()
     // ---------------------------------------------------------------------------
     // Initialise variable for saving output data
     // ---------------------------------------------------------------------------
-    softclockVec.setName("softclock");
-    softclock_t2Vec.setName("softclock_t2");
-    softclock_t3Vec.setName("softclock_t3");
+    driftVec.setName("drift");
+    offsetVec.setName("offset");
     noise1Vec.setName("noise1");
     noise2Vec.setName("noise2");
     noise3Vec.setName("noise3");
-    driftVec.setName("drift");
-    offsetVec.setName("offset");
+    pcoclockVec.setName("PCOClockState");
+    classicclockVec.setName("ClassicClock");
+    thresholdVec.setName("Threshold");
     update_numberVec.setName("update_number");
-    drift_valueVec.setName("drift_value");
-    offset_valueVec.setName("offset_value");
-    error_driftVec.setName("error_drift");
-    error_offsetVec.setName("error_offset");
-    delta_driftVec.setName("delta_drift");
-    delta_offsetVec.setName("delta_offset");
-    drift_adj_valueVec.setName("drift_adj_value");
-    offset_adj_valueVec.setName("offset_adj_value");
-    // phyclockVec.setName("phyclock");
-    physicalClockVec.setName("PhysicalClock");
-    adjustedthresholdvalueVec.setName("ThresholdAdjustValue");
-    thresholdVec.setName("RegisterThreshold");
-    // thresholdOffsetVec.setName("ThresholdOffset");
-    pulsetimeVec.setName("PulseTime");
-
-    thresholdOffsetWithMasterVec.setName("ThresholdOffsetBasedMaster");
-    thresholdOffsetWithrelayVec.setName("ThresholdOffsetBasedRelay");
-
-    thresholdOffsetWithMasterIIRVec.setName("ThresholdOffsetBasedMasterIIR");
-    thresholdOffsetWithrelayIIRVec.setName("ThresholdOffsetBasedRelayIIR");
-
-    // offsetTotalVec.setName("OffsetTotal");
+    measurementoffsetVec.setName("MeasurementOffset");
 
     // ---------------------------------------------------------------------------
     // Initialise variable
     // ---------------------------------------------------------------------------
-    offset = par("offset");
-    drift =  par("drift");
-    sim_time_limit = par("sim_time_limit");
-    sigma1  = par("sigma1");
-    sigma2 = par("sigma2");
-    sigma3 = par("sigma3");
-    u3 = par("u3");
-    Tcamp  = par("Tcamp");
-    Tsync = par("Tsync");
-
-    Threshold = par("RegisterThreshold");
-
-    FrameDuration = par ("FrameDuration");
-    slotDuration = par("slotDuration");
+    offset = par("offset"); // the clock offset
+    drift =  par("drift");  // the clock skew (the variation of clock frequency)
+    sim_time_limit = par("sim_time_limit"); // simulation time
+    sigma1  = par("sigma1");    // the standard deviation of clock skew noise
+    sigma2 = par("sigma2"); // the standard deviation of clock offset noise
+    sigma3 = par("sigma3"); // the standard deviation of timestamp (meausmrenet) noise
+    u3 = par("u3"); // the mean of timestamp (measurement) noise
+    Tcamp  = par("Tcamp");  // clock update period
+    Threshold = par("Threshold");
+    pulseDuration = par("pulseDuration");
     ScheduleOffset = par("ScheduleOffset");
-    delay = par("delay");
-    AdjustParameter = par("AdjustParameter");
-    k = int(sim_time_limit/Tcamp);
+    tau = par("tau");   // the transmission delay
 
-    error_drift = offset;
-    error_offset = drift;
+    ReferenceClock = 0;
+    ClassicClock = 0;
+    PCOClockState = 0;
+    ThresholdTotal = 0;
+    Timestamp = 0;   // timestamp based on the reception of SYNC packet
+    LastUpdateTime = SIMTIME_DBL(simTime());
+    MeasurementOffset = 0;
+    ReceivedSYNCTime = 0;   // the reception time of SYNC packet
+
+    k = int(sim_time_limit / Tcamp);
     drift_previous = drift;
     offset_previous = offset;
     i = 0;
@@ -93,89 +74,14 @@ void PCOClock::initialize()
     delta_drift = delta_offset = 0;
     Tm = Tm_previous =0;
     offset_adj_previous=0;
-    PulseTime = 0;
-
-    // ---------------------------------------------------------------------------
-    // Initialise variable for PCO, when times of clock update reaches the
-    // 'UpdateTimes', also means the clock time reaches the threshold
-    // (RegisterThreshold). The clock time reset to zero, and a pulse is generated
-    // and broadcasted at the same time
-    // ---------------------------------------------------------------------------
-    ev << "Clock: the threshold of register is " << Threshold << "s." << endl;
-    PulseTimePrevious = 0;
-    // numPulse = 0;
-    LastUpdateTime = SIMTIME_DBL(simTime());
-    RefTimePreviousPulse = 0;
-    offsetTotal = 0;
-    ReceivedPulseTime = 0;
-
-
-    ReferenceClock = 0;
-    PhysicalClock = 0;
-    ThresholdTotal = 0;
-    PCOClock = 0;
-
-    ThresholdAdjustValueBasedMasterIIR = 0;
-    ThresholdAdjustValueBasedRelayIIR = 0;
-
-    NormalizedReceivedPulseTime = 0;
-    NormalizedThreshold = 0;
-
-    CorrectionAlgorithm = par("CorrectionAlgorithm");
-
-    // the parameter of numerator of IIR filter
-    IIRnum1 = par("IIRnum1");
-    IIRnum2 = par("IIRnum2");
-    IIRnum3 = par("IIRnum3");
-    // the parameter of denominator of IIR filter
-    IIRden1 = par("IIRden1");
-    IIRden2 = par("IIRden2");
-    IIRden3 = par("IIRden3");
-
-    EV << "PCOClock: the numerator parameter of IIR Filter is "<<endl;
-    EV << "IIRnum1: " << IIRnum1 << " IIRnum2: " << IIRnum2 << " IIRnum3: " << IIRnum3 << endl;
-
-    EV << "PCOClock: the denominator parameter of IIR Filter is "<<endl;
-    EV << "IIRden1: " << IIRden1 << " IIRden2: " << IIRden2 << " IIRden3: " << IIRden3 << endl;
-
-    EV << "PCOClock: AdjustParameter: " << AdjustParameter << endl;
-
-    IIRInputMaster1 = 0;
-    IIRInputMaster2 = 0;
-    IIRInputMaster3 = 0;
-    IIROutputMaster1 = 0;
-    IIROutputMaster2 = 0;
-    IIROutputMaster3 = 0;
-
-    IIRInputRelay1 = 0;
-    IIRInputRelay2 = 0;
-    IIRInputRelay3 = 0;
-    IIROutputRelay1 = 0;
-    IIROutputRelay2 = 0;
-    IIROutputRelay3 = 0;
-
-    IIRFilterOutputMaster = 0;
-    IIRFilterOutputRelay = 0;
 
     NodeId = (findHost()->getId() - 4);
-    EV << "PCOClock: the node id is " << NodeId << ", and 'ScheduleOffset+slotDuration*NodeId' is "<< ScheduleOffset+slotDuration*NodeId <<endl ;
+    EV << "PCOClock: the node id is " << NodeId << ", and 'ScheduleOffset + pulseDuration * NodeId' is "<< ScheduleOffset + pulseDuration * NodeId <<endl ;
     // id of master should be 0;
     // id of relay[0] should be 1; id of relay[1] should be 2;
 
-    EV << "yan: findHost()->getIndex() is " << findHost()->getIndex() << endl ;
-    EV << "yan: findHost()->getId() is " << findHost()->getId() << endl ;
-
-    ThresholdOffsetBasedMaster = 0;
-    ThresholdOffsetBasedRelay = 0;
-
-    ThresholdAdjustValueBasedMaster = 0;
-    ThresholdAdjustValueBasedRelay = 0;
-
-    ThresholdAdjustValueBasedMasterIIR = 0;
-    ThresholdAdjustValueBasedRelayIIR = 0;
-
-    ThresholdOffsetPreviousBasedMaster = 0;
-    ThresholdOffsetPreviousBasedRelay = 0;
+    // EV << "yan: findHost()->getIndex() is " << findHost()->getIndex() << endl ;
+    // EV << "yan: findHost()->getId() is " << findHost()->getId() << endl ;
 
     if(ev.isGUI())
     {
@@ -185,20 +91,18 @@ void PCOClock::initialize()
     delta_driftVec.record(delta_drift);
     delta_offsetVec.record(delta_offset);
 
-    // Tcamp is clock update period
-    scheduleAt(simTime() + ScheduleOffset + NodeId*slotDuration ,new cMessage("CLTimer"));
-    LastUpdateTime = ScheduleOffset + NodeId*slotDuration;
-    RefTimePreviousPulse = LastUpdateTime;
+    scheduleAt(simTime() + ScheduleOffset + NodeId*pulseDuration ,new cMessage("CLTimer"));
+    LastUpdateTime = ScheduleOffset + NodeId*pulseDuration;
 
-    EV << "PCOClock: Clock starts at " << (simTime() + NodeId*slotDuration + ScheduleOffset) << endl;
+    EV << "PCOClock: Clock starts at " << (simTime() + ScheduleOffset + NodeId * pulseDuration) << endl;
 }
 
 void PCOClock::handleMessage(cMessage *msg)
 {
     if(msg->isSelfMessage())
     {
-        physicalClockUpdate();   // update physical clock by clock offset and drift
-        EV << "PCOClock: Physical Clock is " << PhysicalClock << endl;
+        ClockUpdate();   // update PCO clock
+        EV << "PCOClock: PCO Clock State is " << PCOClockState << endl;
 
         i = i + 1;
         ev << "i = "<< i << endl;
@@ -265,15 +169,12 @@ void PCOClock::handleMessage(cMessage *msg)
     }
 }
 
-
-
-
 /* when the clock time reach the threshold value, the clock time will be reset to zero */
-double PCOClock::physicalClockUpdate()
+double PCOClock::ClockUpdate()
 {
     ev << "PCOClock: the PREVIOUS offset is "<< offset << endl;
     noise2 =  normal(0,sigma2,1);
-    offset = offset + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime)+ noise2;
+    offset = offset + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + noise2;
     ev << "PCOClock: the UPDATED offset is "<< offset << endl;
 
     ev << "PCOClock: the PREVIOUS drift is "<< drift <<endl;
@@ -283,26 +184,26 @@ double PCOClock::physicalClockUpdate()
 
     if ( NodeId == 0)   // master node
     {
-        ev << "PCOClock: the PREVIOUS Reference clock is "<< ReferenceClock << endl;
-        ReferenceClock = offset + SIMTIME_DBL(simTime());
-        ev << "PCOClock: the UPDATED Reference clock is "<< ReferenceClock << endl;
+        ev << "PCOClock: the PREVIOUS Classic clock is "<< ClassicClock << endl;
+        ClassicClock = offset + SIMTIME_DBL(simTime());
+        ev << "PCOClock: the UPDATED Classic clock is "<< ClassicClock << endl;
     }
     else    // relay node
     {
-        ev << "PCOClock: the PREVIOUS Reference clock is "<< ReferenceClock << endl;
-        ReferenceClock = offset + SIMTIME_DBL(simTime()) - (ScheduleOffset + NodeId*slotDuration);
-        ev << "PCOClock: the UPDATED Reference clock is "<< ReferenceClock << endl;
+        ev << "PCOClock: the PREVIOUS classic clock is "<< ClassicClock << endl;
+        ClassicClock = offset + SIMTIME_DBL(simTime()) - (ScheduleOffset + NodeId * pulseDuration);
+        ev << "PCOClock: the UPDATED classic clock is "<< ClassicClock << endl;
     }
 
-    if ((PhysicalClock - Threshold + Tcamp + Tcamp) > 0 )
+    if ((PCOClockState - Threshold + Tcamp + Tcamp) > 0 )
     {
         ev << "PCOClock: the PREVIOUS 'ThresholdTotal' is "<< ThresholdTotal <<endl;
         ThresholdTotal = ThresholdTotal + Threshold;
         ev << "PCOClock: the UPDATED 'ThresholdTotal' is "<< ThresholdTotal <<endl;
 
-        ev << "PCOClock: the PREVIOUS 'PhysicalClock' is "<< PhysicalClock <<endl;
-        PhysicalClock = ReferenceClock - ThresholdTotal;
-        ev << "PCOClock: the UPDATED 'PhysicalClock' is "<< PhysicalClock <<endl;
+        ev << "PCOClock: the PREVIOUS 'PCOClockState' is "<< PCOClockState <<endl;
+        PCOClockState = ClassicClock - ThresholdTotal;
+        ev << "PCOClock: the UPDATED 'PCOClockState' is "<< PCOClockState <<endl;
 
         generateSYNC();
         EV << "PCOClock: generate and sent SYNC packet to Core module. " << endl;
@@ -310,30 +211,30 @@ double PCOClock::physicalClockUpdate()
     }
     else
     {
-        ev << "PCOClock: the PREVIOUS 'PhysicalClock' is "<< PhysicalClock <<endl;
-        PhysicalClock = ReferenceClock - ThresholdTotal;
-        ev << "PCOClock: the UPDATED 'PhysicalClock' is "<< PhysicalClock <<endl;
+        ev << "PCOClock: the PREVIOUS 'PCOClockState' is "<< PCOClockState <<endl;
+        PCOClockState = ClassicClock - ThresholdTotal;
+        ev << "PCOClock: the UPDATED 'PCOClockState' is "<< PCOClockState <<endl;
     }
 
     LastUpdateTime = SIMTIME_DBL(simTime());
     ev << "PCOClock: the 'LastUpdateTime' is "<< SIMTIME_DBL(simTime()) <<endl;
-    return PhysicalClock;
+
+    pcoclockVec.record(PCOClockState);
+    classicclockVec.record(ClassicClock);
+
+    return PCOClockState;
 }
 
 void PCOClock::recordResult()
 {
-    driftVec.record(drift);
     offsetVec.record(offset);
-    update_numberVec.record(i);
+    driftVec.record(drift);
     noise1Vec.record(noise1);
     noise2Vec.record(noise2);
-    adjustedthresholdvalueVec.record(ThresholdAdjustValueBasedMaster);
-    adjustedthresholdvalueVec.record(ThresholdAdjustValueBasedRelay);
-    physicalClockVec.record(PhysicalClock);
-
+    update_numberVec.record(i);
 }
 
-/* @breif get timestamp of local drifting clock */
+/* @breif generate timestamp */
 double PCOClock::getTimestamp()
 {
     ev << "PCOClock: PCOTimestamp... " << endl;
@@ -342,11 +243,10 @@ double PCOClock::getTimestamp()
 
     ev << "PCOClock: simTime = " << SIMTIME_DBL(simTime()) << ", LastUpdateTime = "<< LastUpdateTime << endl;
 
-    PCOClock = PhysicalClock+ drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + noise3;
-    // PCOClock = PhysicalClock+ drift * (SIMTIME_DBL(simTime()) - LastUpdateTime);
-    ev << "PCOClock: 'PCOClock' is " << PCOClock << endl;
+    Timestamp = PCOClockState + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + noise3;
+    ev << "PCOClock: 'Timestamp' is " << Timestamp << endl;
 
-    return PCOClock;
+    return Timestamp;
 }
 
 void PCOClock::finish()
@@ -372,215 +272,42 @@ void PCOClock::updateDisplay()
 {
     char buf[100];
     sprintf(buf, "offset [msec]: %3.2f   \ndrift [ppm]: %3.2f \norigine: %3.2f",
-        // offset,drift*1E6,lastupdatetime);
            offset,drift*1E6,LastUpdateTime);
     getDisplayString().setTagArg("t",0,buf);
 }
 
-double PCOClock::getThresholdOffsetWithMaster()
+double PCOClock::getMeasurementOffset(int MeasurmentAlgorithm, int AddressOffset)
 {
-    ev << "PCOClock: get threshold offset of clock with master node... "<< endl;
+    ev << "PCOClock: get measurement offset... "<< endl;
 
-    // Note: 2.176E-3 means the time for receiver to recept the SYNC packet from the sender,
+    // Note: 2.176E-3 (tau) means the time for receiver to recept the SYNC packet from the sender,
     // 1.82E-4 is for physical layer to check the SYNC packet
     // 2.176E-3 = 2.368E-3 - 1.82E-4
 
-    // to obtain the value of offset, we need normalise the 'ReceivedPulseTime', 'Threshold'
-    // because '2.176E-3', 'ScheduleOffset', 'slotDuration*NodeId' is the normalized value in the system.
+    // the 'getSource()' function of packet can be used to determine where is the received SYNC from
 
-    NormalizedReceivedPulseTime = ReceivedPulseTime/Threshold;
-    NormalizedThreshold = Threshold/Threshold;
+    if (MeasurmentAlgorithm == 1)   // the receipted SYNC is from master node
+        MeasurementOffset = (ReceivedSYNCTime - tau) - Threshold + (ScheduleOffset + pulseDuration * NodeId);
+    else if (MeasurmentAlgorithm == 2)  // node i receives the SYNC from node j (node i fires before node j)
+        MeasurementOffset = (ReceivedSYNCTime - tau) - 0 - (pulseDuration * AddressOffset);
+    else if (MeasurmentAlgorithm == 3)  // node j receives the SYNC from node i (node i fires before node j)
+        MeasurementOffset = (ReceivedSYNCTime - tau) - Threshold + (pulseDuration * AddressOffset);
 
-    ThresholdOffsetBasedMaster = (NormalizedReceivedPulseTime  - 2.176E-3) - NormalizedThreshold + ScheduleOffset + slotDuration*NodeId;
+    ev << "PCOClock: 'MeasurementOffset' is " << MeasurementOffset << endl;
 
-    ev << "debug: 'ReceivedPulseTime' is " << ReceivedPulseTime << endl;
-    ev << "debug: 'NormalizedReceivedPulseTime' is " << NormalizedReceivedPulseTime << endl;
-    ev << "debug: 'Threshold' is " << Threshold << endl;
-    ev << "debug: 'NormalizedThreshold' is " << NormalizedThreshold << endl;
-    ev << "debug: 'ScheduleOffset' is " << ScheduleOffset << endl;
-    ev << "debug: 'slotDuration*NodeId' is " << slotDuration*NodeId << endl;
-    ev << "debug: 'ThresholdOffsetBasedMaster' is " << ThresholdOffsetBasedMaster << endl;
-    ev << "debug: 'AbsoluteValue(ThresholdOffsetBasedMaster)' is " << AbsoluteValue(ThresholdOffsetBasedMaster) << endl;
-    ev << "debug: 'AbsoluteValue(ThresholdOffsetPreviousBasedMaster)' is " << AbsoluteValue(ThresholdOffsetPreviousBasedMaster) << endl;
+    if (MeasurmentAlgorithm == 1)
+        measurementoffsetVec.record(MeasurementOffset);
+    else if (MeasurmentAlgorithm == 2)
+        measurementoffsetVec.record(MeasurementOffset);
+    else if (MeasurmentAlgorithm == 3)
+        measurementoffsetVec.record(MeasurementOffset);
 
-    /*
-    if (AbsoluteValue(ThresholdOffsetBasedMaster) > (0.0008 + AbsoluteValue(ThresholdOffsetPreviousBasedMaster)))
-    {
-        ThresholdOffsetBasedMaster = (ReceivedPulseTime  - 2.176E-3) - 0 - ScheduleOffset - slotDuration*NodeId;
-    }
-    */
-    /*
-    if (AbsoluteValue(ThresholdOffsetBasedMaster) > (0.0008 + AbsoluteValue(ThresholdOffsetPreviousBasedMaster)))
-    {
-        ThresholdOffsetBasedMaster = 0;
-    }
-    */
-
-    ev << "PCOClock: 'ThresholdOffsetBasedMaster' is " << ThresholdOffsetBasedMaster << endl;
-
-    thresholdOffsetWithMasterVec.record(ThresholdOffsetBasedMaster);
-
-    ThresholdOffsetPreviousBasedMaster = ThresholdOffsetBasedMaster;
-
-    return ThresholdOffsetBasedMaster;
+    return MeasurementOffset;
 }
-
-void PCOClock::adjustThresholdBasedMaster()
-{
-    ThresholdAdjustValueBasedMaster = AdjustParameter * ThresholdOffsetBasedMaster;
-
-    ThresholdAdjustValueBasedMasterIIR = IIRFilterMaster(ThresholdOffsetBasedMaster);
-    thresholdOffsetWithMasterIIRVec.record(ThresholdAdjustValueBasedMasterIIR);
-
-    ev << "debug: 'ThresholdOffsetBasedMaster' is " << ThresholdOffsetBasedMaster << endl;
-    ev << "debug: 'ThresholdAdjustValueBasedMasterIIR' is " << ThresholdAdjustValueBasedMasterIIR << endl;
-
-    if (CorrectionAlgorithm == 0)
-    {
-        ev << "PCOClock: based on the threshold adjustment value: "<< ThresholdAdjustValueBasedMaster << ", the RegisterThreshold change from " << Threshold;
-        Threshold = Threshold * (1 + ThresholdAdjustValueBasedMaster);
-        ev << " to " << Threshold << endl;
-    }
-    else if (CorrectionAlgorithm == 1)
-    {
-        ev << "PCOClock: based on the threshold adjustment value: "<< ThresholdAdjustValueBasedMasterIIR << ", the RegisterThreshold change from " << Threshold;
-        Threshold = Threshold * (1 + ThresholdAdjustValueBasedMasterIIR);
-        ev << " to " << Threshold << endl;
-    }
-    else if (CorrectionAlgorithm == 2)
-    {
-        // do nothing
-        ;
-    }
-
-    thresholdVec.record(Threshold);
-}
-
-double PCOClock::getThresholdOffsetWithRelay()
-{
-    ev << "PCOClock: get threshold offset of clock with relay node... "<< endl;
-
-    if (NodeId == 1)
-    {
-        NormalizedReceivedPulseTime = ReceivedPulseTime/Threshold;
-        NormalizedThreshold = Threshold/Threshold;
-
-        ThresholdOffsetBasedRelay = (NormalizedReceivedPulseTime  - 2.176E-3) - 0 - slotDuration ;
-
-        ev << "PCOClock: 'ThresholdOffsetBasedRelay' is " << ThresholdOffsetBasedRelay << endl;
-        ev << "PCOClock: 'ThresholdOffsetPreviousBasedRelay' is " << ThresholdOffsetPreviousBasedRelay << endl;
-
-        ev << "debug: 'ReceivedPulseTime' is " << ReceivedPulseTime << endl;
-        ev << "debug: 'NormalizedReceivedPulseTime' is " << NormalizedReceivedPulseTime << endl;
-        ev << "debug: 'slotDuration' is " << slotDuration << endl;
-        ev << "debug: 'ThresholdOffsetBasedRelay' is " << ThresholdOffsetBasedRelay << endl;
-        ev << "debug: 'AbsoluteValue(ThresholdOffsetBasedRelay)' is " << AbsoluteValue(ThresholdOffsetBasedRelay) << endl;
-        ev << "debug: 'AbsoluteValue(ThresholdOffsetPreviousBasedRelay)' is " << AbsoluteValue(ThresholdOffsetPreviousBasedRelay) << endl;
-
-        /*
-        if (AbsoluteValue(ThresholdOffsetBasedRelay) > (0.0008 + AbsoluteValue(ThresholdOffsetPreviousBasedRelay)))
-        {
-            ThresholdOffsetBasedRelay = (ReceivedPulseTime  - 2.176E-3) - Threshold + slotDuration;
-        }
-        */
-        /*
-
-        if (AbsoluteValue(ThresholdOffsetBasedRelay) > (0.0008 + AbsoluteValue(ThresholdOffsetPreviousBasedRelay)))
-        {
-            ThresholdOffsetBasedRelay = 0;
-        }
-        */
-
-        ev << "PCOClock: 'ThresholdOffsetBasedRelay' is " << ThresholdOffsetBasedRelay << endl;
-
-        thresholdOffsetWithrelayVec.record(ThresholdOffsetBasedRelay);
-
-        ThresholdOffsetPreviousBasedRelay = ThresholdOffsetBasedRelay;
-    }
-
-    if (NodeId == 2)
-    {
-        NormalizedReceivedPulseTime = ReceivedPulseTime/Threshold;
-        NormalizedThreshold = Threshold/Threshold;
-
-        ThresholdOffsetBasedRelay = (NormalizedReceivedPulseTime  - 2.176E-3) - NormalizedThreshold + slotDuration;
-
-        ev << "PCOClock: 'ThresholdOffsetBasedRelay' is " << ThresholdOffsetBasedRelay << endl;
-        ev << "PCOClock: 'ThresholdOffsetPreviousBasedRelay' is " << ThresholdOffsetPreviousBasedRelay << endl;
-
-        ev << "debug: 'ReceivedPulseTime' is " << ReceivedPulseTime << endl;
-        ev << "debug: 'Threshold' is " << Threshold << endl;
-        ev << "debug: 'slotDuration' is " << slotDuration << endl;
-        ev << "debug: 'ThresholdOffsetBasedRelay' is " << ThresholdOffsetBasedRelay << endl;
-        ev << "debug: 'AbsoluteValue(ThresholdOffsetBasedRelay)' is " << AbsoluteValue(ThresholdOffsetBasedRelay) << endl;
-        ev << "debug: 'AbsoluteValue(ThresholdOffsetPreviousBasedRelay)' is " << AbsoluteValue(ThresholdOffsetPreviousBasedRelay) << endl;
-
-        /*
-        if (AbsoluteValue(ThresholdOffsetBasedRelay) > (0.0008 + AbsoluteValue(ThresholdOffsetPreviousBasedRelay)))
-        {
-            ThresholdOffsetBasedRelay = (ReceivedPulseTime  - 2.176E-3) - 0 - slotDuration ;
-        }
-        */
-        /*
-        if (AbsoluteValue(ThresholdOffsetBasedRelay) > (0.0008 + AbsoluteValue(ThresholdOffsetPreviousBasedRelay)))
-        {
-            ThresholdOffsetBasedRelay = 0;
-        }
-        */
-
-        ev << "PCOClock: 'ThresholdOffsetBasedRelay' is " << ThresholdOffsetBasedRelay << endl;
-
-        thresholdOffsetWithrelayVec.record(ThresholdOffsetBasedRelay);
-
-        ThresholdOffsetPreviousBasedRelay = ThresholdOffsetBasedRelay;
-    }
-
-    return ThresholdOffsetBasedRelay;
-
-}
-
-void PCOClock::adjustThresholdBasedRelay()
-{
-    ThresholdAdjustValueBasedRelay = AdjustParameter * ThresholdOffsetBasedRelay;
-
-    ThresholdAdjustValueBasedRelayIIR = IIRFilterRelay(ThresholdOffsetBasedRelay);
-    thresholdOffsetWithrelayIIRVec.record(ThresholdAdjustValueBasedRelayIIR);
-
-    ev << "debug: 'ThresholdOffsetBasedRelay' is " << ThresholdOffsetBasedRelay << endl;
-    ev << "debug: 'ThresholdAdjustValueBasedRelayIIR' is " << ThresholdAdjustValueBasedRelayIIR << endl;
-
-    if (CorrectionAlgorithm == 0)
-    {
-        ev << "PCOClock: based on the threshold adjustment value: "<< ThresholdAdjustValueBasedRelay << ", the RegisterThreshold change from " << Threshold;
-        Threshold = Threshold * (1 + ThresholdAdjustValueBasedRelay);
-        ev << " to " << Threshold << endl;
-    }
-    else if (CorrectionAlgorithm == 1)
-    {
-        ev << "PCOClock: based on the threshold adjustment value: "<< ThresholdAdjustValueBasedRelayIIR << ", the RegisterThreshold change from " << Threshold;
-        Threshold = Threshold * (1 + ThresholdAdjustValueBasedRelayIIR);
-        ev << " to " << Threshold << endl;
-    }
-    else if (CorrectionAlgorithm == 2)
-    {
-        // do nothing
-        ;
-    }
-
-    thresholdVec.record(Threshold);
-}
-
-/*
-int PCOClock::getnumPulse()
-{
-    ev << "PCOClock: the returned 'numPulse' is " << numPulse << endl;
-    return numPulse;
-}
-*/
 
 void PCOClock::generateSYNC()
 {
-    EV << "PCOClock: time reaches threshold, generate a SYNC packet \n";
+    EV << "PCOClock: PCO clock state reaches threshold, it is reset to zero, meanwhile, a SYNC packet is generated \n";
 
     PtpPkt *pck = new PtpPkt("SYNC");
     pck->setPtpType(SYNC);
@@ -590,10 +317,10 @@ void PCOClock::generateSYNC()
     EV << "PCOClock transmits SYNC packet to Core module" << endl;
 }
 
-double PCOClock::setReceivedTime(double value)
+double PCOClock::setReceivedSYNCTime(double value)
 {
-    ReceivedPulseTime = value;
-    return ReceivedPulseTime;
+    ReceivedSYNCTime = value;
+    return ReceivedSYNCTime;
 }
 
 cModule *PCOClock::findHost(void)
@@ -608,54 +335,6 @@ cModule *PCOClock::findHost(void)
         parent = node->getParentModule();
     }
     return node;
-}
-
-double PCOClock::IIRFilterMaster(double IIRFilterInput)
-{
-    EV << "IIRFilterMaster..." << endl;
-    EV << "PREVIOUS IIRInput1: " << IIRInputMaster1 << " PREVIOUS IIRInput2: " << IIRInputMaster2 << " PREVIOUS IIRInput3: " << IIRInputMaster3 << endl;
-
-    EV << "PREVIOUS IIROutput1: " << IIROutputMaster1 << " PREVIOUS IIROutput2: " << IIROutputMaster2 << " PREVIOUS IIROutput3: " << IIROutputMaster3 << endl;
-
-    IIRInputMaster3 = IIRInputMaster2;
-    IIRInputMaster2 = IIRInputMaster1;
-    IIRInputMaster1 = IIRFilterInput;
-
-    IIROutputMaster3 = IIROutputMaster2;
-    IIROutputMaster2 = IIROutputMaster1;
-    IIROutputMaster1 = (1/IIRden1) * ((IIRnum1 * IIRInputMaster1) + (IIRnum2 * IIRInputMaster2) + (IIRnum3 * IIRInputMaster3) - (IIRden2 * IIROutputMaster2) - (IIRden3 * IIROutputMaster3));
-
-    IIRFilterOutputMaster = IIROutputMaster1;
-
-    EV << "UPDATED IIRInput1: " << IIRInputMaster1 << " UPDATED IIRInput2: " << IIRInputMaster2 << " UPDATED IIRInput3: " << IIRInputMaster3 << endl;
-
-    EV << "UPDATED IIROutput1: " << IIROutputMaster1 << " UPDATED IIROutput2: " << IIROutputMaster2 << " UPDATED IIROutput3: " << IIROutputMaster3 << endl;
-
-    return IIRFilterOutputMaster;
-}
-
-double PCOClock::IIRFilterRelay(double IIRFilterInput)
-{
-    EV << "IIRFilterRelay..." << endl;
-    EV << "PREVIOUS IIRInput1: " << IIRInputRelay1 << " PREVIOUS IIRInput2: " << IIRInputRelay2 << " PREVIOUS IIRInput3: " << IIRInputRelay3 << endl;
-
-    EV << "PREVIOUS IIROutput1: " << IIROutputRelay1 << " PREVIOUS IIROutput2: " << IIROutputRelay2 << " PREVIOUS IIROutput3: " << IIROutputRelay3 << endl;
-
-    IIRInputRelay3 = IIRInputRelay2;
-    IIRInputRelay2 = IIRInputRelay1;
-    IIRInputRelay1 = IIRFilterInput;
-
-    IIROutputRelay3 = IIROutputRelay2;
-    IIROutputRelay2 = IIROutputRelay1;
-    IIROutputRelay1 = (1/IIRden1) * ((IIRnum1 * IIRInputRelay1) + (IIRnum2 * IIRInputRelay2) + (IIRnum3 * IIRInputRelay3) - (IIRden2 * IIROutputRelay2) - (IIRden3 * IIROutputRelay3));
-
-    IIRFilterOutputRelay = IIROutputRelay1;
-
-    EV << "UPDATED IIRInput1: " << IIRInputRelay1 << " UPDATED IIRInput2: " << IIRInputRelay2 << " UPDATED IIRInput3: " << IIRInputRelay3 << endl;
-
-    EV << "UPDATED IIROutput1: " << IIROutputRelay1 << " UPDATED IIROutput2: " << IIROutputRelay2 << " UPDATED IIROutput3: " << IIROutputRelay3 << endl;
-
-    return IIRFilterOutputRelay;
 }
 
 double PCOClock::AbsoluteValue(double AbsoluteValueInput)

@@ -25,8 +25,6 @@ simple RelaySlave
 {
     parameters:
        	@class(RelaySlave);
-      	volatile double Tcamp;
-      	volatile double rate;
        	int slaveAddrOffset;
  
     gates:

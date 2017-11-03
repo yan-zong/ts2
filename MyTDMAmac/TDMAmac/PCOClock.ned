@@ -1,40 +1,44 @@
+//***************************************************************************
+// * File:        This file is part of TS2.
+// * Created on:  07 Nov 2016
+// * Author:      Yan Zong, Xuweu Dai
+// *
+// * Copyright:   (C) 2016 Northumbria University, UK.
+// *
+// *              TS2 is free software; you can redistribute it and/or modify it
+// *              under the terms of the GNU General Public License as published
+// *              by the Free Software Foundation; either version 3 of the
+// *              License, or (at your option) any later version.
+// *
+// *              TS2 is distributed in the hope that it will be useful, but
+// *              WITHOUT ANY WARRANTY; without even the implied warranty of
+// *              MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// *              GNU General Public License for more details.
+// *
+// * Funding:     This work was financed by the Northumbria University Faculty
+//                Funded and RDF funded studentship, UK
+// ****************************************************************************
+
 package mytdmamac.TDMAmac;
 
 simple PCOClock
 {
     parameters:
-        volatile double offset;
-        volatile double drift;
-        volatile double sigma1;
-        volatile double sigma2;
-        volatile double sigma3;
-        volatile double u3;
-        volatile double Tcamp;
-        volatile double Tsync;
-        volatile double sim_time_limit;
-        volatile double alpha;
-        volatile double  beta;        
-        volatile double RegisterThreshold;        
-        volatile double FrameDuration;
-        volatile double AdjustParameter;
-        // how long is a slot?
-        double slotDuration @unit(s) = default(0ms);
-    	// schedule the second SYNC from node (i.e., rnode[0])
-    	// duration between beacon (first SYNC packet) and second SYNC packet
+        volatile double offset;	// the clock offset
+        volatile double drift;	// the clock skew (the variation of clock frequency)
+        volatile double sigma1;	// the standard deviation of clock skew noise
+        volatile double sigma2;	// the standard deviation of clock offset noise
+        volatile double sigma3;	// the standard deviation of timestamp (meausmrenet) noise
+        volatile double u3;	// the mean of timestamp (measurement) noise
+        volatile double Tcamp;	// clock update period
+        volatile double sim_time_limit;	// the simulation time
+        volatile double alpha;	// the correction parameter of clock offset
+        volatile double beta;	// the correction parameter of clock skew        
+        volatile double Threshold;
+        double pulseDuration @unit(s) = default(0ms);	// duration between neighboring SYNC packets
     	double ScheduleOffset @unit(s) = default(0ms);
-    	// @brief this delay consists of transmission delay and propagation delay, see clock.h 
-    	double delay @unit(s) = default(0ms);
-    	// the parameter of numerator of IIR filter
-    	double IIRnum1;
-    	double IIRnum2;
-    	double IIRnum3;
-    	// the parameter of denominator of IIR filter
-    	double IIRden1;
-    	double IIRden2;
-    	double IIRden3;
-    	// Clock Correction Algorithm
-    	int CorrectionAlgorithm;
-    	
+    	double tau @unit(s) = default(0ms);	// @brief transmission delay, see clock.h 
+    	    	
     gates:
         input inclock;
         output outclock;

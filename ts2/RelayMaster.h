@@ -1,6 +1,6 @@
 //***************************************************************************
 // * File:        This file is part of TS2.
-// * Created on:  07 Dov 2016
+// * Created on:  07 Nov 2016
 // * Author:      Yan Zong, Xuweu Dai
 // *
 // * Copyright:   (C) 2016 Northumbria University, UK.
@@ -45,7 +45,7 @@ protected:
     int lowerGateIn;
     int lowerGateOut;
 
-    PCOClock *pClock; // Yan Zong: pointer to clock module
+    PCOClock *pClock; // pointer to clock module
 
     virtual void initialize();
     virtual void handleMessage(cMessage *msg);
