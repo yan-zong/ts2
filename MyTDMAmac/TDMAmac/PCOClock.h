@@ -31,7 +31,8 @@ class PCOClock:public cSimpleModule
 {
     public:
         double getMeasurementOffset(int MeasurmentAlgorithm, int AddressOffset);
-        void adjustClock();
+        double getMeasurementSkew(double measuredOffset);
+        void adjustClock(double estimatedOffset, double estimatedSkew);
         double getTimestamp();
         double setReceivedSYNCTime(double value);
 
@@ -66,8 +67,13 @@ class PCOClock:public cSimpleModule
         double LastUpdateTime;  // used to store the last update time of reference time
         double Timestamp;   // timestamp based on the reception of SYNC packet
         double ReceivedSYNCTime;    // the time that node receives the SYNC packet
-        double MeasurementOffset;
         double tau; // the transmission delay
+        double alpha;  // the correction parameter of clock offset
+        double beta;   // the correction parameter of clock skew
+        int CorrectionAlgorithm;    // correction algorithm
+                                    // 1 is for classic PCO by using constant value, 2 is for classic PCO by using offset value
+        double varepsilon;
+        int numRelay;
 
         /* @brief the id of node */
         int NodeId;

@@ -78,17 +78,17 @@ network Network extends MyBaseNetwork
             @display("p=72,82;b=42,42,rect,yellow;i=device/wifilaptop");
         }
 
+        rnode[numRelay]: RelayNode 
+        {
+            numHosts = numRelay;
+            @display("p=210,82;b=42,42,rect,yellow;i=device/wifilaptop");
+        }
+
         snode[numSlave]: SlaveNode
         // snode[numSlave]: SlaveCC2420
         {
             numHosts = numSlave;
             @display("p=146,82;b=42,42,rect,yellow;i=device/wifilaptop");
-        }
-
-        rnode[numRelay]: RelayNode 
-        {
-            numHosts = numRelay;
-            @display("p=210,82;b=42,42,rect,yellow;i=device/wifilaptop");
         }
 
     connections allowunconnected:	// all connections and gates are to be generated dynamically

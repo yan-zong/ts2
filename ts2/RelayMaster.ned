@@ -25,6 +25,7 @@ simple RelayMaster
 {
     parameters:
        @class(RelayMaster);
+       
     	double Tsync = default(1);
         int masterAddrOffset;
         double RandomValue;

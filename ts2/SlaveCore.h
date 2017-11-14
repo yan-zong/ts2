@@ -40,6 +40,9 @@ class SlaveCore: public cSimpleModule
         int myRelayAddress;
         LAddress::L3Type masterL3Addr;
         LAddress::L3Type myL3Addr;
+        double EstimatedOffset; // the measurement offset
+        double EstimatedSkew; // the measurement skew
+        int AddressOffset;
 
         PCOClock *pClock; // pointer to my clock module
 

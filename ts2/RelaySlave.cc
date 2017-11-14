@@ -58,35 +58,6 @@ void RelaySlave::initialize()
     ev<<"Relay Slave: MasterModule: findHost() -> getParentModule returns: "<< MasterModule -> getName() <<endl;
     // Relay Slave: findHost()->getParentModule returns: TSieee802154SM
 
-    /*
-    // find master node
-    MasterModule = MasterModule -> getSubmodule("mnode");
-
-    cModule *RelayModule = findHost() -> getParentModule();
-    ev<<"Relay Slave: RelayModule: findHost() -> getParentModule returns: "<< RelayModule -> getName() <<endl;
-    // Relay Slave: findHost()->getParentModule returns: TSieee802154SM
-
-    // find relay node
-    RelayModule = RelayModule -> getSubmodule("rnode", (findHost()->getIndex()));
-
-    if (MasterModule != NULL)
-    {
-        // myMasterAddress = 1000;
-        // ev<<"Relay Slave: Master default address is "<< myMasterAddress <<endl;
-        ev<<"Relay Slave: my master node is "<< MasterModule -> getName() <<endl;
-    }
-    else if (RelayModule != NULL)
-    {
-        // myMasterAddress = 2000 + (RelayModule->getIndex());
-        // ev<<"Relay Slave: Master default address is "<< myMasterAddress <<endl;
-        ev<<"Relay Slave: my master node is "<< RelayModule -> getName() <<endl;
-    }
-    else
-    {
-        error("No Sink node or RelayMaster are found");
-    }
-    */
-
 	// Find the Relay Master, and Relay Master pointer
 	pRelayMaster = (RelayMaster *)getParentModule() -> getSubmodule("RelayMaster");
 	ev<<"Relay Master: Relay Master pointer is "<< pRelayMaster <<endl;
@@ -122,7 +93,7 @@ void RelaySlave::handleMessage(cMessage *msg)
     if (msg->isSelfMessage())
     {
         handleSelfMessage(msg);
-        delete msg;
+        // delete msg;
     }
 
 	if (msg->arrivedOn("inclock"))
@@ -273,12 +244,18 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
             if (myMasterAddress == 1000)
             {
                 ev << "Relay Slave receives SYNC packet from master node, process it\n";
+
+                // get the measurement offset based on the reception of SYNC from master,
+                // and no need to use the 'AddressOffset.#
+                ev << "Relay Slave: get the offset and skew...\n";
+                EstimatedOffset = pClock -> getMeasurementOffset(1, 0);
+                EstimatedSkew = pClock -> getMeasurementSkew(EstimatedOffset);
+
                 ev << "Relay Slave: adjust clock...\n";
+                pClock -> adjustClock(EstimatedOffset, EstimatedSkew);
 
-                // ToDo: yan zong
-                // pClock -> getThresholdOffsetWithMaster();
+                ev << "Relay Slave: Done.\n";
 
-                // pClock -> adjustThresholdBasedMaster();
                 break;
 
             }
@@ -287,10 +264,28 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
                 ev << "Relay Slave receives SYNC packet from relay node, ignore it\n";
                 ev << "Relay Slave: adjust clock...\n";
 
-                // ToDo: yan Zong
-                // pClock -> getThresholdOffsetWithRelay();
 
-                //  pClock -> adjustThresholdBasedRelay();
+                ev << "Relay Slave: get the offset and skew...\n";
+                AddressOffset = myMasterAddress - myAddress;
+
+                if (AddressOffset > 0)
+                {
+                    EstimatedOffset = pClock -> getMeasurementOffset(2, AddressOffset);
+                    EstimatedSkew = pClock -> getMeasurementSkew(EstimatedOffset);
+                }
+                if (AddressOffset < 0)
+                {
+                    AddressOffset = - AddressOffset;
+                    EstimatedOffset = pClock -> getMeasurementOffset(3, AddressOffset);
+                    EstimatedSkew = pClock -> getMeasurementSkew(EstimatedOffset);
+                }
+
+                ev << "Relay Slave: adjust clock...\n";
+                pClock -> adjustClock(EstimatedOffset, EstimatedSkew);
+
+                ev << "Relay Slave: Done.\n";
+
+
 
                 break;
 

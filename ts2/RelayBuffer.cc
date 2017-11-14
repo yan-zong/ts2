@@ -32,7 +32,7 @@ Define_Module(RelayBuffer);
 
 void RelayBuffer::initialize()
 {
-	ev << "RelayBuffer Initialisation \n";
+	ev << "RelayBuffer Initialisation... \n";
 	pckVec.setName("package");  // package
 
 	if(ev.isGUI())
@@ -45,7 +45,7 @@ void RelayBuffer::initialize()
 
 void RelayBuffer::handleMessage(cMessage *msg)
 {
-	if(msg->isSelfMessage())
+	if(msg -> isSelfMessage())
 	{
 		ev << "RelayBuffer does not have any self message, ignore and delete it\r\n";
 		delete msg;

@@ -37,7 +37,11 @@ simple PCOClock
         volatile double Threshold;
         double pulseDuration @unit(s) = default(0ms);	// duration between neighboring SYNC packets
     	double ScheduleOffset @unit(s) = default(0ms);
-    	double tau @unit(s) = default(0ms);	// @brief transmission delay, see clock.h 
+    	double tau @unit(s) = default(0ms);	// @brief transmission delay, see clock.h
+    	int CorrectionAlgorithm;	// correction algorithm
+    								// 1 is for classic PCO by using constant value, 2 is for classic PCO by using offset value
+    	double varepsilon = default(0);
+    	int numRelay = default(0);      
     	    	
     gates:
         input inclock;

@@ -41,6 +41,8 @@ void MasterCore::initialize()
         else
             address = findHost()->getIndex();
 
+        ev<<"MasterCore: my address is "<< address << endl;
+
         PtpPkt * temp = new PtpPkt("REGISTER");
         // we use the host modules findHost() as a appl address
         temp->setDestination(PTP_BROADCAST_ADDR);
@@ -74,14 +76,14 @@ void MasterCore::handleMessage(cMessage* msg)
 {
     int whichGate;
 
-    if (msg->isSelfMessage())
+    if (msg -> isSelfMessage())
     {
         handleSelfMessage(msg);
         return;
     }
 
     // not self-message,check where it comes from
-    whichGate = msg->getArrivalGateId();
+    whichGate = msg -> getArrivalGateId();
 
     if(whichGate == upperGateIn)
     {

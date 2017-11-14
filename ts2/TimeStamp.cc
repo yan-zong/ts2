@@ -32,12 +32,12 @@ void TimeStamp::initialize()
     //             if there is no a clock module, use the simTime() as the time source.
 
     ev<<"TimeStamp: initialize..."<<endl;
-    pClk=(PCOClock *)(findHost()->getSubmodule("clock"));
+    pClk = (PCOClock *)(findHost() -> getSubmodule("clock"));
 
-    if (pClk==NULL) // no clock is found, force to use simTime() as the node's clock
+    if (pClk == NULL) // no clock is found, force to use simTime() as the node's clock
     {
         useGlobalRefClock = true;
-        ev<<"TimeStamp: No clock module is found. set useGlobalRefClock=true, use simTime() for time stamping\n";
+        ev<<"TimeStamp: No clock module is found. set useGlobalRefClock = true, use simTime() for time stamping\n";
     }
     else    // we have clock module, select time source
     {
@@ -50,7 +50,7 @@ void TimeStamp::initialize()
         else    //find clock module, but no parameter useGlobalRefClock is specified,
         {
             useGlobalRefClock = false;
-            ev<<"TimeStamp: useGlobalRefClock= false\n";
+            ev<<"TimeStamp: useGlobalRefClock = false\n";
          }
     }
 }
@@ -64,10 +64,10 @@ void TimeStamp::handleMessage(cMessage *msg)
     cPacket *pck= static_cast<cPacket *>(msg);
 
     // Tx packet
-    if(msg->arrivedOn("upperGateIn"))   // Tx packet from upper layer, all nodes should be a sub module of the simulation which has no parent module!!!
+    if(msg -> arrivedOn("upperGateIn"))   // Tx packet from upper layer, all nodes should be a sub module of the simulation which has no parent module!!!
     {
         ev<<"Timestamp: TX packet ";
-        while( pck->getEncapsulatedPacket()!= NULL )
+        while(pck -> getEncapsulatedPacket() != NULL )
         {
              pck = pck -> getEncapsulatedPacket();
         }
@@ -103,16 +103,15 @@ void TimeStamp::handleMessage(cMessage *msg)
     {
         ev << "Timestamp: RX packet..." << endl;
 
-        while(pck->getEncapsulatedPacket() != NULL)
+        while(pck -> getEncapsulatedPacket() != NULL)
         {
             pck = pck->getEncapsulatedPacket();
         }
         if (dynamic_cast<PtpPkt *>(pck) != NULL)
         {
-            // for PCO
             double receivedTime;
-            receivedTime = pClk->getTimestamp();
-            pClk->setReceivedSYNCTime(receivedTime);
+            receivedTime = pClk -> getTimestamp();
+            pClk -> setReceivedSYNCTime(receivedTime);
             ev << "Timestamp: SYNC packet is received at " << receivedTime << " on Timastamp module. " << endl;
 
             /*

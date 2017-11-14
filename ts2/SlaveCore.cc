@@ -209,25 +209,34 @@ void SlaveCore::handleMasterMessage(cMessage *msg)
 
             if ((((PtpPkt *)msg) -> getSource())  == 1000)
             {
-                ev << "Slave receives SYNC packet from master node, process it\n";
+                ev << "Relay Slave receives SYNC packet from master node, process it\n";
+
+                // get the measurement offset based on the reception of SYNC from master,
+                // and no need to use the 'AddressOffset.#
+                ev << "Slave: get the offset and skew...\n";
+                EstimatedOffset = pClock -> getMeasurementOffset(4, 0);
+                EstimatedSkew = pClock -> getMeasurementSkew(EstimatedOffset);
+
                 ev << "Slave: adjust clock...\n";
+                pClock -> adjustClock(EstimatedOffset, EstimatedSkew);
 
-                // ToDo: Yan zong
-                // pClock -> getThresholdOffsetWithMaster();
+                ev << "Slave: Done.\n";
 
-                // pClock -> adjustThresholdBasedMaster();
                 break;
 
             }
             else if ( ((((PtpPkt *)msg) -> getSource()) >= 2000) || ((((PtpPkt *)msg) -> getSource()) < 3000) )
             {
                 ev << "Slave receives SYNC packet from relay node, process it\n";
+
+                ev << "Slave: get the offset and skew...\n";
+                EstimatedOffset = pClock -> getMeasurementOffset(4, 0);
+                EstimatedSkew = pClock -> getMeasurementSkew(EstimatedOffset);
+
                 ev << "Slave: adjust clock...\n";
+                pClock -> adjustClock(EstimatedOffset, EstimatedSkew);
 
-                // ToDo: Yan Zong
-                // pClock -> getThresholdOffsetWithRelay();
-
-                // pClock -> adjustThresholdBasedRelay();
+                ev << "Slave: Done.\n";
 
                 break;
 
@@ -292,20 +301,11 @@ void SlaveCore::finish()
 
 void SlaveCore::updateDisplay()
 {
-	char buf[100];
+//	char buf[100];
 //	sprintf(buf, "dms [ms]: %3.2f \ndsm [ms]: %3.2f \ndpr [ms]: %3.2f \noffset [ms]: %3.2f\n ",
 //		dms*1000,dsm*1000,dprop*1000,offset*1000);
-	getDisplayString().setTagArg("t",0,buf);
+//	getDisplayString().setTagArg("t",0,buf);
 }
-
-// ---------------------------------------------------------------------------
-// this function is used to adjust the clock
-// ---------------------------------------------------------------------------
-void SlaveCore::servo_clock()
-{
-	recordResult();
-}
-
 
 cModule *SlaveCore::findHost(void)
 {

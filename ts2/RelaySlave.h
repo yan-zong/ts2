@@ -52,8 +52,10 @@ class RelaySlave: public cSimpleModule
 	    int myMasterAddress;    // the variable is used in the multi-hop network
 	    LAddress::L3Type masterL3Addr;
 	    LAddress::L3Type myL3Addr;
+	    double EstimatedOffset; // the measurement offset
+	    double EstimatedSkew; // the measurement skew
+	    int AddressOffset;
 
-	    cModule *myMasterNode; // default value (at stage 1) is myself (this)
 	    RelayMaster *pRelayMaster; // a pointer to the Relay Master module in my nodes (a boundary clock)
 	    PCOClock *pClock; // pointer to my clock module
 

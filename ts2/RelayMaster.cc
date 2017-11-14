@@ -56,7 +56,6 @@ void RelayMaster::initialize()
             error("No clock module is found in the module");
         }
 
-        // Todo: Double check this function Yan ZONG
         // find relay node, and index
         cModule *RelayModule = findHost() -> getParentModule();
         ev<<"Relay Master: RelayModule: findHost() -> getParentModule returns: "<< RelayModule -> getName() <<endl;
@@ -64,43 +63,6 @@ void RelayMaster::initialize()
 
         RelayModule = RelayModule->getSubmodule("rnode", (findHost() -> getIndex()));
 
-        // Todo: Double check this function Yan ZONG
-        /*
-        // Schedule the time-synchronisation of relay
-        // ToDo: add a random value function to improve the efficiency of packet exchange
-        RandomTime = uniform(0,1,0);
-
-        if (hasPar("RandomValue"))
-        {
-            ScheduleRandomTime = RandomTime * ((double)par("RandomValue"));
-        }
-        else
-        {
-            error("No Parameter RandomValue is found in the *.ini file");
-        }
-
-        // for multi-hop PTP
-        scheduleAt(simTime() + Tsync + ScheduleRandomTime, new cMessage("MStimer"));
-
-        PtpPkt * temp = new PtpPkt("REGISTER");
-        temp->setPtpType(REGRELAY);
-
-        // use the host modules findHost() as a application address
-        temp->setDestination(PTP_BROADCAST_ADDR);
-        temp->setSource(myAddress);
-
-        // set SrcAddr, DestAddr with LAddress::L3Type values for MiXiM
-        // L3: Network Layer
-        temp->setDestAddr(LAddress::L3BROADCAST);
-        temp->setSrcAddr( LAddress::L3Type(myAddress));
-        temp->setByteLength(0);
-
-        // set the control info to tell the network layer (layer 3) address
-        NetwControlInfo::setControlInfo(temp, LAddress::L3BROADCAST );
-
-        EV << "Relay Master broadcasts REGISTER packet" << endl;
-        send(temp,"lowerGateOut");
-        */
   }
 
 

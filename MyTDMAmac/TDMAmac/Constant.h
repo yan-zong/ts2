@@ -1,6 +1,6 @@
 //***************************************************************************
 // * File:        This file is part of TS2.
-// * Created on:  07 Dov 2016
+// * Created on:  07 Nov 2016
 // * Author:      Yan Zong, Xuweu Dai
 // *
 // * Copyright:   (C) 2016 Northumbria University, UK.
@@ -23,28 +23,16 @@
 
 #define MAX_SLAVE 100
 
-// in IEEE 1588 PTP
-// SYNC packet length is 44 bytes
-// DREQ packet length is 44 bytes
-// DRES packet length is 54 bytes
-
 // in omnetpp.ini
-// phy.headerLength = 8 bit
-// mac.headerLength = 8 bit
-// netwl.headerLength = 16 bit
+// phy.headerLength = 8 x 6 bit (6 bytes)
+// mac.headerLength = 8 x 13 bit (13 bytes)
+// netwl.headerLength = 0 bit (0 bytes)
 
-/* Constants for PTP  */
 /* Packet length  */
 #define SYNC_BYTE 40
-#define DREQ_BYTE 40
-#define DRES_BYTE 50
 
-#define OFFSET	  0
-#define DRIFT	  1
-#define CONSTDELAY 17E-3
-
-/** @brief Broadcast and Null address for PTP packet
- *       Since our PTP address follows the same as the L3 address ("SimpleAddress.h")
+/** @brief Broadcast and Null address for packet
+ *       Since PCO address follows the same as the L3 address ("SimpleAddress.h")
  *       we use the same definition as L3 address
  *       -1   for broadcast address
  *       0    for null address
@@ -52,7 +40,7 @@
 #define PTP_BROADCAST_ADDR -1
 #define PTP_NULL_ADDR 0
 
-/** @brief Types for PTP packets PtpPkt.ptpType */
+/** @brief Types for packets PtpPkt.ptpType */
 enum PtpPacket_types
 {
     SYNC = 0,
@@ -65,10 +53,17 @@ enum PtpPacket_types
 
 /** @brief Values for PtpPkt.pckType
  * OTHER for packet with name "REGISTER"*/
-enum{PTP=0, OTHER=1, CLOCK=2};
+enum
+{
+    PTP = 0,
+    OTHER = 1,
+    CLOCK = 2
+};
 
-/* Tipi di messaggio scambiati tra nodo e clock. */
-enum{TIME_REQ=0, TIME_RES=1, OFFSET_ADJ=2, FREQ_ADJ=3, PROCESSED_OFFSET=4};
+/* Types of events managed by the node manager */
+enum
+{
+    CICLICO = 0,
+    ACICLICO = 1
+};
 
-/* Tipi di eventi gestiti dal nodo manager */
-enum{CICLICO=0, ACICLICO=1};
