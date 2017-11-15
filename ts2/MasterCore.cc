@@ -99,8 +99,8 @@ void MasterCore::handleMessage(cMessage* msg)
         {
             EV<<"This ia a PtpPkt packet, MasterCore is processing it now"<<endl;
             PtpPkt *pck= static_cast<PtpPkt *>(msg);
-            if(pck->getSource() != address &
-               (pck->getDestination() == address | pck->getDestination() == PTP_BROADCAST_ADDR))
+            if(pck -> getSource() != address &
+               (pck -> getDestination() == address | pck -> getDestination() == PTP_BROADCAST_ADDR))
              {
                 EV << "the packet is for me, process it\n";
                 handleSlaveMessage(pck); // handelSlaveMessage() does not delete msg

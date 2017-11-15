@@ -51,6 +51,8 @@ class PCOClock:public cSimpleModule
 
         double offset;  // the clock offset
         double drift;   // the clock skew (the variation of clock frequency)
+        double offset_present; // the present clock offset
+        double drift_present;  // the present clock skew
         double sigma1;  // the standard deviation of clock skew noise
         double sigma2;  // the standard deviation of clock offset noise
         double sigma3;  // the standard deviation of timestamp (meausmrenet) noise
@@ -58,12 +60,10 @@ class PCOClock:public cSimpleModule
         double noise1;  // clock skew noise
         double noise2;  // clock offset noise
         double noise3;  // timestamp (meausmrenet) noise
-        double Tcamp;   // clock update period
-        double ReferenceClock;  // the reference time (perfect time)
+        double tau_0;   // clock update period
         double ClassicClock;    // the classic clock time
         double PCOClockState;    // the PCO clock state
         double Threshold;   // PCO clock threshold
-        double ThresholdTotal;  // the sum of PCO clock threshold
         double LastUpdateTime;  // used to store the last update time of reference time
         double Timestamp;   // timestamp based on the reception of SYNC packet
         double ReceivedSYNCTime;    // the time that node receives the SYNC packet
@@ -86,20 +86,9 @@ class PCOClock:public cSimpleModule
         /* @brief duration between beacon (first SYNC packet) and second SYNC packet */
         double ScheduleOffset;
 
-        double drift_previous; //定义这个变量是为了计算drift10-drift0的值
-        double offset_previous;
-        double delta_drift;  //计算drift10-drift0的值
-        double delta_offset;
-        double offset_adj_value;//offset的校正值
-        double offset_adj_previous;//前一次同步时offset的校正值
-        double drift_adj_value;
         double sim_time_limit;  // simulation time
         int i;
-        int j;//去掉前10个同步校正值
         int k;
-        double Tm;
-        double Tm_previous;
-
 
         std::ofstream outFile;
         cOutVector noise1Vec;
@@ -112,21 +101,10 @@ class PCOClock:public cSimpleModule
         cOutVector measurementoffsetVec;
         cOutVector classicclockVec;
         cOutVector pcoclockVec;
+        cOutVector timestampVec;
 
-
-
-        cOutVector delta_driftVec; // 记录drift10-drift0的值
-        cOutVector delta_offsetVec;
-        cOutVector drift_adj_valueVec ;//记录滤波后的校正值
-        cOutVector offset_adj_valueVec;
-        cOutVector drift_valueVec;    //同步校正offset时，记录offset真实值
-        cOutVector offset_valueVec;   //同步校正drift时，记录drift真实值
-        cOutVector error_driftVec;   // 记录drift同步误差的矢量类
-        cOutVector error_offsetVec; // 记录offset同步误差的矢量类
-        cStdDev    driftStd;           //为计算drift的平均值和标准差
-        cStdDev    offsetStd;
-        cStdDev    error_sync_drift;  // 为计算drift同步误差平均值和标准差
-        cStdDev    error_sync_offset;     // 为计算offset同步误差平均值和标准差
+        cStdDev    driftStd;    // standard deviation of skew
+        cStdDev    offsetStd;   // standard deviation of offset
 };
 
 #endif /* PCOClock_H_ */

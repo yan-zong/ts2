@@ -285,8 +285,6 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
 
                 ev << "Relay Slave: Done.\n";
 
-
-
                 break;
 
             }
@@ -304,7 +302,7 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
                 ev << "Relay Slave handleMasterMesage() is processing DRES Packet from Master.\n";
 
                 // activate the second-hop time sync immediately.
-                // pRelayMaster->startSync();
+                // pRelayMaster -> startSync();
                 break;
             }
             else if (myMasterAddress == 2000 || myMasterAddress > 2000)
@@ -312,7 +310,7 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
                 ev << "Relay Slave handleMasterMesage() is processing DRES Packet from relay node.\n";
 
                 // activate the second-hop time sync immediately.
-                // pRelayMaster->startSync();
+                // pRelayMaster -> startSync();
                 break;
             }
             else

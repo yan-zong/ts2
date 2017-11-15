@@ -38,8 +38,6 @@ private:
     int myAddress;      // the variable is used in the multi-hop network
     int mySlaveAddress; // the variable is used in the multi-hop network
     double Tsync;
-    double ScheduleRandomTime;  // random value generator
-    double RandomTime;  // random value generator
 
 protected:
     int lowerGateIn;

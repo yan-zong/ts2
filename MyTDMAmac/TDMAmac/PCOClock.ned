@@ -30,7 +30,7 @@ simple PCOClock
         volatile double sigma2;	// the standard deviation of clock offset noise
         volatile double sigma3;	// the standard deviation of timestamp (meausmrenet) noise
         volatile double u3;	// the mean of timestamp (measurement) noise
-        volatile double Tcamp;	// clock update period
+        volatile double tau_0;	// clock update period
         volatile double sim_time_limit;	// the simulation time
         volatile double alpha;	// the correction parameter of clock offset
         volatile double beta;	// the correction parameter of clock skew        
@@ -38,7 +38,7 @@ simple PCOClock
         double pulseDuration @unit(s) = default(0ms);	// duration between neighboring SYNC packets
     	double ScheduleOffset @unit(s) = default(0ms);
     	double tau @unit(s) = default(0ms);	// @brief transmission delay, see clock.h
-    	int CorrectionAlgorithm;	// correction algorithm
+    	int CorrectionAlgorithm;	// correction algorithm, 0 is for null
     								// 1 is for classic PCO by using constant value, 2 is for classic PCO by using offset value
     	double varepsilon = default(0);
     	int numRelay = default(0);      

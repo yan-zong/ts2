@@ -92,10 +92,13 @@ void SlaveCore::handleMessage(cMessage *msg)
 
     if(msg->isSelfMessage())
     {
-        handleSelfMessage(msg);
+        error("error in SlaveCore module, there should be no self message in slave core.\n");
+        delete msg;
+
+        // handleSelfMessage(msg);
     }
 
-    if (msg->arrivedOn("inclock"))
+    if (msg -> arrivedOn("inclock"))
 	{
 	    EV << "SlaveCore: Slave receives a SYNC packet from clock module, delete it and DON't re-generate a full SYNC packet due to the it is slave node.\n";
 	    delete msg;
@@ -105,7 +108,7 @@ void SlaveCore::handleMessage(cMessage *msg)
 	    // handleClockMessage(msg);
 	}
 
-    if (msg->arrivedOn("lowerGateIn"))  // data packet from lower layer
+    if (msg -> arrivedOn("lowerGateIn"))  // data packet from lower layer
 	{   // check PtpPkt type
         if (dynamic_cast<PtpPkt *>(msg) != NULL)
         {
@@ -121,6 +124,9 @@ void SlaveCore::handleMessage(cMessage *msg)
              {
                  EV << "the packet is not for me, ignore it\n";
              }
+
+             delete msg;
+
         }
         else
         {
@@ -129,13 +135,13 @@ void SlaveCore::handleMessage(cMessage *msg)
          }
 	}
 
-    if (msg->arrivedOn("upperGateIn"))   // data packet from upper layer
+    if (msg -> arrivedOn("upperGateIn"))   // data packet from upper layer
     {
          EV << "receive a PtpPkt packet from higher layer"<<endl;
          send(msg, "lowerGateOut");
     }
 
-    if (msg->arrivedOn("inevent"))
+    if (msg -> arrivedOn("inevent"))
     {
         handleEventMessage(msg);
         delete msg;

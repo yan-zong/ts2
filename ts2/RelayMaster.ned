@@ -26,7 +26,7 @@ simple RelayMaster
     parameters:
        @class(RelayMaster);
        
-    	double Tsync = default(1);
+    	double Tsync = default(1);	// Todo: no use in the PCO model
         int masterAddrOffset;
         double RandomValue;
             

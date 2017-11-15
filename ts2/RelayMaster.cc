@@ -83,8 +83,11 @@ void RelayMaster::handleMessage(cMessage* msg)
 
     if (msg->isSelfMessage())
     {
-        handleSelfMessage(msg);
-        return;
+        error("error in RelayMaster module, there should be no self message in relay master.\n");
+        delete msg;
+
+        // handleSelfMessage(msg);
+        // return;
     }
 
     // no self-message,check where it comes from
