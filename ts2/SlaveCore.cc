@@ -92,16 +92,18 @@ void SlaveCore::handleMessage(cMessage *msg)
 
     if(msg -> isSelfMessage())
     {
-        handleSelfMessage(msg);
+        error("SlaveCore: there should not be selfMessage in the slave core module");
+
+        // handleSelfMessage(msg);
         return;
     }
 
     if (msg -> arrivedOn("inclock"))
 	{
-	    EV << "SlaveCore: Slave receives a SYNC packet from clock module, delete it and DON't re-generate a full SYNC packet due to the it is slave node.\n";
+	    EV << "SlaveCore: Slave receives a SYNC packet from clock module, delete it and DON't re-generate a full SYNC packet due to it is slave node.\n";
 	    delete msg;
 
-	    scheduleAt(simTime(), new cMessage("OffsetTimer"));
+	    // scheduleAt(simTime(), new cMessage("OffsetTimer"));
 	}
 
     if (msg -> arrivedOn("lowerGateIn"))  // data packet from lower layer
