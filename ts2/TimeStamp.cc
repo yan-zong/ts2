@@ -99,7 +99,7 @@ void TimeStamp::handleMessage(cMessage *msg)
     }
 
     // Rx packet
-    if(msg->arrivedOn("lowerGateIn"))
+    if(msg -> arrivedOn("lowerGateIn"))
     {
         ev << "Timestamp: RX packet..." << endl;
 

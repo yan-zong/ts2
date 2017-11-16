@@ -47,36 +47,24 @@ void RelayMaster::initialize()
         else
             error("No parameter masterAddrOffset is found");
 
-        ev << "Relay Master address is "<< myAddress <<endl;
+        ev << "RelayMaster: my address is "<< myAddress <<endl;
 
         // Initialise the pointer to the clock module */
         pClock = (PCOClock *)getParentModule() -> getParentModule() -> getSubmodule("clock");
         if (pClock == NULL)
         {
-            error("No clock module is found in the module");
+            error("RelayMaster: No clock module is found in the module");
         }
 
         // find relay node, and index
         cModule *RelayModule = findHost() -> getParentModule();
-        ev<<"Relay Master: RelayModule: findHost() -> getParentModule returns: "<< RelayModule -> getName() <<endl;
-        // Relay Slave: findHost()->getParentModule returns: TSieee802154SM
+        ev<<"RelayMaster: RelayModule: findHost() -> getParentModule returns: "<< RelayModule -> getName() <<endl;
+        //RelayMaster: findHost()->getParentModule returns: Network
 
         RelayModule = RelayModule->getSubmodule("rnode", (findHost() -> getIndex()));
 
   }
 
-
-/**
- * The basic handle message function.
- *
- * Depending on the gate a message arrives handleMessage just calls
- * different handle*Msg functions to further process the message.
- *
- * You should not make any changes in this function but implement all
- * your functionality into the handle*Msg functions called from here.
- *
- * handleUpperMsg, handleLowerMsg, handleSelfMsg
- **/
 void RelayMaster::handleMessage(cMessage* msg)
 {
     int whichGate;
@@ -85,16 +73,13 @@ void RelayMaster::handleMessage(cMessage* msg)
     {
         error("error in RelayMaster module, there should be no self message in relay master.\n");
         delete msg;
-
-        // handleSelfMessage(msg);
-        // return;
     }
 
     // no self-message,check where it comes from
     whichGate = msg -> getArrivalGateId();
     if (whichGate == lowerGateIn)
     {
-        EV << "Relay Master receives a packet"<<endl;
+        EV << "RelayMaster: receives a packet"<<endl;
 
         if (dynamic_cast<PtpPkt *>(msg) != NULL)
         {
@@ -162,7 +147,7 @@ void RelayMaster::handleSelfMessage(cMessage *msg)
     // set the control info to tell the network layer (layer 3) address
     NetwControlInfo::setControlInfo(pck, LAddress::L3BROADCAST );
 
-    EV << "Relay Master broadcasts SYNC packet" << endl;
+    EV << "RelayMaster: broadcasts SYNC packet" << endl;
     send(pck,"lowerGateOut");
 
     scheduleAt(simTime() + Tsync, new cMessage("MStimer"));   // schedule the next time-synchronisation.
@@ -171,7 +156,7 @@ void RelayMaster::handleSelfMessage(cMessage *msg)
 void RelayMaster::handleSlaveMessage(PtpPkt *msg)
 {
     mySlaveAddress = msg -> getSource();
-    ev << "Relay Master: mySlaveAddress = " << mySlaveAddress <<".\n";
+    ev << "RelayMaster: mySlaveAddress = " << mySlaveAddress <<".\n";
 
     switch (msg -> getPtpType())
     {
@@ -179,12 +164,12 @@ void RelayMaster::handleSlaveMessage(PtpPkt *msg)
         {
             if (mySlaveAddress == 1000)
             {
-                ev << "Relay Master: the received REGISTER packet is from the master, NOT for me, ignore it \n";
+                ev << "RelayMaster: the received REGISTER packet is from the master, NOT for me, ignore it \n";
                 break;
             }
             else if (mySlaveAddress == 2000 || mySlaveAddress > 2000)
             {
-                ev << "Relay Master: the received REGISTER packet is from the Relay node, ignore it\n";
+                ev << "RelayMaster: the received REGISTER packet is from the Relay node, ignore it\n";
                 break;
             }
             else
@@ -261,7 +246,7 @@ void RelayMaster::startSync()
     // set the control info to tell the network layer (layer 3) address
     NetwControlInfo::setControlInfo(pck, LAddress::L3BROADCAST );
 
-    EV << "Relay Master broadcasts SYNC packet" << endl;
+    EV << "RelayMaster: broadcasts SYNC packet" << endl;
     send(pck,"lowerGateOut");
 }
 

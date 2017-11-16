@@ -86,9 +86,7 @@ class PCOClock:public cSimpleModule
         /* @brief duration between beacon (first SYNC packet) and second SYNC packet */
         double ScheduleOffset;
 
-        double sim_time_limit;  // simulation time
         int i;
-        int k;
 
         std::ofstream outFile;
         cOutVector noise1Vec;

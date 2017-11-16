@@ -64,7 +64,6 @@ class SlaveCore: public cSimpleModule
 
     private:
 	    void handleSelfMessage(cMessage *msg);
-	    void handleClockMessage(cMessage *msg);
 	    void handleMasterMessage(cMessage *msg);
 	    void recordResult();
 	    void handleOtherPacket(cMessage *msg);

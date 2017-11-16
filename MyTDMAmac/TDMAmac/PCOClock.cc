@@ -47,7 +47,6 @@ void PCOClock::initialize()
     // ---------------------------------------------------------------------------
     offset = par("offset"); // the clock offset
     drift =  par("drift");  // the clock skew (the variation of clock frequency)
-    sim_time_limit = par("sim_time_limit"); // simulation time
     sigma1  = par("sigma1");    // the standard deviation of clock skew noise
     sigma2 = par("sigma2"); // the standard deviation of clock offset noise
     sigma3 = par("sigma3"); // the standard deviation of timestamp (meausmrenet) noise
@@ -72,7 +71,6 @@ void PCOClock::initialize()
     offset_present = 0; // the present clock offset
     drift_present = 0;  // the present clock skew
 
-    k = int(sim_time_limit / tau_0);
     i = 0;
 
     NodeId = (findHost()->getId() - 4);
@@ -112,21 +110,10 @@ void PCOClock::handleMessage(cMessage *msg)
 
         i = i + 1;
         ev << "i = "<< i << endl;
-        ev << "k = " << k << endl;
 
-        if(k >= 9999999)
+        if(i % 100 == 0)
         {
-            if((i > 10) && (i % 100 == 0))
-            {
-                ev << "Larger amount of data, record offset and drift of clock"<<endl;
-                recordResult();
-                driftStd.collect(drift);
-                offsetStd.collect(offset);
-            }
-        }
-        else
-        {
-            ev << "Less amount of data,record offset and drift of clock"<<endl;
+            ev << "record the offset and drift of clock"<<endl;
             recordResult();
             driftStd.collect(drift);
             offsetStd.collect(offset);
@@ -137,7 +124,7 @@ void PCOClock::handleMessage(cMessage *msg)
 
     else
     {
-        error("PCOClock receipts a Packet from node. It does not exchange Packet with node.\n");
+        error("Clock module receipts a packet from node. It does not receive packet from sensor node.\n");
     }
 
     delete msg;
@@ -153,23 +140,26 @@ double PCOClock::ClockUpdate()
     double PCOClockStateTemp = 0;
 
     ev << "PCOClock: the PREVIOUS offset is "<< offset << endl;
-    noise2 =  normal(0,sigma2,1);
+    noise2 =  normal(0, sigma2, 1);
     offset = offset + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + noise2;
     offset_present = drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + noise2;
     ev << "PCOClock: the UPDATED offset is "<< offset << endl;
+    ev << "PCOClock: the PRESENT offset is "<< offset_present << endl;
 
     ev << "PCOClock: the PREVIOUS drift is "<< drift <<endl;
     noise1 =  normal(0,sigma1,1);
     drift = drift + noise1;
     drift_present = noise1;
     ev << "PCOClock: the UPDATED drift is "<< drift <<endl;
+    ev << "PCOClock: the PRESENT drift is "<< drift_present << endl;
 
+    ev << "PCOClock: the PREVIOUS classic clock is "<< ClassicClock <<endl;
     // update the classic clock
     ClassicClock = ClassicClock + tau_0 + offset_present;
+    ev << "PCOClock: the UPDATED classic clock is "<< ClassicClock <<endl;
 
     // update the PCO clock
     PCOClockStateTemp = PCOClockState + tau_0 + offset_present;
-
     ev << "PCOClock: the TEMP 'PCOClockState' is "<< PCOClockStateTemp <<endl;
 
     if ((PCOClockStateTemp) >= Threshold)
@@ -212,17 +202,18 @@ void PCOClock::recordResult()
     update_numberVec.record(i);
 }
 
-/* @breif generate timestamp */
 double PCOClock::getTimestamp()
 {
     ev << "PCOClock: PCOTimestamp... " << endl;
-    noise3 = normal(u3,sigma3);
+    noise3 = normal(u3, sigma3);
     noise3Vec.record(noise3);
+    ev << "PCOClock: the timestamp noise 'noise3' is " << noise3 << endl;
 
     ev << "PCOClock: simTime = " << SIMTIME_DBL(simTime()) << ", LastUpdateTime = "<< LastUpdateTime << endl;
 
     Timestamp = PCOClockState + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + noise3;
     ev << "PCOClock: 'Timestamp' is " << Timestamp << endl;
+    ev << "PCOClock: the presented updated PCO clock state 'drift * (SIMTIME_DBL(simTime()) - LastUpdateTime)' is " << drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) << endl;
 
     timestampVec.record(Timestamp);
 
@@ -364,10 +355,12 @@ double PCOClock::AbsoluteValue(double AbsoluteValueInput)
 void PCOClock::adjustClock(double estimatedOffset, double estimatedSkew)
 {
     double PCOClockStateTemp = 0;
+
     if (CorrectionAlgorithm == 0)   // null
     {
 
     }
+
     else if (CorrectionAlgorithm == 1)   // correct PCO state by using constant value, i.e., classic PCO
     {
         PCOClockStateTemp = PCOClockState + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + varepsilon;
@@ -379,8 +372,9 @@ void PCOClock::adjustClock(double estimatedOffset, double estimatedSkew)
             ev << "PCOClock: the PREVIOUS 'PCOClockState' is "<< PCOClockState <<endl;
             PCOClockState = PCOClockState + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + varepsilon - Threshold ;
             ev << "PCOClock: the UPDATED 'PCOClockState' is "<< PCOClockState <<endl;
+            ev << "PCOClock: the presented updated PCO clock state 'drift * (SIMTIME_DBL(simTime()) - LastUpdateTime)' is " << drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) << endl;
 
-            generateSYNC();  // to fix the bugs
+            generateSYNC();
 
             EV << "PCOClock: generate and sent SYNC packet to Core module. " << endl;
 
@@ -390,6 +384,7 @@ void PCOClock::adjustClock(double estimatedOffset, double estimatedSkew)
             ev << "PCOClock: the PREVIOUS 'PCOClockState' is "<< PCOClockState <<endl;
             PCOClockState = PCOClockState + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + varepsilon;
             ev << "PCOClock: the UPDATED 'PCOClockState' is "<< PCOClockState <<endl;
+            ev << "PCOClock: the presented updated PCO clock state 'drift * (SIMTIME_DBL(simTime()) - LastUpdateTime)' is " << drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) << endl;
         }
         else
         {
@@ -398,6 +393,7 @@ void PCOClock::adjustClock(double estimatedOffset, double estimatedSkew)
 
         ev << "PCOClock: the PCO clock state is adjusted to " << PCOClockState << endl;
     }
+
     else if (CorrectionAlgorithm == 2)  // correct PCO state by using clock offset and skew, i.e., PkCOs
     {
         // correct the PCO clock state

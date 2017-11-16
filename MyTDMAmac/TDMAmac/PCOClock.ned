@@ -31,7 +31,6 @@ simple PCOClock
         volatile double sigma3;	// the standard deviation of timestamp (meausmrenet) noise
         volatile double u3;	// the mean of timestamp (measurement) noise
         volatile double tau_0;	// clock update period
-        volatile double sim_time_limit;	// the simulation time
         volatile double alpha;	// the correction parameter of clock offset
         volatile double beta;	// the correction parameter of clock skew        
         volatile double Threshold;

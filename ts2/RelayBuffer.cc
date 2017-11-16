@@ -47,15 +47,15 @@ void RelayBuffer::handleMessage(cMessage *msg)
 {
 	if(msg -> isSelfMessage())
 	{
-		ev << "RelayBuffer does not have any self message, ignore and delete it\r\n";
+		ev << "RelayBuffer: RelayBuffer does not have any self message, ignore and delete it\r\n";
 		delete msg;
 		return;
 	}
 	else
 	{
-	    ev << "RelayBuffer receives a message. \n";
+	    ev << "RelayBuffer: RelayBuffer receives a message. \n";
 	    handleRelayMessage(msg);
-	    ev << "RelayBuffer forwards message RelayMaster or RelaySlave\n";
+	    ev << "RelayBuffer: RelayBuffer forwards message RelayMaster or RelaySlave\n";
 	}
 
 	if(ev.isGUI())
@@ -82,7 +82,7 @@ void RelayBuffer::handleRelayMessage(cMessage *msg)
         isPtpPkt = FALSE;
     }
 
-    if (msg->arrivedOn ("in", 2 ))
+    if (msg->arrivedOn ("in", 2))
     {
         if (isPtpPkt == FALSE)
         {
@@ -91,19 +91,19 @@ void RelayBuffer::handleRelayMessage(cMessage *msg)
         }
         else
         {
-            if (pkt->getDestination() == PTP_BROADCAST_ADDR)
+            if (pkt -> getDestination() == PTP_BROADCAST_ADDR)
             {
                 send(msg,"out",0); // RelaySlave
                 send((pkt)->dup(),"out",1);   // RelayMaster
             }
-            else if ( (pkt->getDestination() == 2000) | (pkt->getDestination() > 2000) )
+            else if ( (pkt -> getDestination() >= 2000) & (pkt -> getDestination() < 3000) )
             {
                 send(msg,"out",0);  // RelaySlave
                 send((pkt)->dup(),"out",1);  // RelayMaster
             }
             else
             {
-                error("RelayBuffer error in handleRelayMessagne");
+                error("RelayBuffer: error in handleRelayMessagne");
             }
         }
     }
@@ -136,9 +136,9 @@ void RelayBuffer::handleRelayMessage(cMessage *msg)
 
     else
     {
-        error("RelayBuffer error in handleRelayMessagne");
+        error("RelayBuffer: error in handleRelayMessagne");
     }
-    ev << "RelayBuffer Success.\n";
+    ev << "RelayBuffer: success.\n";
 }
 
 void RelayBuffer::finish()

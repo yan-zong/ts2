@@ -37,9 +37,9 @@ void MasterCore::initialize()
         // outclock = findGate ("outclock");
 
         if (hasPar("masterAddrOffset"))
-            address = findHost()->getIndex()+(int)par("masterAddrOffset"); // ->getId(); for compatible with MiXiM, see BaseAppLayer.cc
+            address = findHost() -> getIndex() + (int)par("masterAddrOffset"); // ->getId(); for compatible with MiXiM, see BaseAppLayer.cc
         else
-            address = findHost()->getIndex();
+            address = findHost() -> getIndex();
 
         ev<<"MasterCore: my address is "<< address << endl;
 
@@ -55,22 +55,9 @@ void MasterCore::initialize()
 
         NetwControlInfo::setControlInfo(temp, LAddress::L3BROADCAST );
 
-        EV << "Master: Core broadcasts REGISTER packet" << endl;
+        EV << "MasterCore: Core broadcasts REGISTER packet" << endl;
         send(temp,"lowerGateOut");
   }
-
-
-/**
- * The basic handle message function.
- *
- * Depending on the gate a message arrives handleMessage just calls
- * different handle*Msg functions to further process the message.
- *
- * You should not make any changes in this function but implement all
- * your functionality into the handle*Msg functions called from here.
- *
- * handleUpperMsg, handleLowerMsg, handleSelfMsg
- **/
 
 void MasterCore::handleMessage(cMessage* msg)
 {
@@ -97,7 +84,7 @@ void MasterCore::handleMessage(cMessage* msg)
 
         if (dynamic_cast<PtpPkt *>(msg) != NULL)
         {
-            EV<<"This ia a PtpPkt packet, MasterCore is processing it now"<<endl;
+            EV<< " MasterCore: This ia a PtpPkt packet, MasterCore is processing it now"<<endl;
             PtpPkt *pck= static_cast<PtpPkt *>(msg);
             if(pck -> getSource() != address &
                (pck -> getDestination() == address | pck -> getDestination() == PTP_BROADCAST_ADDR))
@@ -119,7 +106,7 @@ void MasterCore::handleMessage(cMessage* msg)
 
     else if(whichGate == inclock)
     {
-        EV << "Master receives a SYNC packet from clock module, delete it and re-generate a full SYNC packet \n";
+        EV << "MasterCore: Master receives a SYNC packet from clock module, delete it and re-generate a full SYNC packet \n";
         delete msg;
 
         scheduleAt(simTime(), new cMessage("FrameTimer"));
@@ -168,18 +155,18 @@ void MasterCore::handleSelfMessage(cMessage *msg)
 
     NetwControlInfo::setControlInfo(pck, LAddress::L3BROADCAST );
 
-    EV << "Master broadcasts SYNC packet" << endl;
+    EV << "MasterCore: Master broadcasts SYNC packet" << endl;
     send(pck,"lowerGateOut");
 
 }
 
 void MasterCore::handleSlaveMessage(PtpPkt *msg)
 {
-    switch (msg->getPtpType())
+    switch (msg -> getPtpType())
     {
         case SYNC:
         {
-            ev << "MasterCore receives a SYNC packet, ignore it.\n";
+            ev << "MasterCore: MasterCore receives a SYNC packet, ignore it.\n";
             break;
         }
         case REG:
@@ -201,17 +188,17 @@ void MasterCore::handleSlaveMessage(PtpPkt *msg)
         }
         case REGRELAY:
         {
-            ev << " Register packet from relay node, ignore it\n";
+            ev << "MasterCore: Register packet from relay node, ignore it\n";
             break;
         }
         case REGREPLY:
         {
-            ev << "Received register_reply packet (PtpType=REGREPLY), ignore\n";
+            ev << "MasterCore: Received register_reply packet (PtpType = REGREPLY), ignore\n";
             break;
         }
         default:
         {
-            ev << "unknown message. Report warning and ignore\n";
+            ev << "MasterCore: unknown message. Report warning and ignore\n";
             break;
         }
     }

@@ -41,15 +41,14 @@ class RelaySlave: public cSimpleModule
 
     private:
 	    void handleSelfMessage(cMessage *msg);
-	    void handleClockMessage(cMessage *msg);
 	    void handleMasterMessage(cMessage *msg);
 	    void recordResult();
 	    void handleOtherPacket(cMessage *msg);
 	    void handleEventMessage(cMessage *msg);
 
 	    const char *name;
-	    int myAddress;          // the variable is used in the multi-hop network
-	    int myMasterAddress;    // the variable is used in the multi-hop network
+	    int myAddress;
+	    int myMasterAddress;
 	    LAddress::L3Type masterL3Addr;
 	    LAddress::L3Type myL3Addr;
 	    double EstimatedOffset; // the measurement offset
