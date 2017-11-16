@@ -167,9 +167,14 @@ void RelayMaster::handleSlaveMessage(PtpPkt *msg)
                 ev << "RelayMaster: the received REGISTER packet is from the master, NOT for me, ignore it \n";
                 break;
             }
-            else if (mySlaveAddress == 2000 || mySlaveAddress > 2000)
+            else if (mySlaveAddress >= 2000 || mySlaveAddress < 3000)
             {
                 ev << "RelayMaster: the received REGISTER packet is from the Relay node, ignore it\n";
+                break;
+            }
+            else if (mySlaveAddress >= 3000)
+            {
+                ev << "RelayMaster: the received REGISTER packet is from the slave node, ignore it\n";
                 break;
             }
             else

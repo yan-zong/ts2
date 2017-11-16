@@ -92,15 +92,16 @@ void SlaveCore::handleMessage(cMessage *msg)
 
     if(msg -> isSelfMessage())
     {
-        error("SlaveCore: error in SlaveCore module, there should be no self message in slave core.\n");
-        delete msg;
+        handleSelfMessage(msg);
+        return;
     }
 
     if (msg -> arrivedOn("inclock"))
 	{
 	    EV << "SlaveCore: Slave receives a SYNC packet from clock module, delete it and DON't re-generate a full SYNC packet due to the it is slave node.\n";
 	    delete msg;
-	    EV << "SlaveCore: the received SYNC from clock module is deleted.\n";
+
+	    scheduleAt(simTime(), new cMessage("OffsetTimer"));
 	}
 
     if (msg -> arrivedOn("lowerGateIn"))  // data packet from lower layer
@@ -169,7 +170,7 @@ void SlaveCore::handleSelfMessage(cMessage *msg)
     NetwControlInfo::setControlInfo(pck, LAddress::L3Type(pck -> getDestination()));
 
     send((cMessage *)pck,"lowerGateOut");
-    EV << "Slave broadcasts SYNC packet" << endl;
+    EV << "SlaveCore: broadcasts SYNC packet" << endl;
 }
 
 void SlaveCore::handleOtherPacket(cMessage *msg)
@@ -232,6 +233,12 @@ void SlaveCore::handleMasterMessage(cMessage *msg)
 
                 ev << "SlaveCore: Done.\n";
 
+                break;
+
+            }
+            else if ((((PtpPkt *)msg) -> getSource()) >= 3000)
+            {
+                ev << "SlaveCore: receives SYNC packet from slave node, ignore it\n";
                 break;
 
             }

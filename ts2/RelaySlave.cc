@@ -93,6 +93,7 @@ void RelaySlave::handleMessage(cMessage *msg)
     if (msg -> isSelfMessage())
     {
         handleSelfMessage(msg);
+        return;
     }
 
 	if (msg -> arrivedOn("inclock"))
@@ -278,6 +279,14 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
                 break;
 
             }
+            else if (myMasterAddress >= 3000)
+            {
+                ev << "RelaySlave: receives SYNC packet from slave node, ignore it\n";
+
+                break;
+
+            }
+
             else
             {
                 ev << "RelaySlave: the received SYNC packet is invalid, ignore it \n";
