@@ -140,7 +140,7 @@ void MasterCore::handleSelfMessage(cMessage *msg)
     PtpPkt *pck = new PtpPkt("SYNC");
     pck->setPtpType(SYNC);
 
-    pck->setByteLength(44);
+    pck->setByteLength(2);
     // pck->setTimestamp(simTime());
 
     pck->setSource(address);

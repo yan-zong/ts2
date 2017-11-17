@@ -87,6 +87,8 @@ class PCOClock:public cSimpleModule
         double ScheduleOffset;
 
         int i;
+        double PCOfireTime;
+
 
         std::ofstream outFile;
         cOutVector noise1Vec;
@@ -96,10 +98,12 @@ class PCOClock:public cSimpleModule
         cOutVector offsetVec;
         cOutVector update_numberVec;  // the clock update times
         cOutVector thresholdVec;    // the threshold value
-        cOutVector measurementoffsetVec;
+        cOutVector measuredoffsetmasterVec;
+        cOutVector measuredoffsetrelayVec;
         cOutVector classicclockVec;
         cOutVector pcoclockVec;
         cOutVector timestampVec;
+        cOutVector PCOfireTimeVec;
 
         cStdDev    driftStd;    // standard deviation of skew
         cStdDev    offsetStd;   // standard deviation of offset

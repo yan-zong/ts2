@@ -39,8 +39,10 @@ void PCOClock::initialize()
     classicclockVec.setName("ClassicClock");
     thresholdVec.setName("Threshold");
     update_numberVec.setName("update_number");
-    measurementoffsetVec.setName("MeasurementOffset");
+    measuredoffsetmasterVec.setName("MeasuredOffsetMaster");
+    measuredoffsetrelayVec.setName("MeasuredOffsetRelay");
     timestampVec.setName("Timestamp");
+    PCOfireTimeVec.setName("PCOFireTime");
 
     // ---------------------------------------------------------------------------
     // Initialise variable
@@ -70,6 +72,7 @@ void PCOClock::initialize()
     ReceivedSYNCTime = 0;   // the reception time of SYNC packet
     offset_present = 0; // the present clock offset
     drift_present = 0;  // the present clock skew
+    PCOfireTime = 0;
 
     i = 0;
 
@@ -169,6 +172,10 @@ double PCOClock::ClockUpdate()
         ev << "PCOClock: the UPDATED 'PCOClockState' is "<< PCOClockState <<endl;
 
         generateSYNC();
+
+        PCOfireTime = SIMTIME_DBL(simTime());
+        PCOfireTimeVec.record(PCOfireTime);
+
         EV << "PCOClock: generate and sent SYNC packet to Core module. " << endl;
 
     }
@@ -245,7 +252,7 @@ void PCOClock::generateSYNC()
 
     PtpPkt *pck = new PtpPkt("SYNC");
     pck -> setPtpType(SYNC);
-    pck -> setByteLength(44);
+    pck -> setByteLength(2);
     send(pck,"outclock");
 
     EV << "PCOClock: PCOClock transmits SYNC packet to Core module" << endl;
@@ -264,14 +271,13 @@ double PCOClock::getMeasurementOffset(int MeasurmentAlgorithm, int AddressOffset
 
     // the 'getSource()' function of packet can be used to determine where is the received SYNC from
 
-    // if the node is the relay node, the scheduled offset of DESYNC should be considered.
-    if (MeasurmentAlgorithm == 1)   // the receipted SYNC is from master node
+    if (MeasurmentAlgorithm == 1)   // receive the SYNC from master node, the received node is the relay node.
     {
         if (ReceivedSYNCTime < (Threshold/2))
         {
             MeasuredOffset = (ReceivedSYNCTime - tau) - 0 + (ScheduleOffset + pulseDuration * NodeId);
         }
-        else if ((ReceivedSYNCTime > (Threshold/2)) | (ReceivedSYNCTime == (Threshold/2)))
+        else if (ReceivedSYNCTime >= (Threshold/2))
         {
             MeasuredOffset = (ReceivedSYNCTime - tau) - Threshold + (ScheduleOffset + pulseDuration * NodeId);
         }
@@ -283,7 +289,7 @@ double PCOClock::getMeasurementOffset(int MeasurmentAlgorithm, int AddressOffset
         {
             MeasuredOffset = (ReceivedSYNCTime - tau) - 0 - (pulseDuration * AddressOffset);
         }
-        else if ((ReceivedSYNCTime > (Threshold/2)) | (ReceivedSYNCTime == (Threshold/2)))
+        else if ((ReceivedSYNCTime >= (Threshold/2)))
         {
             MeasuredOffset = (ReceivedSYNCTime - tau) - Threshold - (pulseDuration * AddressOffset);
         }
@@ -295,19 +301,32 @@ double PCOClock::getMeasurementOffset(int MeasurmentAlgorithm, int AddressOffset
         {
             MeasuredOffset = (ReceivedSYNCTime - tau) - 0 + (pulseDuration * AddressOffset);
         }
-        else if ((ReceivedSYNCTime > (Threshold/2)) | (ReceivedSYNCTime == (Threshold/2)))
+        else if ((ReceivedSYNCTime >= (Threshold/2)))
         {
             MeasuredOffset = (ReceivedSYNCTime - tau) - Threshold + (pulseDuration * AddressOffset);
         }
     }
 
-    else if (MeasurmentAlgorithm == 4)  // the node is the slave node, the scheduled offset of DESYNC should not be considered.
+    else if (MeasurmentAlgorithm == 4)  // receive the SYNC from relay node, and the received node is the slave node.
+    {
+        if (ReceivedSYNCTime < (Threshold/2))
+        {
+            MeasuredOffset = (ReceivedSYNCTime - tau) - 0 - (ScheduleOffset + pulseDuration * AddressOffset);
+        }
+        else if ((ReceivedSYNCTime >= (Threshold/2)))
+        {
+            MeasuredOffset = (ReceivedSYNCTime - tau) - Threshold - (ScheduleOffset + pulseDuration * AddressOffset);
+        }
+
+    }
+
+    else if (MeasurmentAlgorithm == 5)  // receive SYNC from master node, and the received node is the slave node.
     {
         if (ReceivedSYNCTime < (Threshold/2))
         {
             MeasuredOffset = (ReceivedSYNCTime - tau) - 0;
         }
-        else if ((ReceivedSYNCTime > (Threshold/2)) | (ReceivedSYNCTime == (Threshold/2)))
+        else if ((ReceivedSYNCTime >= (Threshold/2)))
         {
             MeasuredOffset = (ReceivedSYNCTime - tau) - Threshold;
         }
@@ -321,7 +340,12 @@ double PCOClock::getMeasurementOffset(int MeasurmentAlgorithm, int AddressOffset
 
     ev << "PCOClock: 'MeasurementOffset' is " << MeasuredOffset << endl;
 
-    measurementoffsetVec.record(MeasuredOffset);
+    if (MeasurmentAlgorithm == 1)
+        measuredoffsetmasterVec.record(MeasuredOffset);
+    else if (MeasurmentAlgorithm == 2 || MeasurmentAlgorithm == 3 || MeasurmentAlgorithm == 4)
+        measuredoffsetrelayVec.record(MeasuredOffset);
+    else if (MeasurmentAlgorithm == 5)
+        measuredoffsetmasterVec.record(MeasuredOffset);
 
     return MeasuredOffset;
 }
@@ -376,6 +400,9 @@ void PCOClock::adjustClock(double estimatedOffset, double estimatedSkew)
 
             generateSYNC();
 
+            PCOfireTime = SIMTIME_DBL(simTime());
+            PCOfireTimeVec.record(PCOfireTime);
+
             EV << "PCOClock: generate and sent SYNC packet to Core module. " << endl;
 
         }
@@ -396,12 +423,43 @@ void PCOClock::adjustClock(double estimatedOffset, double estimatedSkew)
 
     else if (CorrectionAlgorithm == 2)  // correct PCO state by using clock offset and skew, i.e., PkCOs
     {
+
         // correct the PCO clock state
-        PCOClockState = PCOClockState + alpha * estimatedOffset;
+        PCOClockStateTemp = PCOClockState + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + alpha * estimatedOffset;
+
+        ev << "PCOClock: the TEMP 'PCOClockState' is "<< PCOClockStateTemp <<endl;
+
+        if ((PCOClockStateTemp) >= Threshold)
+        {
+            ev << "PCOClock: the PREVIOUS 'PCOClockState' is "<< PCOClockState <<endl;
+            PCOClockState = PCOClockState + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + alpha * estimatedOffset - Threshold ;
+            ev << "PCOClock: the UPDATED 'PCOClockState' is "<< PCOClockState <<endl;
+            ev << "PCOClock: the presented updated PCO clock state 'drift * (SIMTIME_DBL(simTime()) - LastUpdateTime)' is " << drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) << endl;
+
+            generateSYNC();
+
+            PCOfireTime = SIMTIME_DBL(simTime());
+            PCOfireTimeVec.record(PCOfireTime);
+
+            EV << "PCOClock: generate and sent SYNC packet to Core module. " << endl;
+
+        }
+        else if ((PCOClockStateTemp) < Threshold)
+        {
+            ev << "PCOClock: the PREVIOUS 'PCOClockState' is "<< PCOClockState <<endl;
+            PCOClockState = PCOClockState + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + alpha * estimatedOffset;
+            ev << "PCOClock: the UPDATED 'PCOClockState' is "<< PCOClockState <<endl;
+            ev << "PCOClock: the presented updated PCO clock state 'drift * (SIMTIME_DBL(simTime()) - LastUpdateTime)' is " << drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) << endl;
+        }
+        else
+        {
+            error("PCOClock: error in the PCO clock adjustment function");
+        }
 
         ev << "PCOClock: the PCO clock state is adjusted to " << PCOClockState << endl;
 
     }
+
     else if (CorrectionAlgorithm == 3)  // correct PCO state by using clock offset and skew by using the P controller, i.e., PkCOs
     {
         // correct the PCO threshold

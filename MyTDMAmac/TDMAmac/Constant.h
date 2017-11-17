@@ -29,7 +29,7 @@
 // netwl.headerLength = 0 bit (0 bytes)
 
 /* Packet length  */
-#define SYNC_BYTE 40
+#define SYNC_BYTE 2 // for timestamp
 
 /** @brief Broadcast and Null address for packet
  *       Since PCO address follows the same as the L3 address ("SimpleAddress.h")

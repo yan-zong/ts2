@@ -154,7 +154,7 @@ void SlaveCore::handleSelfMessage(cMessage *msg)
 {
     PtpPkt *pck = new PtpPkt("SYNC");
     pck -> setPtpType(SYNC);
-    pck -> setByteLength(44);
+    pck -> setByteLength(2);
 
     // pck -> setTimestamp(simTime());
 
@@ -199,6 +199,8 @@ void SlaveCore::handleEventMessage(cMessage *msg)
 
 void SlaveCore::handleMasterMessage(cMessage *msg)
 {
+    int AddressOffset;
+
     switch(((PtpPkt *)msg) -> getPtpType())
     {
 		case SYNC:
@@ -211,7 +213,7 @@ void SlaveCore::handleMasterMessage(cMessage *msg)
                 // get the measurement offset based on the reception of SYNC from master,
                 // and no need to use the 'AddressOffset.#
                 ev << "SlaveCore: get the offset and skew...\n";
-                EstimatedOffset = pClock -> getMeasurementOffset(4, 0);
+                EstimatedOffset = pClock -> getMeasurementOffset(5, 0);
                 EstimatedSkew = pClock -> getMeasurementSkew(EstimatedOffset);
 
                 ev << "SlaveCore: adjust clock...\n";
@@ -227,7 +229,9 @@ void SlaveCore::handleMasterMessage(cMessage *msg)
                 ev << "SlaveCore: receives SYNC packet from relay node, process it\n";
 
                 ev << "SlaveCore: get the offset and skew...\n";
-                EstimatedOffset = pClock -> getMeasurementOffset(4, 0);
+                AddressOffset = (((PtpPkt *)msg) -> getSource()) - (2000 - 1);
+
+                EstimatedOffset = pClock -> getMeasurementOffset(4, AddressOffset);
                 EstimatedSkew = pClock -> getMeasurementSkew(EstimatedOffset);
 
                 ev << "SlaveCore: adjust clock...\n";
