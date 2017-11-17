@@ -421,7 +421,7 @@ void PCOClock::adjustClock(double estimatedOffset, double estimatedSkew)
         ev << "PCOClock: the PCO clock state is adjusted to " << PCOClockState << endl;
     }
 
-    else if (CorrectionAlgorithm == 2)  // correct PCO state by using clock offset and skew, i.e., PkCOs
+    else if (CorrectionAlgorithm == 2)  // correct PCO state by using measurement offset
     {
 
         // correct the PCO clock state
