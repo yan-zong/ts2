@@ -21,37 +21,36 @@
 
 /* Constants for simulation */
 
-#define MAX_SLAVE 100
-
-// in omnetpp.ini
+// the configuration of SYNC packet, modeling the Pulse of PCO
 // phy.headerLength = 8 x 6 bit (6 bytes)
 // mac.headerLength = 8 x 13 bit (13 bytes)
 // netwl.headerLength = 0 bit (0 bytes)
+// timestamp.Length = 8 x 2 bit (2 bytes)
 
-/* Packet length  */
-#define SYNC_BYTE 2 // for timestamp
+/* Packet length */
+#define TIMESTAMP_BYTE 2
 
-/** @brief Broadcast and Null address for packet
- *       Since PCO address follows the same as the L3 address ("SimpleAddress.h")
- *       we use the same definition as L3 address
- *       -1   for broadcast address
- *       0    for null address
- * */
-#define PTP_BROADCAST_ADDR -1
-#define PTP_NULL_ADDR 0
+/* Broadcast and Null address for packet
+ * Since PCO address follows the same as the L3 address ("SimpleAddress.h")
+ * we use the same definition as L3 address
+ * -1   for broadcast address
+ * 0    for null address
+ */
+#define PACKET_BROADCAST_ADDR -1
+#define PACKET_NULL_ADDR 0
 
-/** @brief Types for packets PtpPkt.ptpType */
-enum PtpPacket_types
+/* Types for packets Packet.packetType */
+enum packetTypes
 {
-    SYNC = 0,
-    REG = 1,
+    REG = 0,    // the register packet from the master node
+    REGRELAY = 1,   // the register packet from the relay node
     REGREPLY = 2,
-    REGRELAY = 3,
+    SYNC = 3,
     DREQ = 4,
     DRES = 5
 };
 
-/** @brief Values for PtpPkt.pckType
+/* Values for Packet.packetType
  * OTHER for packet with name "REGISTER"*/
 enum
 {

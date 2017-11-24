@@ -66,13 +66,13 @@ void RelaySlave::initialize()
         error("RelaySlave: could not find RelayMaster module in a Relay node (boundary clock node)");
     }
 
-	PtpPkt * temp = new PtpPkt("REGISTER");
-	temp -> setPtpType(REG);
+    Packet * temp = new Packet("REGISTER");
+	temp -> setPacketType(REG);
 	temp -> setByteLength(0);
 
     // use the host modules findHost() as a appl address
     temp -> setSource(myAddress);
-    temp -> setDestination(PTP_BROADCAST_ADDR); //PTP_BROADCAST_ADDR = -1
+    temp -> setDestination(PACKET_BROADCAST_ADDR); //PTP_BROADCAST_ADDR = -1
 
     // set SrcAddr, DestAddr with LAddress::L3Type values for MiXiM
     temp->setDestAddr(LAddress::L3BROADCAST);
@@ -107,12 +107,12 @@ void RelaySlave::handleMessage(cMessage *msg)
 
 	if (msg -> arrivedOn("in"))   // data packet from lower layer
 	{
-        if (dynamic_cast<PtpPkt *>(msg) != NULL)
+        if (dynamic_cast<Packet *>(msg) != NULL)
         {
             EV << "RelaySlave: receives a PtpPkt packet. ";
-            if(((PtpPkt*)msg) -> getSource() != myAddress  &
-                     (((PtpPkt*)msg) -> getDestination() == myAddress  |
-                             ((PtpPkt*)msg) -> getDestination() == PTP_BROADCAST_ADDR))
+            if(((Packet*)msg) -> getSource() != myAddress  &
+                     (((Packet*)msg) -> getDestination() == myAddress  |
+                             ((Packet*)msg) -> getDestination() == PACKET_BROADCAST_ADDR))
             {
                 EV << "the PtpPkt packet is for me, Relay Slave is processing it\n";
                 handleMasterMessage(msg);
@@ -148,14 +148,14 @@ void RelaySlave::handleMessage(cMessage *msg)
 
 void RelaySlave::handleSelfMessage(cMessage *msg)
 {
-    PtpPkt *pck = new PtpPkt("SYNC");
-    pck -> setPtpType(SYNC);
+    Packet *pck = new Packet("SYNC");
+    pck -> setPacketType(SYNC);
     pck -> setByteLength(2);
 
     // pck -> setTimestamp(simTime());
 
     pck -> setSource(myAddress);
-    pck -> setDestination(PTP_BROADCAST_ADDR);
+    pck -> setDestination(PACKET_BROADCAST_ADDR);
 
     // pck -> setData(SIMTIME_DBL(simTime()));
     // pck -> setTsTx(SIMTIME_DBL(simTime())); // set transmission time stamp ts1 on SYNC
@@ -181,7 +181,7 @@ void RelaySlave::handleEventMessage(cMessage *msg)
 	if(((Event *)msg)->getEventType()==CICLICO)
 	{
 		Packet *pck = new Packet("CICLICO");
-		pck->setPckType(OTHER);
+		pck->setPacketType(OTHER);
 		pck->setByteLength(((Event *)msg)->getPckLength());
 
 		pck->setSource(myAddress);
@@ -197,9 +197,9 @@ void RelaySlave::handleEventMessage(cMessage *msg)
 
 void RelaySlave::handleMasterMessage(cMessage *msg)
 {
-    myMasterAddress = (((PtpPkt *)msg) -> getSource());
+    myMasterAddress = (((Packet *)msg) -> getSource());
 
-    switch(((PtpPkt *)msg) -> getPtpType())
+    switch(((Packet *)msg) -> getPacketType())
     {
         case REG:
         {

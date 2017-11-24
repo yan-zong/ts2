@@ -43,11 +43,11 @@ void MasterCore::initialize()
 
         ev<<"MasterCore: my address is "<< address << endl;
 
-        PtpPkt * temp = new PtpPkt("REGISTER");
+        Packet * temp = new Packet("REGISTER");
         // we use the host modules findHost() as a appl address
-        temp->setDestination(PTP_BROADCAST_ADDR);
+        temp->setDestination(PACKET_BROADCAST_ADDR);
         temp->setSource(address);
-        temp->setPtpType(REG);
+        temp->setPacketType(REG);
 
         temp->setDestAddr(LAddress::L3BROADCAST);
         temp->setSrcAddr( LAddress::L3Type(address));
@@ -82,12 +82,12 @@ void MasterCore::handleMessage(cMessage* msg)
         // check PtpPkt type
         EV<<"MasterCore Receives a packet"<<endl;
 
-        if (dynamic_cast<PtpPkt *>(msg) != NULL)
+        if (dynamic_cast<Packet *>(msg) != NULL)
         {
             EV<< " MasterCore: This ia a PtpPkt packet, MasterCore is processing it now"<<endl;
-            PtpPkt *pck= static_cast<PtpPkt *>(msg);
+            Packet *pck= static_cast<Packet *>(msg);
             if(pck -> getSource() != address &
-               (pck -> getDestination() == address | pck -> getDestination() == PTP_BROADCAST_ADDR))
+               (pck -> getDestination() == address | pck -> getDestination() == PACKET_BROADCAST_ADDR))
              {
                 EV << "the packet is for me, process it\n";
                 handleSlaveMessage(pck); // handelSlaveMessage() does not delete msg
@@ -137,14 +137,14 @@ void MasterCore::handleMessage(cMessage* msg)
 
 void MasterCore::handleSelfMessage(cMessage *msg)
 {
-    PtpPkt *pck = new PtpPkt("SYNC");
-    pck->setPtpType(SYNC);
+    Packet *pck = new Packet("SYNC");
+    pck->setPacketType(SYNC);
 
     pck->setByteLength(2);
     // pck->setTimestamp(simTime());
 
     pck->setSource(address);
-    pck->setDestination(PTP_BROADCAST_ADDR);
+    pck->setDestination(PACKET_BROADCAST_ADDR);
 
     // pck->setData(SIMTIME_DBL(simTime()));
     // pck->setTsTx(SIMTIME_DBL(simTime())); // set transmission timie stamp ts1 on SYNC
@@ -160,9 +160,9 @@ void MasterCore::handleSelfMessage(cMessage *msg)
 
 }
 
-void MasterCore::handleSlaveMessage(PtpPkt *msg)
+void MasterCore::handleSlaveMessage(Packet *msg)
 {
-    switch (msg -> getPtpType())
+    switch (msg -> getPacketType())
     {
         case SYNC:
         {
@@ -171,13 +171,13 @@ void MasterCore::handleSlaveMessage(PtpPkt *msg)
         }
         case REG:
         {
-             PtpPkt *rplPkt= static_cast<PtpPkt *>((PtpPkt *)msg->dup());
+            Packet *rplPkt= static_cast<Packet *>((Packet *)msg->dup());
              rplPkt->setName("REPLY_REGISGER");
              rplPkt->setByteLength(0);
-             rplPkt->setPtpType(REGREPLY);
+             rplPkt->setPacketType(REGREPLY);
 
              rplPkt->setSource(address);
-             rplPkt->setDestination(((PtpPkt *)msg)->getSource());
+             rplPkt->setDestination(((Packet *)msg)->getSource());
 
              rplPkt->setSrcAddr(LAddress::L3Type(rplPkt->getSource()));
              rplPkt->setDestAddr(LAddress::L3Type(rplPkt->getDestination()));

@@ -24,7 +24,6 @@
 #include "Packet_m.h"
 #include "Event_m.h"
 #include "Constant.h"
-#include "PtpPkt_m.h"
 #include "ApplPkt_m.h"
 #include "RelayBuffer.h"
 
@@ -69,12 +68,12 @@ void RelayBuffer::handleMessage(cMessage *msg)
 // determine whether ignore the received packet
 void RelayBuffer::handleRelayMessage(cMessage *msg)
 {
-    PtpPkt *pkt;
-    if (dynamic_cast<PtpPkt *>(msg) != NULL)
+    Packet *pkt;
+    if (dynamic_cast<Packet *>(msg) != NULL)
     {
         ev << "the received packet is PtpPkt packet.\n";
         isPtpPkt = TRUE;
-        pkt = (PtpPkt*)msg;
+        pkt = (Packet*)msg;
     }
     else
     {
@@ -91,7 +90,7 @@ void RelayBuffer::handleRelayMessage(cMessage *msg)
         }
         else
         {
-            if (pkt -> getDestination() == PTP_BROADCAST_ADDR)
+            if (pkt -> getDestination() == PACKET_BROADCAST_ADDR)
             {
                 send(msg,"out",0); // RelaySlave
                 send((pkt)->dup(),"out",1);   // RelayMaster

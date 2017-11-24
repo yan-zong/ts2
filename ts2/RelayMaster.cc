@@ -81,12 +81,12 @@ void RelayMaster::handleMessage(cMessage* msg)
     {
         EV << "RelayMaster: receives a packet"<<endl;
 
-        if (dynamic_cast<PtpPkt *>(msg) != NULL)
+        if (dynamic_cast<Packet *>(msg) != NULL)
         {
             EV << "this ia a PtpPkt packet, Relay Master now is processing it " <<endl;
-            PtpPkt *pck = static_cast<PtpPkt *>(msg);
+            Packet *pck = static_cast<Packet *>(msg);
             if(pck -> getSource() != myAddress &
-                    (pck -> getDestination() == myAddress | pck -> getDestination() == PTP_BROADCAST_ADDR))
+                    (pck -> getDestination() == myAddress | pck -> getDestination() == PACKET_BROADCAST_ADDR))
              {
                 EV << "the PtpPkt packet is for me, process it\n";
                  handleSlaveMessage(pck);   // handelSlaveMessage() does not delete msg
@@ -128,14 +128,14 @@ void RelayMaster::handleMessage(cMessage* msg)
 
 void RelayMaster::handleSelfMessage(cMessage *msg)
 {
-    PtpPkt *pck = new PtpPkt("SYNC");
-    pck->setPtpType(SYNC);
+    Packet *pck = new Packet("SYNC");
+    pck->setPacketType(SYNC);
     pck->setByteLength(2);
 
     // pck->setTimestamp(simTime());
 
     pck->setSource(myAddress);
-    pck->setDestination(PTP_BROADCAST_ADDR);    // PTP_BROADCAST_ADDR = -1
+    pck->setDestination(PACKET_BROADCAST_ADDR);    // PTP_BROADCAST_ADDR = -1
 
     // pck->setData(SIMTIME_DBL(simTime()));
     // pck->setTsTx(SIMTIME_DBL(simTime())); // set transmission time stamp ts1 on SYNC
@@ -153,12 +153,12 @@ void RelayMaster::handleSelfMessage(cMessage *msg)
     scheduleAt(simTime() + Tsync, new cMessage("MStimer"));   // schedule the next time-synchronisation.
 }
 
-void RelayMaster::handleSlaveMessage(PtpPkt *msg)
+void RelayMaster::handleSlaveMessage(Packet *msg)
 {
     mySlaveAddress = msg -> getSource();
     ev << "RelayMaster: mySlaveAddress = " << mySlaveAddress <<".\n";
 
-    switch (msg -> getPtpType())
+    switch (msg -> getPacketType())
     {
         case REG:
         {
@@ -232,14 +232,14 @@ void RelayMaster::startSync()
 {
     Enter_Method_Silent(); // see simuutil.h for detail
 
-    PtpPkt *pck = new PtpPkt("SYNC");
-    pck->setPtpType(SYNC);
+    Packet *pck = new Packet("SYNC");
+    pck->setPacketType(SYNC);
     pck->setByteLength(2); // SYNC_BYTE = 40
 
     // pck->setTimestamp(simTime());
 
     pck->setSource(myAddress);
-    pck->setDestination(PTP_BROADCAST_ADDR);
+    pck->setDestination(PACKET_BROADCAST_ADDR);
 
     // pck->setData(SIMTIME_DBL(simTime()));
     // pck->setTsTx(SIMTIME_DBL(simTime())); // set transmission time stamp ts1 on SYNC

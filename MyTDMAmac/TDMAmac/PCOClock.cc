@@ -21,7 +21,7 @@
 
 #include "PCOClock.h"
 #include "Constant.h"
-#include "PtpPkt_m.h"
+#include "Packet_m.h"
 
 Define_Module(PCOClock);
 
@@ -250,8 +250,8 @@ void PCOClock::generateSYNC()
 
     EV << "PCOClock: PCO clock state reaches threshold, it is reset to zero, meanwhile, a SYNC packet is generated \n";
 
-    PtpPkt *pck = new PtpPkt("SYNC");
-    pck -> setPtpType(SYNC);
+    Packet *pck = new Packet("SYNC");
+    pck -> setPacketType(SYNC);
     pck -> setByteLength(2);
     send(pck,"outclock");
 

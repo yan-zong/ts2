@@ -70,10 +70,10 @@ void SlaveCore::initialize()
         error("SlaveCore: No Sink node or RelayMaster are found");
     }
 
-	PtpPkt * temp = new PtpPkt("REGISTER");
+	Packet * temp = new Packet("REGISTER");
     temp->setSource(address);
-    temp->setDestination(PTP_BROADCAST_ADDR);
-    temp->setPtpType(REG);
+    temp->setDestination(PACKET_BROADCAST_ADDR);
+    temp->setPacketType(REG);
     temp->setByteLength(0);
 
     temp->setDestAddr(LAddress::L3BROADCAST);
@@ -108,12 +108,12 @@ void SlaveCore::handleMessage(cMessage *msg)
 
     if (msg -> arrivedOn("lowerGateIn"))  // data packet from lower layer
 	{   // check PtpPkt type
-        if (dynamic_cast<PtpPkt *>(msg) != NULL)
+        if (dynamic_cast<Packet *>(msg) != NULL)
         {
             EV << "SlaveCore receives a PtpPkt packet. ";
-             if(((PtpPkt*)msg) -> getSource() != address &
-                     (((PtpPkt*)msg) -> getDestination() == address |
-                             ((PtpPkt*)msg) -> getDestination() == PTP_BROADCAST_ADDR))
+             if(((Packet*)msg) -> getSource() != address &
+                     (((Packet*)msg) -> getDestination() == address |
+                             ((Packet*)msg) -> getDestination() == PACKET_BROADCAST_ADDR))
              {
                  EV << "the packet is for me, process it\n";
                  handleMasterMessage(msg);
@@ -128,7 +128,7 @@ void SlaveCore::handleMessage(cMessage *msg)
         else
         {
             EV << " this packtet is not a PtpPkt packet, send it up to higher layer"<<endl;
-            send(((PtpPkt *)msg)->dup(),"upperGateOut");
+            send(((Packet *)msg)->dup(),"upperGateOut");
          }
 	}
 
@@ -152,14 +152,14 @@ void SlaveCore::handleMessage(cMessage *msg)
 
 void SlaveCore::handleSelfMessage(cMessage *msg)
 {
-    PtpPkt *pck = new PtpPkt("SYNC");
-    pck -> setPtpType(SYNC);
+    Packet *pck = new Packet("SYNC");
+    pck -> setPacketType(SYNC);
     pck -> setByteLength(2);
 
     // pck -> setTimestamp(simTime());
 
     pck -> setSource(address);
-    pck -> setDestination(PTP_BROADCAST_ADDR);
+    pck -> setDestination(PACKET_BROADCAST_ADDR);
 
     // pck -> setData(SIMTIME_DBL(simTime()));
     // pck -> setTsTx(SIMTIME_DBL(simTime())); // set transmission time stamp ts1 on SYNC
@@ -184,7 +184,7 @@ void SlaveCore::handleEventMessage(cMessage *msg)
 	if(((Event *)msg)->getEventType()==CICLICO)
 	{
 		Packet *pck = new Packet("CICLICO");
-		pck->setPckType(OTHER);
+		pck->setPacketType(OTHER);
 		pck->setSource(address);
 		pck->setDestination(((Event *)msg)->getDest());
 		pck->setByteLength(((Event *)msg)->getPckLength());
@@ -201,12 +201,12 @@ void SlaveCore::handleMasterMessage(cMessage *msg)
 {
     int AddressOffset;
 
-    switch(((PtpPkt *)msg) -> getPtpType())
+    switch(((Packet *)msg) -> getPacketType())
     {
 		case SYNC:
 		{
 
-            if ((((PtpPkt *)msg) -> getSource())  == 1000)
+            if ((((Packet *)msg) -> getSource())  == 1000)
             {
                 ev << "SlaveCore: receives SYNC packet from master node, process it\n";
 
@@ -224,12 +224,12 @@ void SlaveCore::handleMasterMessage(cMessage *msg)
                 break;
 
             }
-            else if ( ((((PtpPkt *)msg) -> getSource()) >= 2000) || ((((PtpPkt *)msg) -> getSource()) < 3000) )
+            else if ( ((((Packet *)msg) -> getSource()) >= 2000) || ((((Packet *)msg) -> getSource()) < 3000) )
             {
                 ev << "SlaveCore: receives SYNC packet from relay node, process it\n";
 
                 ev << "SlaveCore: get the offset and skew...\n";
-                AddressOffset = (((PtpPkt *)msg) -> getSource()) - (2000 - 1);
+                AddressOffset = (((Packet *)msg) -> getSource()) - (2000 - 1);
 
                 EstimatedOffset = pClock -> getMeasurementOffset(4, AddressOffset);
                 EstimatedSkew = pClock -> getMeasurementSkew(EstimatedOffset);
@@ -242,7 +242,7 @@ void SlaveCore::handleMasterMessage(cMessage *msg)
                 break;
 
             }
-            else if ((((PtpPkt *)msg) -> getSource()) >= 3000)
+            else if ((((Packet *)msg) -> getSource()) >= 3000)
             {
                 ev << "SlaveCore: receives SYNC packet from slave node, ignore it\n";
                 break;
@@ -269,17 +269,17 @@ void SlaveCore::handleMasterMessage(cMessage *msg)
 
         case REGREPLY:
         {
-            if ((((PtpPkt *)msg) -> getSource()) == 1000)
+            if ((((Packet *)msg) -> getSource()) == 1000)
             {
                 ev << "Relay Slave receives REGISTER_REPLY packet from master node, process it\n";
-                myMasterAddress == (((PtpPkt *)msg) -> getSource());
+                myMasterAddress == (((Packet *)msg) -> getSource());
                 ev<<"SlaveCore: my master's address is updated to "<< myMasterAddress << " according to the the REGPREPLY packet)\n";
                 break;
             }
-            else if ( ((((PtpPkt *)msg) -> getSource()) >= 2000) || ((((PtpPkt *)msg) -> getSource()) < 3000) )
+            else if ( ((((Packet *)msg) -> getSource()) >= 2000) || ((((Packet *)msg) -> getSource()) < 3000) )
             {
                 ev << "Relay Slave receives REGISTER_REPLY packet from Relay node, process it\n";
-                myRelayAddress == (((PtpPkt *)msg) -> getSource());
+                myRelayAddress == (((Packet *)msg) -> getSource());
                 ev<<"SlaveCore: my relay's address is updated to "<< myRelayAddress << " according to the the REGPREPLY packet)\n";
                 break;
             }

@@ -22,7 +22,6 @@
 #include <string.h>
 #include <math.h>
 #include <omnetpp.h>
-#include "PtpPkt_m.h"
 #include "Packet_m.h" // for information exchange with manager
 #include "Event_m.h"
 #include "NetwControlInfo.h"

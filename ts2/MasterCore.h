@@ -24,7 +24,7 @@
 
 #include <string.h>
 #include <omnetpp.h>
-#include "PtpPkt_m.h"
+#include "Packet_m.h"
 #include "Event_m.h"
 #include "Constant.h"
 
@@ -49,7 +49,7 @@ protected:
 
 private:
     void handleSelfMessage(cMessage *msg);
-    void handleSlaveMessage(PtpPkt *msg);
+    void handleSlaveMessage(Packet *msg);
 
 };
 
