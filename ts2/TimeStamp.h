@@ -28,7 +28,7 @@
 class TimeStamp : public cSimpleModule
 {
     private:
-     bool useGlobalRefClock;
+     bool useReferenceClock;
      PCOClock *pClk;
 
   protected:

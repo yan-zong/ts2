@@ -130,15 +130,12 @@ void RelayMaster::handleSelfMessage(cMessage *msg)
 {
     Packet *pck = new Packet("SYNC");
     pck->setPacketType(SYNC);
-    pck->setByteLength(2);
-
-    // pck->setTimestamp(simTime());
+    pck->setByteLength(TIMESTAMP_BYTE);
 
     pck->setSource(myAddress);
     pck->setDestination(PACKET_BROADCAST_ADDR);    // PTP_BROADCAST_ADDR = -1
 
     // pck->setData(SIMTIME_DBL(simTime()));
-    // pck->setTsTx(SIMTIME_DBL(simTime())); // set transmission time stamp ts1 on SYNC
 
     // set SrcAddr, DestAddr with LAddress::L3Type values for MiXiM
     pck->setSrcAddr( LAddress::L3Type(myAddress));
@@ -234,15 +231,12 @@ void RelayMaster::startSync()
 
     Packet *pck = new Packet("SYNC");
     pck->setPacketType(SYNC);
-    pck->setByteLength(2); // SYNC_BYTE = 40
-
-    // pck->setTimestamp(simTime());
+    pck->setByteLength(TIMESTAMP_BYTE);
 
     pck->setSource(myAddress);
     pck->setDestination(PACKET_BROADCAST_ADDR);
 
     // pck->setData(SIMTIME_DBL(simTime()));
-    // pck->setTsTx(SIMTIME_DBL(simTime())); // set transmission time stamp ts1 on SYNC
 
     // set SrcAddr, DestAddr with LAddress::L3Type values for MiXiM
     pck->setSrcAddr( LAddress::L3Type(myAddress));

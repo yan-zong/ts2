@@ -21,10 +21,10 @@
 
 /* Constants for simulation */
 
-// the configuration of SYNC packet, modeling the Pulse of PCO
+// the configuration of SYNC packet, modeling the Pulse of classic PCO
 // phy.headerLength = 8 x 6 bit (6 bytes)
 // mac.headerLength = 8 x 13 bit (13 bytes)
-// netwl.headerLength = 0 bit (0 bytes)
+// netwl.headerLength = 8 x 0 bit (0 bytes)
 // timestamp.Length = 8 x 2 bit (2 bytes)
 
 /* Packet length */
@@ -51,10 +51,10 @@ enum packetTypes
 };
 
 /* Values for Packet.packetType
- * OTHER for packet with name "REGISTER"*/
+ * OTHER for packet with name "REGISTER" */
 enum
 {
-    PTP = 0,
+    PCO = 0,
     OTHER = 1,
     CLOCK = 2
 };

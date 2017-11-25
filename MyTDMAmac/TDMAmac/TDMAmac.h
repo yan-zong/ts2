@@ -1,6 +1,6 @@
 //***************************************************************************
 // * File:        This file is part of TS2.
-// * Created on:  07 Dov 2016
+// * Created on:  07 Nov 2016
 // * Author:      Yan Zong, Xuweu Dai
 // *
 // * Copyright:   (C) 2016 Northumbria University, UK.
@@ -129,13 +129,13 @@ protected:
     cStdDev qLength;
     int droppedPackets;
 
-    /* @brief two modes will be used, first mode is the TimeSyncMode
-     * (only synchronisation in this mode), and second mode is the
-     * Synchronised TDMA Data transmission mode (both data transmission
-     * and synchronisation in this mode)
-     * TRUE == mode 1 (synchronisation )
-     * FALSE == mode 2 (Synchronised TDMA Data transmission mode )
-     * */
+    /* two modes will be used, first mode is the TimeSyncMode
+     * (only synchronization in this mode), and second mode is the
+     * Synchronized TDMA Data transmission mode (both data transmission
+     * and synchronization in this mode)
+     * TRUE == mode 1 (synchronization)
+     * FALSE == mode 2 (Synchronized TDMA Data transmission mode )
+     */
     bool SyncStatus;
 
 };

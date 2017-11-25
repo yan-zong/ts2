@@ -64,26 +64,24 @@ class PCOClock:public cSimpleModule
         double ClassicClock;    // the classic clock time
         double PCOClockState;    // the PCO clock state
         double Threshold;   // PCO clock threshold
-        double LastUpdateTime;  // used to store the last update time of reference time
-        double Timestamp;   // timestamp based on the reception of SYNC packet
+        double LastUpdateTime;  // store the last update time of reference time
+        double Timestamp;   // timestamp
         double ReceivedSYNCTime;    // the time that node receives the SYNC packet
         double tau; // the transmission delay
         double alpha;  // the correction parameter of clock offset
         double beta;   // the correction parameter of clock skew
         int CorrectionAlgorithm;    // correction algorithm
                                     // 1 is for classic PCO by using constant value, 2 is for classic PCO by using offset value
-        double varepsilon;
+        double varepsilon;  // the coupling strength of PCO model
         int numRelay;
 
         /* @brief the id of node */
         int NodeId;
 
-        /* @brief Duration of a slot #LMAC */
-        // double slotDuration; // yan zong
+        /* @brief duration of SYNC packet from neighboring relay nodes */
         double pulseDuration;
 
-        /* @brief schedule the second SYNC from node (i.e., rnode[0]) */
-        /* @brief duration between beacon (first SYNC packet) and second SYNC packet */
+        /* @brief duration of ScheduledOffset */
         double ScheduleOffset;
 
         int i;

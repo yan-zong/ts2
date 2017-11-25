@@ -35,14 +35,14 @@ void PCOClock::initialize()
     noise1Vec.setName("noise1");
     noise2Vec.setName("noise2");
     noise3Vec.setName("noise3");
-    pcoclockVec.setName("PCOClockState");
-    classicclockVec.setName("ClassicClock");
-    thresholdVec.setName("Threshold");
+    pcoclockVec.setName("PCOclockstate");
+    classicclockVec.setName("classicclock");
+    thresholdVec.setName("threshold");
     update_numberVec.setName("update_number");
-    measuredoffsetmasterVec.setName("MeasuredOffsetMaster");
-    measuredoffsetrelayVec.setName("MeasuredOffsetRelay");
-    timestampVec.setName("Timestamp");
-    PCOfireTimeVec.setName("PCOFireTime");
+    measuredoffsetmasterVec.setName("measuredoffsetMaster");
+    measuredoffsetrelayVec.setName("measuredoffsetRelay");
+    timestampVec.setName("timestamp");
+    PCOfireTimeVec.setName("PCOfiretime");
 
     // ---------------------------------------------------------------------------
     // Initialise variable
@@ -54,21 +54,21 @@ void PCOClock::initialize()
     sigma3 = par("sigma3"); // the standard deviation of timestamp (meausmrenet) noise
     u3 = par("u3"); // the mean of timestamp (measurement) noise
     tau_0  = par("tau_0");  // clock update period
-    Threshold = par("Threshold");
-    pulseDuration = par("pulseDuration");
-    ScheduleOffset = par("ScheduleOffset");
+    Threshold = par("Threshold");   // PCO clock state threshold
+    pulseDuration = par("pulseDuration");   // duration of SYNC packet from neighboring relay nodes
+    ScheduleOffset = par("ScheduleOffset"); // duration of ScheduledOffset from proposed superframe
     tau = par("tau");   // the transmission delay
     alpha = par("alpha");   // the correction parameter of clock offset
     beta = par("beta");   // the correction parameter of clock skew
     CorrectionAlgorithm = par("CorrectionAlgorithm");    // correction algorithm
                                 // 1 is for classic PCO by using constant value, 2 is for classic PCO by using offset value
-    varepsilon = par("varepsilon");
-    numRelay = par("numRelay");
+    varepsilon = par("varepsilon"); // the coupling strength of PCO model
+    numRelay = par("numRelay"); // the number of relay nodes in the simulated network
 
     ClassicClock = 0;
     PCOClockState = 0;
     Timestamp = 0;   // timestamp based on the reception of SYNC packet
-    LastUpdateTime = SIMTIME_DBL(simTime());
+    LastUpdateTime = 0;
     ReceivedSYNCTime = 0;   // the reception time of SYNC packet
     offset_present = 0; // the present clock offset
     drift_present = 0;  // the present clock skew
@@ -89,17 +89,21 @@ void PCOClock::initialize()
         updateDisplay();
     }
 
+    // the desynchronisation technology should be implemented into the master and relay nodes,
+    // the desynchronisation cannot be implemented into the slave nodes, because slave nodes cannot
+    // transmit the packet, they just can receipt the packet from other nodes.
+
     if (NodeId <= numRelay)   // the sensor node is the master or relay nodes
     {
         scheduleAt(simTime() + ScheduleOffset + NodeId * pulseDuration ,new cMessage("CLTimer"));
         LastUpdateTime = ScheduleOffset + NodeId * pulseDuration;
-        EV << "PCOClock: Clock starts at " << (simTime() + ScheduleOffset + NodeId * pulseDuration) << endl;
+        EV << "PCOClock: Master/Relay clock starts at " << (simTime() + ScheduleOffset + NodeId * pulseDuration) << endl;
     }
     else    // the sensor node is the slave node, no need to implement the desynchronisation
     {
         scheduleAt(simTime(),new cMessage("CLTimer"));
         LastUpdateTime = 0;
-        EV << "PCOClock: Clock starts at " << simTime() << endl;
+        EV << "PCOClock: Slave clock starts at " << simTime() << endl;
     }
 
 }
@@ -108,7 +112,7 @@ void PCOClock::handleMessage(cMessage *msg)
 {
     if(msg->isSelfMessage())
     {
-        ClockUpdate();   // update PCO clock state
+        ClockUpdate();   // key function -- update PCO clock state
         EV << "PCOClock: PCO Clock State is " << PCOClockState << endl;
 
         i = i + 1;
@@ -147,7 +151,7 @@ double PCOClock::ClockUpdate()
     offset = offset + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + noise2;
     offset_present = drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + noise2;
     ev << "PCOClock: the UPDATED offset is "<< offset << endl;
-    ev << "PCOClock: the PRESENT offset is "<< offset_present << endl;
+    ev << "PCOClock: the PRESENT offset is "<< offset_present << ", and (SIMTIME_DBL(simTime()) - LastUpdateTime) should be tau_0, and it actually is "<< (SIMTIME_DBL(simTime()) - LastUpdateTime) << endl;
 
     ev << "PCOClock: the PREVIOUS drift is "<< drift <<endl;
     noise1 =  normal(0,sigma1,1);
@@ -211,12 +215,13 @@ void PCOClock::recordResult()
 
 double PCOClock::getTimestamp()
 {
-    ev << "PCOClock: PCOTimestamp... " << endl;
+    ev << "PCOClock: Timestamp... " << endl;
     noise3 = normal(u3, sigma3);
     noise3Vec.record(noise3);
     ev << "PCOClock: the timestamp noise 'noise3' is " << noise3 << endl;
 
     ev << "PCOClock: simTime = " << SIMTIME_DBL(simTime()) << ", LastUpdateTime = "<< LastUpdateTime << endl;
+    ev << ", and (SIMTIME_DBL(simTime()) - LastUpdateTime) = "<< (SIMTIME_DBL(simTime()) - LastUpdateTime) << endl;;
 
     Timestamp = PCOClockState + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + noise3;
     ev << "PCOClock: 'Timestamp' is " << Timestamp << endl;
@@ -248,28 +253,25 @@ void PCOClock::generateSYNC()
 {
     Enter_Method_Silent(); // see simuutil.h for detail
 
-    EV << "PCOClock: PCO clock state reaches threshold, it is reset to zero, meanwhile, a SYNC packet is generated \n";
+    EV << "PCOClock: PCO clock state reaches threshold, it is reset to zero, meanwhile, a SYNC packet is generated. \n";
 
     Packet *pck = new Packet("SYNC");
     pck -> setPacketType(SYNC);
-    pck -> setByteLength(2);
+    pck -> setByteLength(TIMESTAMP_BYTE);
     send(pck,"outclock");
 
     EV << "PCOClock: PCOClock transmits SYNC packet to Core module" << endl;
 }
 
-// Todo: double check this function, there are some bugs in this function.
 double PCOClock::getMeasurementOffset(int MeasurmentAlgorithm, int AddressOffset)
 {
     ev << "PCOClock: get measurement offset... "<< endl;
 
     double MeasuredOffset;
 
-    // Note: 2.176E-3 (tau) means the time for receiver to recept the SYNC packet from the sender,
+    // Note: 2.176E-3 (tau) means the time for receiver to receipt the SYNC packet from the sender,
     // 1.82E-4 is for physical layer to check the SYNC packet
     // 2.176E-3 = 2.368E-3 - 1.82E-4
-
-    // the 'getSource()' function of packet can be used to determine where is the received SYNC from
 
     if (MeasurmentAlgorithm == 1)   // receive the SYNC from master node, the received node is the relay node.
     {
@@ -340,12 +342,10 @@ double PCOClock::getMeasurementOffset(int MeasurmentAlgorithm, int AddressOffset
 
     ev << "PCOClock: 'MeasurementOffset' is " << MeasuredOffset << endl;
 
-    if (MeasurmentAlgorithm == 1)
+    if (MeasurmentAlgorithm == 1 || MeasurmentAlgorithm == 5)
         measuredoffsetmasterVec.record(MeasuredOffset);
     else if (MeasurmentAlgorithm == 2 || MeasurmentAlgorithm == 3 || MeasurmentAlgorithm == 4)
         measuredoffsetrelayVec.record(MeasuredOffset);
-    else if (MeasurmentAlgorithm == 5)
-        measuredoffsetmasterVec.record(MeasuredOffset);
 
     return MeasuredOffset;
 }
@@ -460,18 +460,12 @@ void PCOClock::adjustClock(double estimatedOffset, double estimatedSkew)
 
     }
 
-    else if (CorrectionAlgorithm == 3)  // correct PCO state by using clock offset and skew by using the P controller, i.e., PkCOs
+    else if (CorrectionAlgorithm == 3)
     {
-        // correct the PCO threshold
-        Threshold = Threshold + alpha * estimatedOffset;
-        // correct the PCO skew
-        drift = drift + beta * estimatedSkew;
-
-        ev << "PCOClock: the PCO clock threshold is adjusted to " << Threshold << endl;
-        ev << "PCOClock: the PCO clock skew is adjusted to " << drift << endl;
 
     }
-    else if (CorrectionAlgorithm == 4)  // new clock correction algorithm
+
+    else if (CorrectionAlgorithm == 4)
     {
 
     }

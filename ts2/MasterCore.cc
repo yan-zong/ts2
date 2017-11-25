@@ -140,14 +140,12 @@ void MasterCore::handleSelfMessage(cMessage *msg)
     Packet *pck = new Packet("SYNC");
     pck->setPacketType(SYNC);
 
-    pck->setByteLength(2);
-    // pck->setTimestamp(simTime());
+    pck->setByteLength(TIMESTAMP_BYTE);
 
     pck->setSource(address);
     pck->setDestination(PACKET_BROADCAST_ADDR);
 
     // pck->setData(SIMTIME_DBL(simTime()));
-    // pck->setTsTx(SIMTIME_DBL(simTime())); // set transmission timie stamp ts1 on SYNC
 
     // set SrcAddr, DestAddr with LAddress::L3Type values for MiXiM
     pck->setSrcAddr( LAddress::L3Type(address));

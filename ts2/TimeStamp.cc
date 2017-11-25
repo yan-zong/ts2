@@ -21,7 +21,7 @@
 
 #include "TimeStamp.h"
 #include "omnetpp.h"
-#include "PtpPkt_m.h"
+#include "Packet_m.h"
 
 Define_Module(TimeStamp);
 
@@ -36,21 +36,21 @@ void TimeStamp::initialize()
 
     if (pClk == NULL) // no clock is found, force to use simTime() as the node's clock
     {
-        useGlobalRefClock = true;
-        ev<<"TimeStamp: No clock module is found. set useGlobalRefClock = true, use simTime() for time stamping\n";
+        useReferenceClock = true;
+        ev<<"TimeStamp: No clock module is found. set useReferenceClock = true, use simTime() for time stamping\n";
     }
     else    // we have clock module, select time source
     {
-        if (hasPar("useGlobalRefClock"))
+        if (hasPar("useReferenceClock"))
         {
-            useGlobalRefClock = par("useGlobalRefClock");
-            ev<<"TimeStamp: useGlobalRefClock = "<<useGlobalRefClock;
+            useReferenceClock = par("useReferenceClock");
+            ev<<"TimeStamp: useReferenceClock = "<<useReferenceClock;
             ev<<" , use parameter to determine clock source or time stamping\n";
         }
-        else    //find clock module, but no parameter useGlobalRefClock is specified,
+        else    //find clock module, but no parameter useReferenceClock is specified,
         {
-            useGlobalRefClock = false;
-            ev<<"TimeStamp: useGlobalRefClock = false\n";
+            useReferenceClock = false;
+            ev<<"TimeStamp: useReferenceClock = false\n";
          }
     }
 }
@@ -73,21 +73,21 @@ void TimeStamp::handleMessage(cMessage *msg)
         }
         // now pck points to the highest layer packet
         // check if it is PtpPkt
-        if (dynamic_cast<PtpPkt *>(pck) != NULL)
+        if (dynamic_cast<Packet *>(pck) != NULL)
         {
             EV<<"is a PtpPkt packet.";
             // set new timestamp
-            EV<<"timestamp PtpPkt->Data was " << ((PtpPkt*)pck) -> getData() <<endl;
-            if (useGlobalRefClock)
+            EV<<"timestamp PtpPkt->Data was " << ((Packet*)pck) -> getData() <<endl;
+            if (useReferenceClock)
             {
-                ((PtpPkt*)pck) -> setTsTx(SIMTIME_DBL(simTime()));
-                EV<<", New timestamp (by simTime()) is " << ((PtpPkt*)pck) -> getTsTx()<<endl;
+                ((Packet*)pck) -> setTsTx(SIMTIME_DBL(simTime()));
+                EV<<", New timestamp (by simTime()) is " << ((Packet*)pck) -> getTsTx()<<endl;
             }
             else
             {
-                ((PtpPkt*)pck)->setTsTx(pClk->getTimestamp());
+                ((Packet*)pck) -> setTsTx(pClk -> getTimestamp());
                 ev<<", New timestamp (by clock module " << pClk -> getName() << ") is ";
-                ev<< ((PtpPkt*)pck) -> getTsTx() <<endl;
+                ev<< ((Packet*)pck) -> getTsTx() <<endl;
             }
         }
         else
@@ -107,18 +107,18 @@ void TimeStamp::handleMessage(cMessage *msg)
         {
             pck = pck->getEncapsulatedPacket();
         }
-        if (dynamic_cast<PtpPkt *>(pck) != NULL)
+        if (dynamic_cast<Packet *>(pck) != NULL)
         {
-            double receivedTime;
-            receivedTime = pClk -> getTimestamp();
-            pClk -> setReceivedSYNCTime(receivedTime);
-            ev << "Timestamp: SYNC packet is received at " << receivedTime << " on Timastamp module. " << endl;
+            // double receivedTime;
+            // receivedTime = pClk -> getTimestamp();
+            // pClk -> setReceivedSYNCTime(receivedTime);
+            // ev << "Timestamp: SYNC packet is received at " << receivedTime << " on Timastamp module. " << endl;
 
-            /*
+
             // the encapsulated packet is a PtpPkt, put a time stamp
             double rxTimeStamp;
-            ev<<" is a PtpPkt, its timestamp was "<< ((PtpPkt*)pck) -> getsetTsRx() <<endl;
-            if (useGlobalRefClock)
+            ev<<" is a PtpPkt, its timestamp was "<< ((Packet*)pck) -> getTsRx() <<endl;
+            if (useReferenceClock)
             {
                 rxTimeStamp = SIMTIME_DBL(simTime());
                 ev << " Now using simTime() for new time stamp,\n";
@@ -129,9 +129,9 @@ void TimeStamp::handleMessage(cMessage *msg)
                 ev << " Now using clock module for new time stamp.\n";
             }
 
-            ((PtpPkt*)pck)->setTsRx(rxTimeStamp);
-            ev << " and new time stamp is "<<((PtpPkt*)pck)->getsetTsRx()<<endl;
-            */
+            ((Packet*)pck)->setTsRx(rxTimeStamp);
+            ev << " and new time stamp is "<<((Packet*)pck)->getTsRx()<<endl;
+
         }
         else
         {

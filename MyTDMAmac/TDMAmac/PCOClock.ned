@@ -34,9 +34,9 @@ simple PCOClock
         volatile double alpha;	// the correction parameter of clock offset
         volatile double beta;	// the correction parameter of clock skew        
         volatile double Threshold;
-        double pulseDuration @unit(s) = default(0ms);	// duration between neighboring SYNC packets
+        double pulseDuration @unit(s) = default(0ms);	// duration between neighboring relay SYNC packets
     	double ScheduleOffset @unit(s) = default(0ms);
-    	double tau @unit(s) = default(0ms);	// @brief transmission delay, see clock.h
+    	double tau @unit(s) = default(0ms);	// transmission delay
     	int CorrectionAlgorithm;	// correction algorithm, 0 is for null
     								// 1 is for classic PCO by using constant value, 2 is for classic PCO by using offset value
     	double varepsilon = default(0);

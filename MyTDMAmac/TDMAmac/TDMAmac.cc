@@ -27,7 +27,7 @@
 
 Define_Module(TDMAmac);
 
-/* Initialize the mac using omnetpp.ini variables and initializing other necessary variables  */
+/* Initialize the mac using omnetpp.ini variables and initializing other necessary variables */
 
 void TDMAmac::initialize(int stage)
 {
@@ -75,15 +75,12 @@ void TDMAmac::initialize(int stage)
         if (pClock2 == NULL)
             error("No clock module is found in the module");
 
-        // FrameTimer = new cMessage( "frame-timer", 0 );
     }
 }
 
 /* Module destructor */
 TDMAmac::~TDMAmac()
 {
-    // cancelAndDelete(FrameTimer);
-
     MacPktQueue::iterator it;
        for(it = macPktQueue.begin(); it != macPktQueue.end(); ++it) {
            delete (*it);
@@ -113,7 +110,7 @@ void TDMAmac::handleUpperMsg(cMessage* msg){
 
     assert(dynamic_cast<cPacket*>(msg));
 
-    EV << "Packet from upper layer" << endl;
+    EV << "TDMAmac: Packet from upper layer" << endl;
 
     /* Casting upper layer message to mac packet format */
     TDMAMacPkt *mac = static_cast<TDMAMacPkt *>(encapsMsg(static_cast<cPacket*>(msg)));
@@ -123,12 +120,12 @@ void TDMAmac::handleUpperMsg(cMessage* msg){
     {
         EV << "TDMAmac: in mode 1, send SYNC packet directly " << endl;
 
-        phy->setRadioState(MiximRadio::TX);
-        TDMAMacPkt* data = mac->dup();
-        data->setKind(1);
+        phy -> setRadioState(MiximRadio::TX);
+        TDMAMacPkt* data = mac -> dup();
+        data -> setKind(1);
         attachSignal(data);
 
-        EV << "Sending down data packet\n";
+        EV << "TDMAmac: Sending down data packet\n";
         sendDown(data);
     }
 
@@ -138,18 +135,18 @@ void TDMAmac::handleUpperMsg(cMessage* msg){
         if (macPktQueue.size() <= queueLength)
         {
             macPktQueue.push_back(mac);
-            EV << "packet put in queue\n  queue size: " << macPktQueue.size() << endl;
+            EV << "TDMAmac: packet put in queue\n  queue size: " << macPktQueue.size() << endl;
         }
         else
         {
            /* Queue is full, new packet has to be deleted */
-           EV << "New packet arrived, but queue is FULL, so new packet is deleted\n";
-           mac->setName("MAC ERROR");
-           mac->setKind(PACKET_DROPPED);
+           EV << "TDMAmac: New packet arrived, but queue is FULL, so new packet is deleted\n";
+           mac -> setName("MAC ERROR");
+           mac -> setKind(PACKET_DROPPED);
            sendControlUp(mac);
            droppedPacket.setReason(DroppedPacket::QUEUE);
            emit(BaseLayer::catDroppedPacketSignal, &droppedPacket);
-           EV <<  "ERROR: Queue is full, forced to delete.\n";
+           EV <<  "TDMAmac: ERROR, Queue is full, forced to delete.\n";
            droppedPackets++;
         }
     }
@@ -203,24 +200,24 @@ void TDMAmac::handleSelfMsg(cMessage* msg)
  */
 TDMAmac::macpkt_ptr_t TDMAmac::encapsMsg(cPacket* msg) {
 
-    TDMAMacPkt *pkt = new TDMAMacPkt(msg->getName(), msg->getKind());
-    pkt->setBitLength(headerLength);
+    TDMAMacPkt *pkt = new TDMAMacPkt(msg -> getName(), msg -> getKind());
+    pkt -> setBitLength(headerLength);
 
     /*  copy dest address from the Control Info attached to the network message by the network layer #LMAC */
-    cObject *const cInfo = msg->removeControlInfo();
+    cObject *const cInfo = msg -> removeControlInfo();
 
-    debugEV << "CInfo removed, mac addr=" << getUpperDestinationFromControlInfo(cInfo) << endl;
-    pkt->setDestAddr(getUpperDestinationFromControlInfo(cInfo));
+    debugEV << "TDMAmac: CInfo removed, mac addr =" << getUpperDestinationFromControlInfo(cInfo) << endl;
+    pkt -> setDestAddr(getUpperDestinationFromControlInfo(cInfo));
 
     /* delete the control info #LMAC */
     delete cInfo;
 
     /* set the src address to own mac address (nic module getId()) #LMAC */
-    pkt->setSrcAddr(myMacAddr);
+    pkt -> setSrcAddr(myMacAddr);
 
     /* encapsulate the network packet #LMAC */
-    pkt->encapsulate(check_and_cast<cPacket *>(msg));
-    debugEV <<"pkt encapsulated\n";
+    pkt -> encapsulate(check_and_cast<cPacket *>(msg));
+    debugEV <<"TDMAmac: pkt encapsulated\n";
 
     return pkt;
 }
@@ -232,7 +229,7 @@ TDMAmac::macpkt_ptr_t TDMAmac::encapsMsg(cPacket* msg) {
 void TDMAmac::handleLowerMsg(cMessage* msg)
 {
     TDMAMacPkt *const mac  = static_cast<TDMAMacPkt *>(msg);
-    const LAddress::L2Type& dest = mac->getDestAddr();
+    const LAddress::L2Type& dest = mac -> getDestAddr();
 
     /*
      * Unused part (Collision tracking)
@@ -246,24 +243,24 @@ void TDMAmac::handleLowerMsg(cMessage* msg)
      */
 
     /* Check if the packet is a broadcast or addressed to this node */
-    EV << " I have received a data packet.\n";
+    EV << "TDMAmac: I have received a data packet.\n";
     if(dest == myMacAddr || LAddress::isL2Broadcast(dest))
     {
-        EV << "sending pkt to upper...\n";
+        EV << "TDMAmac: sending pkt to upper...\n";
         sendUp(decapsMsg(mac));
     }
     else {
-        EV << "packet not for me, deleting...\n";
+        EV << "TDMAmac: packet not for me, deleting...\n";
         delete mac;
     }
 }
 
 void TDMAmac::handleLowerControl(cMessage* msg)
 {
-    switch(msg->getKind()) {
+    switch(msg -> getKind()) {
     case MacToPhyInterface::TX_OVER:
-           debugEV << "PHY indicated transmission over" << endl;
-           phy->setRadioState(MiximRadio::RX);
+           debugEV << "TDMAmac: PHY indicated transmission over" << endl;
+           phy -> setRadioState(MiximRadio::RX);
 
            if (SyncStatus == TRUE)
            {

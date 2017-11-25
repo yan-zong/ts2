@@ -154,15 +154,12 @@ void SlaveCore::handleSelfMessage(cMessage *msg)
 {
     Packet *pck = new Packet("SYNC");
     pck -> setPacketType(SYNC);
-    pck -> setByteLength(2);
-
-    // pck -> setTimestamp(simTime());
+    pck -> setByteLength(TIMESTAMP_BYTE);
 
     pck -> setSource(address);
     pck -> setDestination(PACKET_BROADCAST_ADDR);
 
     // pck -> setData(SIMTIME_DBL(simTime()));
-    // pck -> setTsTx(SIMTIME_DBL(simTime())); // set transmission time stamp ts1 on SYNC
 
     // set SrcAddr, DestAddr with LAddress::L3Type values for MiXiM
     pck -> setSrcAddr(LAddress::L3Type(pck -> getSource()));
@@ -213,6 +210,8 @@ void SlaveCore::handleMasterMessage(cMessage *msg)
                 // get the measurement offset based on the reception of SYNC from master,
                 // and no need to use the 'AddressOffset.#
                 ev << "SlaveCore: get the offset and skew...\n";
+
+                pClock -> setReceivedSYNCTime((((Packet *)msg) -> getTsRx()));
                 EstimatedOffset = pClock -> getMeasurementOffset(5, 0);
                 EstimatedSkew = pClock -> getMeasurementSkew(EstimatedOffset);
 
@@ -231,6 +230,7 @@ void SlaveCore::handleMasterMessage(cMessage *msg)
                 ev << "SlaveCore: get the offset and skew...\n";
                 AddressOffset = (((Packet *)msg) -> getSource()) - (2000 - 1);
 
+                pClock -> setReceivedSYNCTime((((Packet *)msg) -> getTsRx()));
                 EstimatedOffset = pClock -> getMeasurementOffset(4, AddressOffset);
                 EstimatedSkew = pClock -> getMeasurementSkew(EstimatedOffset);
 

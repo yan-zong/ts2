@@ -150,15 +150,12 @@ void RelaySlave::handleSelfMessage(cMessage *msg)
 {
     Packet *pck = new Packet("SYNC");
     pck -> setPacketType(SYNC);
-    pck -> setByteLength(2);
-
-    // pck -> setTimestamp(simTime());
+    pck -> setByteLength(TIMESTAMP_BYTE);
 
     pck -> setSource(myAddress);
     pck -> setDestination(PACKET_BROADCAST_ADDR);
 
     // pck -> setData(SIMTIME_DBL(simTime()));
-    // pck -> setTsTx(SIMTIME_DBL(simTime())); // set transmission time stamp ts1 on SYNC
 
     // set SrcAddr, DestAddr with LAddress::L3Type values for MiXiM
     pck -> setSrcAddr( LAddress::L3Type(myAddress));
@@ -241,6 +238,9 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
                 // get the measurement offset based on the reception of SYNC from master,
                 // and no need to use the 'AddressOffset.#
                 ev << "RelaySlave: get the offset and skew...\n";
+
+                pClock -> setReceivedSYNCTime((((Packet *)msg) -> getTsRx()));
+
                 EstimatedOffset = pClock -> getMeasurementOffset(1, 0);
                 EstimatedSkew = pClock -> getMeasurementSkew(EstimatedOffset);
 
@@ -258,6 +258,8 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
 
                 ev << "RelaySlave: get the offset and skew...\n";
                 AddressOffset = myMasterAddress - myAddress;
+
+                pClock -> setReceivedSYNCTime((((Packet *)msg) -> getTsRx()));
 
                 if (AddressOffset > 0)
                 {

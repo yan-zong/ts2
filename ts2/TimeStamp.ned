@@ -25,7 +25,7 @@ simple TimeStamp
 {
     parameters:
         @class(TimeStamp);
-        bool useGlobalRefClock = default(true); 
+        bool useReferenceClock = default(true); 
 		// true, accurate clock that uses the simTime() as the clock source
         // false, inaccurate clock that uses the clock module as the clock source
            
