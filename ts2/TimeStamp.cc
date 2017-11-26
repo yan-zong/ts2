@@ -1,7 +1,7 @@
 //***************************************************************************
 // * File:        This file is part of TS2.
 // * Created on:  07 Nov 2016
-// * Author:      Yan Zong, Xuweu Dai
+// * Author:      Yan Zong, Xuewu Dai
 // *
 // * Copyright:   (C) 2016 Northumbria University, UK.
 // *
@@ -72,12 +72,12 @@ void TimeStamp::handleMessage(cMessage *msg)
              pck = pck -> getEncapsulatedPacket();
         }
         // now pck points to the highest layer packet
-        // check if it is PtpPkt
+        // check if it is Packet
         if (dynamic_cast<Packet *>(pck) != NULL)
         {
-            EV<<"is a PtpPkt packet.";
+            EV<<"is a Packet.";
             // set new timestamp
-            EV<<"timestamp PtpPkt->Data was " << ((Packet*)pck) -> getData() <<endl;
+            EV<<"timestamp Pkt->Data was " << ((Packet*)pck) -> getData() <<endl;
             if (useReferenceClock)
             {
                 ((Packet*)pck) -> setTsTx(SIMTIME_DBL(simTime()));
@@ -92,7 +92,7 @@ void TimeStamp::handleMessage(cMessage *msg)
         }
         else
         {
-            ev<<" is NOT a PtpPkt packet.Forward down to lower layer without time stamping."<<endl;
+            ev<<" is NOT a packet.Forward down to lower layer without time stamping."<<endl;
         }
         send(msg,"lowerGateOut");
         return;
@@ -109,33 +109,28 @@ void TimeStamp::handleMessage(cMessage *msg)
         }
         if (dynamic_cast<Packet *>(pck) != NULL)
         {
-            // double receivedTime;
-            // receivedTime = pClk -> getTimestamp();
-            // pClk -> setReceivedSYNCTime(receivedTime);
-            // ev << "Timestamp: SYNC packet is received at " << receivedTime << " on Timastamp module. " << endl;
 
-
-            // the encapsulated packet is a PtpPkt, put a time stamp
+            // the encapsulated packet is a Packet, put a time stamp
             double rxTimeStamp;
-            ev<<" is a PtpPkt, its timestamp was "<< ((Packet*)pck) -> getTsRx() <<endl;
+            ev<<" is a Packet, its timestamp was "<< ((Packet*)pck) -> getTsRx() <<endl;
             if (useReferenceClock)
             {
                 rxTimeStamp = SIMTIME_DBL(simTime());
-                ev << " Now using simTime() for new time stamp,\n";
+                ev << " Now using simTime() for new time stamp";
             }
             else
             {
                 rxTimeStamp = pClk -> getTimestamp();
-                ev << " Now using clock module for new time stamp.\n";
+                ev << " Now using clock module for new time stamp";
             }
 
-            ((Packet*)pck)->setTsRx(rxTimeStamp);
-            ev << " and new time stamp is "<<((Packet*)pck)->getTsRx()<<endl;
+            ((Packet*)pck) -> setTsRx(rxTimeStamp);
+            ev << ", and new time stamp is "<<((Packet*)pck) -> getTsRx()<<endl;
 
         }
         else
         {
-            ev<<"  is NOT a PtpPkt, forward it to upper layer without time stamping"<<endl;
+            ev<<"  is NOT a Packet, forward it to upper layer without time stamping"<<endl;
         }
         send(msg,"upperGateOut");
         return;

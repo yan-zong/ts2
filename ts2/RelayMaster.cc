@@ -1,7 +1,7 @@
 //***************************************************************************
 // * File:        This file is part of TS2.
 // * Created on:  07 Nov 2016
-// * Author:      Yan Zong, Xuweu Dai
+// * Author:      Yan Zong, Xuewu Dai
 // *
 // * Copyright:   (C) 2016 Northumbria University, UK.
 // *
@@ -29,7 +29,7 @@ Define_Module(RelayMaster);
 
 void RelayMaster::initialize()
 {
-        ev << "RelayMaster Initialisation "<<endl;
+        ev << "RelayMaster: Initialization... "<<endl;
 
         lowerGateIn  = findGate("lowerGateIn");
         lowerGateOut = findGate("lowerGateOut");
@@ -43,13 +43,13 @@ void RelayMaster::initialize()
         // ---------------------------------------------------------------------------
         // RelayMaster[0] address: 2000; RelayMaster[1] address: 2001 ...
         if (hasPar("masterAddrOffset"))
-            myAddress = (findHost()->getIndex()) + (int)par("masterAddrOffset"); // ->getId(); for compatible with MiXiM, see BaseAppLayer.cc
+            myAddress = (findHost() -> getIndex()) + (int)par("masterAddrOffset"); // ->getId(); for compatible with MiXiM, see BaseAppLayer.cc
         else
             error("No parameter masterAddrOffset is found");
 
         ev << "RelayMaster: my address is "<< myAddress <<endl;
 
-        // Initialise the pointer to the clock module */
+        // Initialize the pointer to the clock module */
         pClock = (PCOClock *)getParentModule() -> getParentModule() -> getSubmodule("clock");
         if (pClock == NULL)
         {
@@ -62,6 +62,7 @@ void RelayMaster::initialize()
         //RelayMaster: findHost()->getParentModule returns: Network
 
         RelayModule = RelayModule->getSubmodule("rnode", (findHost() -> getIndex()));
+        ev<<"RelayMaster: RelayModule: findHost() -> getSubmodule returns: "<< RelayModule->getSubmodule("rnode", (findHost() -> getIndex())) <<endl;
 
   }
 
@@ -69,42 +70,44 @@ void RelayMaster::handleMessage(cMessage* msg)
 {
     int whichGate;
 
-    if (msg->isSelfMessage())
+    if (msg -> isSelfMessage())
     {
-        error("error in RelayMaster module, there should be no self message in relay master.\n");
+        error("RelayMaster: there should be no self message in relay master.\n");
         delete msg;
     }
 
     // no self-message,check where it comes from
     whichGate = msg -> getArrivalGateId();
+
     if (whichGate == lowerGateIn)
     {
         EV << "RelayMaster: receives a packet"<<endl;
 
         if (dynamic_cast<Packet *>(msg) != NULL)
         {
-            EV << "this ia a PtpPkt packet, Relay Master now is processing it " <<endl;
+            EV << "RelayMaster: this is a Packet packet, Relay Master now is processing it " <<endl;
             Packet *pck = static_cast<Packet *>(msg);
-            if(pck -> getSource() != myAddress &
-                    (pck -> getDestination() == myAddress | pck -> getDestination() == PACKET_BROADCAST_ADDR))
+            if((pck -> getSource() != myAddress) &
+                    ((pck -> getDestination() == myAddress) | (pck -> getDestination() == PACKET_BROADCAST_ADDR)))
              {
-                EV << "the PtpPkt packet is for me, process it\n";
-                 handleSlaveMessage(pck);   // handelSlaveMessage() does not delete msg
+                EV << "the packet is for me, process it \n";
+                handleSlaveMessage(pck);   // handelSlaveMessage() does not delete msg
              }
              else
              {
-                 EV << "the PtpPck packet is not for me, ignore it, do nothing\n";
+                 EV << "the packet is not for me, ignore it, do nothing \n";
              }
+
              delete msg;
         }
         else
         {
-            EV << "This is not a PtpPkt packet, send it up to higher layer" <<endl;
-            send(msg,"upperGateOut");
+            EV << "RelayMaster: this is not a packet, send it up to higher layer" <<endl;
+            send(msg, "upperGateOut");
         }
     }
 
-    else if(whichGate == -1)
+    else if (whichGate == -1)
     {
         /* Classes extending this class may not use all the gates, f.e.
          * BaseApplLayer has no upper gates. In this case all upper gate-
@@ -129,11 +132,12 @@ void RelayMaster::handleMessage(cMessage* msg)
 void RelayMaster::handleSelfMessage(cMessage *msg)
 {
     Packet *pck = new Packet("SYNC");
-    pck->setPacketType(SYNC);
-    pck->setByteLength(TIMESTAMP_BYTE);
+    pck -> setPacketType(SYNC);
+    pck -> setByteLength(TIMESTAMP_BYTE);
 
-    pck->setSource(myAddress);
-    pck->setDestination(PACKET_BROADCAST_ADDR);    // PTP_BROADCAST_ADDR = -1
+    pck -> setSource(myAddress);
+    pck -> setDestination(PACKET_BROADCAST_ADDR);   // todo: if this function will be used in the
+                                                    // future, please modify the destination address
 
     // pck->setData(SIMTIME_DBL(simTime()));
 
@@ -161,47 +165,84 @@ void RelayMaster::handleSlaveMessage(Packet *msg)
         {
             if (mySlaveAddress == 1000)
             {
-                ev << "RelayMaster: the received REGISTER packet is from the master, NOT for me, ignore it \n";
+                ev << "RelayMaster: the received REGISTER packet is from the master, NOT for me, ignore it. \n";
                 break;
             }
-            else if (mySlaveAddress >= 2000 || mySlaveAddress < 3000)
+            else if ((mySlaveAddress >= 2000) & (mySlaveAddress < 3000))
             {
-                ev << "RelayMaster: the received REGISTER packet is from the Relay node, ignore it\n";
+                ev << "RelayMaster: Register packet from relay, process it. \n";
+
+                Packet *rplPkt= static_cast<Packet *>((Packet *)msg -> dup());
+                rplPkt -> setName("REPLY_REGISGER");
+                rplPkt -> setByteLength(0);
+                rplPkt -> setPacketType(REGREP);
+
+                rplPkt -> setSource(myAddress);
+                rplPkt -> setDestination(((Packet *)msg) -> getSource());
+
+                rplPkt -> setSrcAddr(LAddress::L3Type(rplPkt -> getSource()));
+                rplPkt -> setDestAddr(LAddress::L3Type(rplPkt -> getDestination()));
+
+                NetwControlInfo::setControlInfo(rplPkt, LAddress::L3Type(rplPkt -> getDestination()));
+                send(rplPkt, "lowerGateOut");
+
+                ev << "RelayMaster: REPLY_REGISGER packet is transmitted. \n";
                 break;
             }
             else if (mySlaveAddress >= 3000)
             {
-                ev << "RelayMaster: the received REGISTER packet is from the slave node, ignore it\n";
+                ev << "RelayMaster: Register packet from slave, process it. \n";
+                Packet *rplPkt= static_cast<Packet *>((Packet *)msg -> dup());
+                rplPkt -> setName("REPLY_REGISGER");
+                rplPkt -> setByteLength(0);
+                rplPkt -> setPacketType(REGREP);
+
+                rplPkt -> setSource(myAddress);
+                rplPkt -> setDestination(((Packet *)msg) -> getSource());
+
+                rplPkt -> setSrcAddr(LAddress::L3Type(rplPkt -> getSource()));
+                rplPkt -> setDestAddr(LAddress::L3Type(rplPkt -> getDestination()));
+
+                NetwControlInfo::setControlInfo(rplPkt, LAddress::L3Type(rplPkt -> getDestination()));
+                send(rplPkt, "lowerGateOut");
+
+                ev << "RelayMaster: REPLY_REGISGER packet is transmitted. \n";
                 break;
             }
             else
             {
-                ev << "the received REGISTER packet is invalid, ignore it \n";
+                ev << "RelayMaster: the received REGISTER packet is invalid, ignore it. \n";
                 break;
             }
         }
 
-        case REGRELAY:
+        case REGREP:
         {
-            ev << "Register packet from relay node, ignore it \n";
-            break;
-        }
-
-        case REGREPLY:
-        {
-            ev << "Relay Master receive REGISTER_REPLY packet, ignore\n";
-            break;
+            if (mySlaveAddress == 1000)
+            {
+                ev << "RelayMaster: Received register_reply packet to the relay node, RelayMaster ignore it. \n";
+            }
+            else if ((mySlaveAddress >= 2000) & (mySlaveAddress < 3000))
+            {
+                ev << "RelayMaster: Received register_reply packet to the relay node, RelayMaster ignore it. \n";
+                break;
+            }
+            else if (mySlaveAddress >= 3000)
+            {
+                ev << "RelayMaster: Received register_reply packet to the slave node, RelayMaster ignore it. \n";
+                break;
+            }
         }
 
         case SYNC:
         {
-            ev << "Relay Master receives a SYNC packet, ignore it\n";
+            ev << "RelayMaster: receives a SYNC packet, ignore it. \n";
             break;
         }
 
         default:
         {
-            error("Relay Master receives unknown message, report warning and ignore");
+            error("RelayMaster: receives unknown message, report warning and ignore. \n");
             break;
         }
     }
@@ -209,6 +250,7 @@ void RelayMaster::handleSlaveMessage(Packet *msg)
 
 void RelayMaster::finish()
 {
+
 }
 
 cModule *RelayMaster::findHost(void)
@@ -225,27 +267,28 @@ cModule *RelayMaster::findHost(void)
     return node;
 }
 
-void RelayMaster::startSync()
+void RelayMaster::startNextHopSync()
 {
     Enter_Method_Silent(); // see simuutil.h for detail
 
     Packet *pck = new Packet("SYNC");
-    pck->setPacketType(SYNC);
-    pck->setByteLength(TIMESTAMP_BYTE);
+    pck -> setPacketType(SYNC);
+    pck -> setByteLength(TIMESTAMP_BYTE);
 
-    pck->setSource(myAddress);
-    pck->setDestination(PACKET_BROADCAST_ADDR);
+    pck -> setSource(myAddress);
+    pck -> setDestination(PACKET_BROADCAST_ADDR);   // todo: if this function will be used in the
+                                                    // future, please modify the destination address
 
     // pck->setData(SIMTIME_DBL(simTime()));
 
     // set SrcAddr, DestAddr with LAddress::L3Type values for MiXiM
-    pck->setSrcAddr( LAddress::L3Type(myAddress));
-    pck->setDestAddr(LAddress::L3BROADCAST);
+    pck -> setSrcAddr( LAddress::L3Type(myAddress));
+    pck -> setDestAddr(LAddress::L3BROADCAST);
 
     // set the control info to tell the network layer (layer 3) address
     NetwControlInfo::setControlInfo(pck, LAddress::L3BROADCAST );
 
     EV << "RelayMaster: broadcasts SYNC packet" << endl;
-    send(pck,"lowerGateOut");
+    send(pck, "lowerGateOut");
 }
 

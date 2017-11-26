@@ -1,7 +1,7 @@
 //***************************************************************************
 // * File:        This file is part of TS2.
 // * Created on:  07 Nov 2016
-// * Author:      Yan Zong, Xuweu Dai
+// * Author:      Yan Zong, Xuewu Dai
 // *
 // * Copyright:   (C) 2016 Northumbria University, UK.
 // *
@@ -19,9 +19,10 @@
 //                Funded and RDF funded studentship, UK
 // ****************************************************************************
 
-bool isPtpPkt = FALSE;
+bool isPacket = FALSE;
 
-class RelayBuffer:public cSimpleModule{
+class RelayBuffer:public cSimpleModule
+{
     protected:
         virtual void initialize();
         virtual void handleMessage(cMessage *msg);

@@ -1,7 +1,7 @@
 //***************************************************************************
 // * File:        This file is part of TS2.
 // * Created on:  07 Nov 2016
-// * Author:      Yan Zong, Xuweu Dai
+// * Author:      Yan Zong, Xuewu Dai
 // *
 // * Copyright:   (C) 2016 Northumbria University, UK.
 // *
@@ -29,7 +29,7 @@ Define_Module(RelaySlave);
 
 void RelaySlave::initialize()
 {
-    ev << "RelaySlave: Initialisation... \n";
+    ev << "RelaySlave: Initialization... \n";
 
 	if(ev.isGUI())
 	{
@@ -43,20 +43,16 @@ void RelaySlave::initialize()
 
 	// ---------------------------------------------------------------------------
     // ArpHost module parameters
-    // parameter 'slaveAddrOffset' is used to set the address of the slave (i.e., S1, S2, etc)
+    // parameter 'slaveAddrOffset' is used to set the address of the slave
     // set the slave address, using the same IP, MAC address as ArpHost (see the *.ini file)
     // ---------------------------------------------------------------------------
+	// RelaySlave[0] address: 2000; RelaySlave[1] address: 2001 ...
 	if (hasPar("slaveAddrOffset"))
-	    myAddress = (findHost()->getIndex()) + (int)par("slaveAddrOffset"); // ->getId(); for compatible with MiXiM, see BaseAppLayer.cc
+	    myAddress = (findHost() -> getIndex()) + (int)par("slaveAddrOffset"); // ->getId(); for compatible with MiXiM, see BaseAppLayer.cc
 	else
 	    error("RelaySlave: No parameter slaveAddrOffset is found");
 
     ev << "RelaySlave: my address is "<< myAddress <<endl;
-
-	// find Master node, and Relay node, and their respective address
-    cModule *MasterModule = findHost() -> getParentModule();
-    ev<<"RelaySlave: MasterModule: findHost() -> getParentModule returns: "<< MasterModule -> getName() <<endl;
-    // RelaySlave: findHost()->getParentModule returns: Network
 
 	// Find the Relay Master, and Relay Master pointer
 	pRelayMaster = (RelayMaster *)getParentModule() -> getSubmodule("RelayMaster");
@@ -82,17 +78,18 @@ void RelaySlave::initialize()
     NetwControlInfo::setControlInfo(temp, LAddress::L3BROADCAST );
 
     send(temp,"out");
-	ev << "RelaySlave: initialisation finished, send REGISTER \n";
+	ev << "RelaySlave: initialization finished, send REGISTER \n";
 }
 
 // msg is always deleted at the end of handlMessage(), but the temp(msg) is not deleted at the end of initialize()
 void RelaySlave::handleMessage(cMessage *msg)
 {
-	ev << "RelaySlave: handleMessage invoked\n";
+	ev << "RelaySlave: handleMessage invoked. \n";
 
     if (msg -> isSelfMessage())
     {
         handleSelfMessage(msg);
+
         return;
     }
 
@@ -101,7 +98,7 @@ void RelaySlave::handleMessage(cMessage *msg)
 	    EV << "RelaySlave: receives a SYNC packet from clock module, delete it and re-generate a full SYNC packet \n";
 	    delete msg;
 
-	    scheduleAt(simTime(), new cMessage("OffsetTimer"));
+	    scheduleAt(simTime(), new cMessage("FireTimer"));
 	    // handleClockMessage(msg);
 	}
 
@@ -109,28 +106,29 @@ void RelaySlave::handleMessage(cMessage *msg)
 	{
         if (dynamic_cast<Packet *>(msg) != NULL)
         {
-            EV << "RelaySlave: receives a PtpPkt packet. ";
-            if(((Packet*)msg) -> getSource() != myAddress  &
-                     (((Packet*)msg) -> getDestination() == myAddress  |
-                             ((Packet*)msg) -> getDestination() == PACKET_BROADCAST_ADDR))
+            EV << "RelaySlave: receives a Packet, ";
+            if((((Packet*)msg) -> getSource() != myAddress)  &
+                     (((((Packet*)msg) -> getDestination() == myAddress)  |
+                             (((Packet*)msg) -> getDestination() == PACKET_BROADCAST_ADDR))))
             {
-                EV << "the PtpPkt packet is for me, Relay Slave is processing it\n";
+                EV << "the Packet is for me, Relay Slave is processing it\n";
                 handleMasterMessage(msg);
             }
             else
-                EV << "the PtpPkt packet is not for me, ignore it, do nothing\n";
+                EV << "the Packet is not for me, ignore it, do nothing\n";
+
             delete msg;
         }
         else
         {
-            EV << "the PtpPkt packet is not for me, send it up to higher layer\n"<<endl;
+            EV << "the packet is not for me, send it up to higher layer. \n"<<endl;
             send(msg, "upperGateOut");
          }
 	}
 
     if (msg -> arrivedOn("upperGateIn"))   // data packet from upper layer
     {
-         EV << "receive a PtpPkt packet from higher layer"<<endl;
+         EV << "RelaySlave: receive a packet from higher layer. "<<endl;
          send(msg, "out");
     }
 
@@ -164,7 +162,7 @@ void RelaySlave::handleSelfMessage(cMessage *msg)
     // set the control info to tell the network layer (layer 3) address
     NetwControlInfo::setControlInfo(pck, LAddress::L3BROADCAST );
 
-    EV << "Relay Slave broadcasts SYNC packet" << endl;
+    EV << "RelaySlave: broadcasts a SYNC packet. " << endl;
     send(pck,"out");
 
 }
@@ -194,32 +192,48 @@ void RelaySlave::handleEventMessage(cMessage *msg)
 
 void RelaySlave::handleMasterMessage(cMessage *msg)
 {
-    myMasterAddress = (((Packet *)msg) -> getSource());
+    // myMasterAddress = (((Packet *)msg) -> getSource());
 
     switch(((Packet *)msg) -> getPacketType())
     {
         case REG:
         {
-            ev << "receive REGISTER package, slave node does nothing. returns\n";
-            break;
-        }
-
-        case REGRELAY:
-        {
-            ev << "receive REGISTER package, slave node does nothing. returns\n";
-            break;
-        }
-
-        case REGREPLY:
-        {
-            if (myMasterAddress == 1000)
+            if ((((Packet *)msg) -> getSource()) == 1000)
             {
-                ev << "RelaySlave: receives REGISTER_REPLY packet from master node. \n";
+                ev << "RelaySlave: receive REGISTER package from master, RelaySlave does nothing. \n";
                 break;
             }
-            else if (myMasterAddress >= 2000 || myMasterAddress < 3000)
+            else if (((((Packet *)msg) -> getSource()) >= 2000) & ((((Packet *)msg) -> getSource()) < 3000))
             {
-                ev << "RelaySlave: receives REGISTER_REPLY packet from Relay node. \n";
+                ev << "RelaySlave: receive REGISTER package from relay, RelaySlave does nothing. \n";
+                break;
+            }
+            else if ((((Packet *)msg) -> getSource()) >= 3000)
+            {
+                ev << "RelaySlave: receive REGISTER package from slave, RelaySlave does nothing. \n";
+                break;
+            }
+        }
+
+        case REGREP:
+        {
+            if ((((Packet *)msg) -> getSource()) == 1000)
+            {
+                ev << "RelaySlave£º receives REGISTER_REPLY packet from master node, process it\n";
+                myMasterAddress == (((Packet *)msg) -> getSource());
+                ev << "RelaySlave: my master's address is updated to "<< myMasterAddress << " according to the the REGPREPLY packet. \n";
+                break;
+            }
+            else if (((((Packet *)msg) -> getSource()) >= 2000) & ((((Packet *)msg) -> getSource()) < 3000))
+            {
+                ev << "RelaySlave£º receives REGISTER_REPLY packet from relay node, process it\n";
+                myRelayAddress == (((Packet *)msg) -> getSource());
+                ev << "SlaveCore: my relay's address is updated to "<< myRelayAddress << " according to the the REGPREPLY packet. \n";
+                break;
+            }
+            else if ((((Packet *)msg) -> getSource()) >= 3000)
+            {
+                ev << "RelaySlave: receives REGISTER_REPLY packet from slave node, RelaySlave does nothing. \n";
                 break;
             }
             else
@@ -231,7 +245,7 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
 
         case SYNC:
         {
-            if (myMasterAddress == 1000)
+            if ((((Packet *)msg) -> getSource()) == 1000)
             {
                 ev << "RelaySlave: receives SYNC packet from master node, process it\n";
 
@@ -240,6 +254,8 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
                 ev << "RelaySlave: get the offset and skew...\n";
 
                 pClock -> setReceivedSYNCTime((((Packet *)msg) -> getTsRx()));
+
+                ev << "RelaySlave: timestamp is "<< (((Packet *)msg) -> getTsRx()) << endl;
 
                 EstimatedOffset = pClock -> getMeasurementOffset(1, 0);
                 EstimatedSkew = pClock -> getMeasurementSkew(EstimatedOffset);
@@ -252,7 +268,7 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
                 break;
 
             }
-            else if (myMasterAddress >= 2000 || myMasterAddress < 3000)
+            else if (((((Packet *)msg) -> getSource()) >= 2000) & ((((Packet *)msg) -> getSource()) < 3000))
             {
                 ev << "RelaySlave: receives SYNC packet from relay node, process it\n";
 
@@ -260,6 +276,8 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
                 AddressOffset = myMasterAddress - myAddress;
 
                 pClock -> setReceivedSYNCTime((((Packet *)msg) -> getTsRx()));
+
+                ev << "RelaySlave: timestamp is "<< (((Packet *)msg) -> getTsRx()) << endl;
 
                 if (AddressOffset > 0)
                 {
@@ -284,11 +302,8 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
             else if (myMasterAddress >= 3000)
             {
                 ev << "RelaySlave: receives SYNC packet from slave node, ignore it\n";
-
                 break;
-
             }
-
             else
             {
                 ev << "RelaySlave: the received SYNC packet is invalid, ignore it \n";
@@ -304,11 +319,12 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
             // pRelayMaster -> startSync();
         }
 
-        case DREQ:
+        default:
         {
-            ev << "RelaySlave: Invalid message. Ignored\n";
+            error("RelayMaster: receives unknown message, report warning and ignore. \n");
             break;
         }
+
     }
 }
 
@@ -319,6 +335,7 @@ void RelaySlave::recordResult()
 
 void RelaySlave::finish()
 {
+
 }
 
 void RelaySlave::updateDisplay()

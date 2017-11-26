@@ -48,7 +48,12 @@ void SlaveCore::initialize()
 	if (pClock == NULL)
 	    error("SlaveCore: No clock module is found");
 
-	/* Initialize the addresses of slave & master */
+    // ---------------------------------------------------------------------------
+    // ArpHost module parameters
+    // parameter 'slaveAddrOffset' is used to set the address of the slave
+    // set the slave address, using the same IP, MAC address as ArpHost (see the *.ini file)
+    // ---------------------------------------------------------------------------
+    // Slave[0] address: 3000; Slave[1] address: 3001 ...
 	if (hasPar("slaveAddrOffset"))
 	    address = findHost() -> getIndex() + (int)par("slaveAddrOffset"); // ->getId(); for compatible with MiXiM, see BaseAppLayer.cc
 	else
@@ -67,7 +72,7 @@ void SlaveCore::initialize()
 
     if ((masterModule == NULL) & (relayModule == NULL))
     {
-        error("SlaveCore: No Sink node or RelayMaster are found");
+        error("SlaveCore: No master node or relay are found");
     }
 
 	Packet * temp = new Packet("REGISTER");
@@ -83,12 +88,12 @@ void SlaveCore::initialize()
     NetwControlInfo::setControlInfo(temp, LAddress::L3BROADCAST );
 
     send(temp,"lowerGateOut");
-	ev << "SlaveCore: Slave Node " << getId() << " : Initialisation finished. Send Register packet\n";
+	ev << "SlaveCore: Slave Node " << getId() << " : Initialization finished. Send Register packet. \n";
 }
 
 void SlaveCore::handleMessage(cMessage *msg)
 {
-    ev << "SlaveCore: handleMessage invoked\n";
+    ev << "SlaveCore: handleMessage invoked. \n";
 
     if(msg -> isSelfMessage())
     {
@@ -100,41 +105,41 @@ void SlaveCore::handleMessage(cMessage *msg)
 
     if (msg -> arrivedOn("inclock"))
 	{
-	    EV << "SlaveCore: Slave receives a SYNC packet from clock module, delete it and DON't re-generate a full SYNC packet due to it is slave node.\n";
+	    EV << "SlaveCore: receives a SYNC packet from clock module, delete it and DON't re-generate a full SYNC packet due to it is slave node.\n";
 	    delete msg;
 
-	    // scheduleAt(simTime(), new cMessage("OffsetTimer"));
+	    // scheduleAt(simTime(), new cMessage("FireTimer"));
 	}
 
     if (msg -> arrivedOn("lowerGateIn"))  // data packet from lower layer
 	{   // check PtpPkt type
         if (dynamic_cast<Packet *>(msg) != NULL)
         {
-            EV << "SlaveCore receives a PtpPkt packet. ";
-             if(((Packet*)msg) -> getSource() != address &
-                     (((Packet*)msg) -> getDestination() == address |
-                             ((Packet*)msg) -> getDestination() == PACKET_BROADCAST_ADDR))
+            EV << "SlaveCore: receives a packet. ";
+             if((((Packet*)msg) -> getSource() != address) &
+                     (((((Packet*)msg) -> getDestination() == address) |
+                             (((Packet*)msg) -> getDestination() == PACKET_BROADCAST_ADDR))))
              {
-                 EV << "the packet is for me, process it\n";
+                 EV << "the Packet is for me, process it. \n";
                  handleMasterMessage(msg);
              }
              else
              {
-                 EV << "the packet is not for me, ignore it\n";
+                 EV << "the Packet is not for me, ignore it. \n";
              }
-             delete msg;
 
+             delete msg;
         }
         else
         {
-            EV << " this packtet is not a PtpPkt packet, send it up to higher layer"<<endl;
-            send(((Packet *)msg)->dup(),"upperGateOut");
+            EV << " this Packet is not a Packet, send it up to higher layer"<<endl;
+            send(((Packet *)msg) -> dup(),"upperGateOut");
          }
 	}
 
     if (msg -> arrivedOn("upperGateIn"))   // data packet from upper layer
     {
-         EV << "receive a PtpPkt packet from higher layer"<<endl;
+         EV << "receive a Packet from higher layer"<<endl;
          send(msg, "lowerGateOut");
     }
 
@@ -174,21 +179,22 @@ void SlaveCore::handleSelfMessage(cMessage *msg)
 
 void SlaveCore::handleOtherPacket(cMessage *msg)
 {
+
 }
 
 void SlaveCore::handleEventMessage(cMessage *msg)
 {
-	if(((Event *)msg)->getEventType()==CICLICO)
+	if(((Event *)msg) -> getEventType()==CICLICO)
 	{
 		Packet *pck = new Packet("CICLICO");
-		pck->setPacketType(OTHER);
-		pck->setSource(address);
-		pck->setDestination(((Event *)msg)->getDest());
-		pck->setByteLength(((Event *)msg)->getPckLength());
+		pck -> setPacketType(OTHER);
+		pck -> setSource(address);
+		pck -> setDestination(((Event *)msg) -> getDest());
+		pck -> setByteLength(((Event *)msg) -> getPckLength());
 
-		for(int i=0; i<((Event *)msg)->getPckNumber()-1; i++)
+		for(int i=0; i<((Event *)msg) -> getPckNumber()-1; i++)
 		{
-		    send((cMessage *)pck->dup(),"lowerGateOut");
+		    send((cMessage *)pck -> dup(),"lowerGateOut");
 		}
 		send(pck,"lowerGateOut");
 	}
@@ -200,6 +206,40 @@ void SlaveCore::handleMasterMessage(cMessage *msg)
 
     switch(((Packet *)msg) -> getPacketType())
     {
+        case REG:
+        {
+            ev<<"SlaveCore: receive Register package, slave node does nothing. \n";
+            break;
+        }
+
+        case REGREP:
+        {
+            if ((((Packet *)msg) -> getSource()) == 1000)
+            {
+                ev << "Relay Slave receives REGISTER_REPLY packet from master node, process it. \n";
+                myMasterAddress == (((Packet *)msg) -> getSource());
+                ev<<"SlaveCore: my master's address is updated to "<< myMasterAddress << " according to the the REGPREPLY packet)\n";
+                break;
+            }
+            else if ( ((((Packet *)msg) -> getSource()) >= 2000) & ((((Packet *)msg) -> getSource()) < 3000))
+            {
+                ev << "Relay Slave receives REGISTER_REPLY packet from Relay node, process it. \n";
+                myRelayAddress == (((Packet *)msg) -> getSource());
+                ev<<"SlaveCore: my relay's address is updated to "<< myRelayAddress << " according to the the REGPREPLY packet)\n";
+                break;
+            }
+            else if ((((Packet *)msg) -> getSource()) >= 3000)
+             {
+                 ev << "Relay Slave receives REGISTER_REPLY packet from slave node,ignore it. \n";
+                 break;
+             }
+            else
+            {
+                ev << "SlaveCore: the received REGREPLY packet is invalid, ignore it \n";
+                break;
+            }
+        }
+
 		case SYNC:
 		{
 
@@ -208,10 +248,13 @@ void SlaveCore::handleMasterMessage(cMessage *msg)
                 ev << "SlaveCore: receives SYNC packet from master node, process it\n";
 
                 // get the measurement offset based on the reception of SYNC from master,
-                // and no need to use the 'AddressOffset.#
+                // and no need to use the 'AddressOffset'
                 ev << "SlaveCore: get the offset and skew...\n";
 
                 pClock -> setReceivedSYNCTime((((Packet *)msg) -> getTsRx()));
+
+                ev << "SlaveCore: timestamp is "<< (((Packet *)msg) -> getTsRx()) << endl;
+
                 EstimatedOffset = pClock -> getMeasurementOffset(5, 0);
                 EstimatedSkew = pClock -> getMeasurementSkew(EstimatedOffset);
 
@@ -231,6 +274,9 @@ void SlaveCore::handleMasterMessage(cMessage *msg)
                 AddressOffset = (((Packet *)msg) -> getSource()) - (2000 - 1);
 
                 pClock -> setReceivedSYNCTime((((Packet *)msg) -> getTsRx()));
+
+                ev << "SlaveCore: timestamp is "<< (((Packet *)msg) -> getTsRx()) << endl;
+
                 EstimatedOffset = pClock -> getMeasurementOffset(4, AddressOffset);
                 EstimatedSkew = pClock -> getMeasurementSkew(EstimatedOffset);
 
@@ -255,45 +301,18 @@ void SlaveCore::handleMasterMessage(cMessage *msg)
             }
 		}
 
-		case REG:
-		{
-		    ev<<"SlaveCore: Register package, slave node does nothing. returns\n";
-			break;
-		}
-
-        case REGRELAY:
+        case DRES:
         {
-            ev << "SlaveCore: receive REGISTER package, slave node does nothing. returns\n";
+            ev << "SlaveCore: Invalid message DRES. Ignored\n";
             break;
         }
 
-        case REGREPLY:
+        default:
         {
-            if ((((Packet *)msg) -> getSource()) == 1000)
-            {
-                ev << "Relay Slave receives REGISTER_REPLY packet from master node, process it\n";
-                myMasterAddress == (((Packet *)msg) -> getSource());
-                ev<<"SlaveCore: my master's address is updated to "<< myMasterAddress << " according to the the REGPREPLY packet)\n";
-                break;
-            }
-            else if ( ((((Packet *)msg) -> getSource()) >= 2000) || ((((Packet *)msg) -> getSource()) < 3000) )
-            {
-                ev << "Relay Slave receives REGISTER_REPLY packet from Relay node, process it\n";
-                myRelayAddress == (((Packet *)msg) -> getSource());
-                ev<<"SlaveCore: my relay's address is updated to "<< myRelayAddress << " according to the the REGPREPLY packet)\n";
-                break;
-            }
-            else
-            {
-                ev << "SlaveCore: the received REGREPLY packet is invalid, ignore it \n";
-                break;
-            }
+            error("SlaveCore: receives unknown message, report warning and ignore. \n");
+            break;
         }
-		case DREQ:
-		{
-		    ev << "SlaveCore: Invalid master message DREQ. Ignored\n";
-		    break;
-		}
+
 	}
 }
 

@@ -1,7 +1,7 @@
 //***************************************************************************
 // * File:        This file is part of TS2.
 // * Created on:  07 Nov 2016
-// * Author:      Yan Zong, Xuweu Dai
+// * Author:      Yan Zong, Xuewu Dai
 // *
 // * Copyright:   (C) 2016 Northumbria University, UK.
 // *
@@ -32,11 +32,11 @@
 class RelayMaster : public cSimpleModule
 {
 public:
-    void startSync();
+    void startNextHopSync();    // for the next hop time synchronization
 
 private:
-    int myAddress;      // the variable is used in the multi-hop network
-    int mySlaveAddress; // the variable is used in the multi-hop network
+    int myAddress;
+    int mySlaveAddress;
     double Tsync;
 
 protected:

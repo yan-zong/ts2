@@ -1,7 +1,7 @@
 //***************************************************************************
 // * File:        This file is part of TS2.
 // * Created on:  07 Nov 2016
-// * Author:      Yan Zong, Xuweu Dai
+// * Author:      Yan Zong, Xuewu Dai
 // *
 // * Copyright:   (C) 2016 Northumbria University, UK.
 // *
@@ -31,30 +31,35 @@ Define_Module(RelayBuffer);
 
 void RelayBuffer::initialize()
 {
-	ev << "RelayBuffer Initialisation... \n";
+	ev << "RelayBuffer: initialization... \n";
 	pckVec.setName("package");  // package
 
-	if(ev.isGUI())
+	if (ev.isGUI())
 	{
 	    updateDisplay();
 	}
 
-	ev << "RelayBuffer Initialisation Success\n";
+	ev << "RelayBuffer: initialization success. \n";
 }
 
 void RelayBuffer::handleMessage(cMessage *msg)
 {
-	if(msg -> isSelfMessage())
+	if (msg -> isSelfMessage())
 	{
-		ev << "RelayBuffer: RelayBuffer does not have any self message, ignore and delete it\r\n";
+		ev << "RelayBuffer: RelayBuffer does not have any self message, ignore and delete it. \r\n";
+
 		delete msg;
+
 		return;
 	}
+
 	else
 	{
-	    ev << "RelayBuffer: RelayBuffer receives a message. \n";
+	    ev << "RelayBuffer: receives a message. \n";
+
 	    handleRelayMessage(msg);
-	    ev << "RelayBuffer: RelayBuffer forwards message RelayMaster or RelaySlave\n";
+
+	    ev << "RelayBuffer: forwards message to RelayMaster or RelaySlave\n";
 	}
 
 	if(ev.isGUI())
@@ -64,28 +69,30 @@ void RelayBuffer::handleMessage(cMessage *msg)
 
 }
 
-// buffer send the packet to the RelayMaster or RelaySalve, RelayMaster and RelaySalve
-// determine whether ignore the received packet
+// buffer send the packet to the RelayMaster or RelaySalve,
+// and RelayMaster and RelaySalve determine whether ignore or process the packet.
 void RelayBuffer::handleRelayMessage(cMessage *msg)
 {
     Packet *pkt;
     if (dynamic_cast<Packet *>(msg) != NULL)
     {
-        ev << "the received packet is PtpPkt packet.\n";
-        isPtpPkt = TRUE;
+        ev << "RelayBuffer: the received packet is Packet.\n";
+
+        isPacket = TRUE;
         pkt = (Packet*)msg;
     }
     else
     {
-        ev << "the received packet is not PtpPkt packet.\n";
-        isPtpPkt = FALSE;
+        ev << "RelayBuffer: the received packet is not packet.\n";
+
+        isPacket = FALSE;
     }
 
-    if (msg->arrivedOn ("in", 2))
+    if (msg -> arrivedOn("in", 2))
     {
-        if (isPtpPkt == FALSE)
+        if (isPacket == FALSE)
         {
-            // Forward non-PtpPkt packet to upper layer (network layer)
+            // Forward non-packet packet to upper layer (network layer)
             send(msg,"out", 0); // relay slave (upper gate)
         }
         else
@@ -98,7 +105,11 @@ void RelayBuffer::handleRelayMessage(cMessage *msg)
             else if ( (pkt -> getDestination() >= 2000) & (pkt -> getDestination() < 3000) )
             {
                 send(msg,"out",0);  // RelaySlave
-                send((pkt)->dup(),"out",1);  // RelayMaster
+                send((pkt) -> dup(),"out",1);  // RelayMaster
+            }
+            else if (pkt -> getDestination() >= 3000)
+            {
+                error("RelayBuffer: the address of received packet should be less than 3000.");
             }
             else
             {
@@ -107,11 +118,11 @@ void RelayBuffer::handleRelayMessage(cMessage *msg)
         }
     }
 
-    else if (msg->arrivedOn ("in", 1 ))
+    else if (msg -> arrivedOn ("in", 1))
     {
-        if (isPtpPkt == FALSE)
+        if (isPacket == FALSE)
         {
-            // Forward non-PtpPkt packet to lower layer
+            // Forward non-Packet packet to lower layer
             send(msg,"out", 2); // lower gate
         }
         else
@@ -120,11 +131,11 @@ void RelayBuffer::handleRelayMessage(cMessage *msg)
         }
     }
 
-    else if ((msg->arrivedOn ("in", 0 )))
+    else if ((msg -> arrivedOn ("in", 0)))
     {
-        if (isPtpPkt == FALSE)
+        if (isPacket == FALSE)
         {
-            // Forward non-PtpPkt packet to lower layer
+            // Forward non-Packet packet to lower layer
             send(msg,"out", 2); // lower gate
         }
         else

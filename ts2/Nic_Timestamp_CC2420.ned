@@ -1,22 +1,23 @@
 //***************************************************************************
-// * file:        Nic_CC2420_TmStmp.ned
+// * File:        This file is part of TS2.
+// * Created on:  07 Nov 2016
+// * Author:      Yan Zong, Xuewu Dai
 // *
-// * author:      Xuweu Dai
+// * Copyright:   (C) 2016 Northumbria University, UK.
 // *
-// * copyright:   (C) 2014 Southwest University, Chongqing, China.
+// *              TS2 is free software; you can redistribute it and/or modify it
+// *              under the terms of the GNU General Public License as published
+// *              by the Free Software Foundation; either version 3 of the
+// *              License, or (at your option) any later version.
 // *
-// *              This program is free software; you can redistribute it
-// *              and/or modify it under the terms of the GNU General Public
-// *              License as published by the Free Software Foundation; either
-// *              version 2 of the License, or (at your option) any later
-// *              version.
-// *              For further information see file COPYING
-// *              in the top level directory
+// *              TS2 is distributed in the hope that it will be useful, but
+// *              WITHOUT ANY WARRANTY; without even the implied warranty of
+// *              MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// *              GNU General Public License for more details.
 // *
-// * Credit:      Yiwen Huang, Taihua Li
-// * Funding: This work was partially financed by the National Science Foundation China under the  
-// * grant ""  
-// **************************************************************************/
+// * Funding:     This work was financed by the Northumbria University Faculty
+//                Funded and RDF funded studentship, UK
+// ****************************************************************************
 
 package ts2;
 

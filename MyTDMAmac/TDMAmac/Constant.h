@@ -1,7 +1,7 @@
 //***************************************************************************
 // * File:        This file is part of TS2.
 // * Created on:  07 Nov 2016
-// * Author:      Yan Zong, Xuweu Dai
+// * Author:      Yan Zong, Xuewu Dai
 // *
 // * Copyright:   (C) 2016 Northumbria University, UK.
 // *
@@ -42,12 +42,10 @@
 /* Types for packets Packet.packetType */
 enum packetTypes
 {
-    REG = 0,    // the register packet from the master node
-    REGRELAY = 1,   // the register packet from the relay node
-    REGREPLY = 2,
-    SYNC = 3,
-    DREQ = 4,
-    DRES = 5
+    REG = 0,
+    REGREP = 1,
+    SYNC = 2,
+    DRES = 3
 };
 
 /* Values for Packet.packetType

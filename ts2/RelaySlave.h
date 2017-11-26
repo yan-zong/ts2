@@ -1,7 +1,7 @@
 //***************************************************************************
 // * File:        This file is part of TS2.
 // * Created on:  07 Dov 2016
-// * Author:      Yan Zong, Xuweu Dai
+// * Author:      Yan Zong, Xuewu Dai
 // *
 // * Copyright:   (C) 2016 Northumbria University, UK.
 // *
@@ -48,6 +48,7 @@ class RelaySlave: public cSimpleModule
 	    const char *name;
 	    int myAddress;
 	    int myMasterAddress;
+	    int myRelayAddress;
 	    LAddress::L3Type masterL3Addr;
 	    LAddress::L3Type myL3Addr;
 	    double EstimatedOffset; // the measurement offset

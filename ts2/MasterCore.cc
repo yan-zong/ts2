@@ -1,7 +1,7 @@
 //***************************************************************************
 // * File:        This file is part of TS2.
 // * Created on:  07 Nov 2016
-// * Author:      Yan Zong, Xuweu Dai
+// * Author:      Yan Zong, Xuewu Dai
 // *
 // * Copyright:   (C) 2016 Northumbria University, UK.
 // *
@@ -36,6 +36,12 @@ void MasterCore::initialize()
         inclock = findGate ("inclock");
         // outclock = findGate ("outclock");
 
+        // ---------------------------------------------------------------------------
+        // ArpHost Module Parameters
+        // parameter 'masterAddrOffset' is used to set the address of the master
+        // set the master address, using the same IP, MAC address as ArpHost (see the *.ini file)
+        // ---------------------------------------------------------------------------
+        // Master address (only one master node is the network): 1000.
         if (hasPar("masterAddrOffset"))
             address = findHost() -> getIndex() + (int)par("masterAddrOffset"); // ->getId(); for compatible with MiXiM, see BaseAppLayer.cc
         else
@@ -53,7 +59,7 @@ void MasterCore::initialize()
         temp->setSrcAddr( LAddress::L3Type(address));
         temp->setByteLength(0);
 
-        NetwControlInfo::setControlInfo(temp, LAddress::L3BROADCAST );
+        NetwControlInfo::setControlInfo(temp, LAddress::L3BROADCAST);
 
         EV << "MasterCore: Core broadcasts REGISTER packet" << endl;
         send(temp,"lowerGateOut");
@@ -66,6 +72,7 @@ void MasterCore::handleMessage(cMessage* msg)
     if (msg -> isSelfMessage())
     {
         handleSelfMessage(msg);
+
         return;
     }
 
@@ -77,17 +84,16 @@ void MasterCore::handleMessage(cMessage* msg)
         send(msg,"lowerGateOut");
     }
 
-    else if(whichGate == lowerGateIn)
+    else if (whichGate == lowerGateIn)
     {
-        // check PtpPkt type
-        EV<<"MasterCore Receives a packet"<<endl;
+        EV<<"MasterCore: receives a packet... "<<endl;
 
         if (dynamic_cast<Packet *>(msg) != NULL)
         {
-            EV<< " MasterCore: This ia a PtpPkt packet, MasterCore is processing it now"<<endl;
-            Packet *pck= static_cast<Packet *>(msg);
-            if(pck -> getSource() != address &
-               (pck -> getDestination() == address | pck -> getDestination() == PACKET_BROADCAST_ADDR))
+            EV<< "MasterCore: This is a Packet, MasterCore is processing it now, "<<endl;
+            Packet *pck = static_cast<Packet *>(msg);
+            if((pck -> getSource() != address) &
+               ((pck -> getDestination() == address) | (pck -> getDestination() == PACKET_BROADCAST_ADDR)))
              {
                 EV << "the packet is for me, process it\n";
                 handleSlaveMessage(pck); // handelSlaveMessage() does not delete msg
@@ -99,17 +105,17 @@ void MasterCore::handleMessage(cMessage* msg)
         }
         else
         {
-            EV << "This is not a PtpPkt packet, send it up to higher layer"<<endl;
+            EV << "MasterCore: This is not a Packet, send it up to higher layer"<<endl;
             send(msg,"upperGateOut");
         }
     }
 
-    else if(whichGate == inclock)
+    else if (whichGate == inclock)
     {
         EV << "MasterCore: Master receives a SYNC packet from clock module, delete it and re-generate a full SYNC packet \n";
         delete msg;
 
-        scheduleAt(simTime(), new cMessage("FrameTimer"));
+        scheduleAt(simTime(), new cMessage("FireTimer"));
 
     }
 
@@ -138,20 +144,20 @@ void MasterCore::handleMessage(cMessage* msg)
 void MasterCore::handleSelfMessage(cMessage *msg)
 {
     Packet *pck = new Packet("SYNC");
-    pck->setPacketType(SYNC);
+    pck -> setPacketType(SYNC);
 
-    pck->setByteLength(TIMESTAMP_BYTE);
+    pck -> setByteLength(TIMESTAMP_BYTE);
 
-    pck->setSource(address);
-    pck->setDestination(PACKET_BROADCAST_ADDR);
+    pck -> setSource(address);
+    pck -> setDestination(PACKET_BROADCAST_ADDR);
 
     // pck->setData(SIMTIME_DBL(simTime()));
 
     // set SrcAddr, DestAddr with LAddress::L3Type values for MiXiM
-    pck->setSrcAddr( LAddress::L3Type(address));
-    pck->setDestAddr(LAddress::L3BROADCAST);
+    pck -> setSrcAddr( LAddress::L3Type(address));
+    pck -> setDestAddr(LAddress::L3BROADCAST);
 
-    NetwControlInfo::setControlInfo(pck, LAddress::L3BROADCAST );
+    NetwControlInfo::setControlInfo(pck, LAddress::L3BROADCAST);
 
     EV << "MasterCore: Master broadcasts SYNC packet" << endl;
     send(pck,"lowerGateOut");
@@ -162,38 +168,84 @@ void MasterCore::handleSlaveMessage(Packet *msg)
 {
     switch (msg -> getPacketType())
     {
-        case SYNC:
-        {
-            ev << "MasterCore: MasterCore receives a SYNC packet, ignore it.\n";
-            break;
-        }
         case REG:
         {
-            Packet *rplPkt= static_cast<Packet *>((Packet *)msg->dup());
-             rplPkt->setName("REPLY_REGISGER");
-             rplPkt->setByteLength(0);
-             rplPkt->setPacketType(REGREPLY);
+            if ((msg -> getSource()) == 1000)
+            {
+                ev << "MasterCore: Register packet from master node, ignore it. \n";
+                break;
+            }
 
-             rplPkt->setSource(address);
-             rplPkt->setDestination(((Packet *)msg)->getSource());
+            else if (((msg -> getSource()) >= 2000) & ((msg -> getSource()) < 3000))
+            {
+                ev << "MasterCore: Register packet from relay, process it. \n";
 
-             rplPkt->setSrcAddr(LAddress::L3Type(rplPkt->getSource()));
-             rplPkt->setDestAddr(LAddress::L3Type(rplPkt->getDestination()));
+                Packet *rplPkt= static_cast<Packet *>((Packet *)msg -> dup());
+                rplPkt -> setName("REPLY_REGISGER");
+                rplPkt -> setByteLength(0);
+                rplPkt -> setPacketType(REGREP);
 
-             NetwControlInfo::setControlInfo(rplPkt, LAddress::L3Type(rplPkt->getDestination()));
-             send(rplPkt, "lowerGateOut");
-             break;
+                rplPkt -> setSource(address);
+                rplPkt -> setDestination(((Packet *)msg) -> getSource());
+
+                rplPkt -> setSrcAddr(LAddress::L3Type(rplPkt -> getSource()));
+                rplPkt -> setDestAddr(LAddress::L3Type(rplPkt -> getDestination()));
+
+                NetwControlInfo::setControlInfo(rplPkt, LAddress::L3Type(rplPkt -> getDestination()));
+                send(rplPkt, "lowerGateOut");
+
+                ev << "MasterCore: REPLY_REGISGER packet is transmitted. \n";
+                break;
+            }
+
+            else if ((msg -> getSource()) >= 3000)
+            {
+            ev << "MasterCore: Register packet from slave, process it. \n";
+
+            Packet *rplPkt= static_cast<Packet *>((Packet *)msg -> dup());
+            rplPkt -> setName("REPLY_REGISGER");
+            rplPkt -> setByteLength(0);
+            rplPkt -> setPacketType(REGREP);
+
+            rplPkt -> setSource(address);
+            rplPkt -> setDestination(((Packet *)msg) -> getSource());
+
+            rplPkt -> setSrcAddr(LAddress::L3Type(rplPkt -> getSource()));
+            rplPkt -> setDestAddr(LAddress::L3Type(rplPkt -> getDestination()));
+
+            NetwControlInfo::setControlInfo(rplPkt, LAddress::L3Type(rplPkt -> getDestination()));
+            send(rplPkt, "lowerGateOut");
+
+            ev << "MasterCore: REPLY_REGISGER packet is transmitted. \n";
+            break;
+            }
         }
-        case REGRELAY:
+
+        case REGREP:
         {
-            ev << "MasterCore: Register packet from relay node, ignore it\n";
+            if ((msg -> getSource()) == 1000)
+            {
+                ev << "MasterCore: Received register_reply packet from the master node, ignore it. \n";
+                break;
+            }
+            else if (((msg -> getSource()) >= 2000) & ((msg -> getSource()) < 3000))
+            {
+                ev << "MasterCore: Received register_reply packet from the relay node, ignore it. \n";
+                break;
+            }
+            else if ((msg -> getSource()) >= 3000)
+            {
+                ev << "MasterCore: Received register_reply packet to the slave node, ignore it. \n";
+                break;
+            }
+        }
+
+        case SYNC:
+        {
+            ev << "MasterCore: Core module receives a SYNC packet, ignore it.\n";
             break;
         }
-        case REGREPLY:
-        {
-            ev << "MasterCore: Received register_reply packet (PtpType = REGREPLY), ignore\n";
-            break;
-        }
+
         default:
         {
             ev << "MasterCore: unknown message. Report warning and ignore\n";
@@ -204,6 +256,7 @@ void MasterCore::handleSlaveMessage(Packet *msg)
 
 void MasterCore::finish()
 {
+
 }
 
 cModule *MasterCore::findHost(void)
