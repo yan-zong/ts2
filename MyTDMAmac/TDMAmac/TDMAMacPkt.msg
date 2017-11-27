@@ -25,6 +25,8 @@ cplusplus {{
 
 class MacPkt;
 
+// this message is developed based on the mac layer (L2)
+
 // Defines all fields of an 802.11 MAC frame
 packet TDMAMacPkt extends MacPkt
 {

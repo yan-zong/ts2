@@ -59,7 +59,7 @@ void RelaySlave::initialize()
 	ev<<"RelaySlave: RelayMaster pointer is "<< pRelayMaster <<endl;
     if (pRelayMaster == NULL)
     {
-        error("RelaySlave: could not find RelayMaster module in a Relay node (boundary clock node)");
+        error("RelaySlave: could not find RelayMaster module in a Relay node (boundary clock node). ");
     }
 
     Packet * temp = new Packet("REGISTER");
@@ -77,7 +77,7 @@ void RelaySlave::initialize()
     // set the control info to tell the network layer (layer 3) address
     NetwControlInfo::setControlInfo(temp, LAddress::L3BROADCAST );
 
-    send(temp,"out");
+    send(temp, "out");
 	ev << "RelaySlave: initialization finished, send REGISTER \n";
 }
 
@@ -111,17 +111,17 @@ void RelaySlave::handleMessage(cMessage *msg)
                      (((((Packet*)msg) -> getDestination() == myAddress)  |
                              (((Packet*)msg) -> getDestination() == PACKET_BROADCAST_ADDR))))
             {
-                EV << "the Packet is for me, Relay Slave is processing it\n";
+                EV << "RelaySlave: the Packet is for me, Relay Slave is processing it. \n";
                 handleMasterMessage(msg);
             }
             else
-                EV << "the Packet is not for me, ignore it, do nothing\n";
+                EV << "RelaySlave: the Packet is not for me, ignore it, do nothing. \n";
 
             delete msg;
         }
         else
         {
-            EV << "the packet is not for me, send it up to higher layer. \n"<<endl;
+            EV << "RelaySlave: the packet is not for me, send it up to higher layer. \n"<<endl;
             send(msg, "upperGateOut");
          }
 	}
@@ -192,7 +192,6 @@ void RelaySlave::handleEventMessage(cMessage *msg)
 
 void RelaySlave::handleMasterMessage(cMessage *msg)
 {
-    // myMasterAddress = (((Packet *)msg) -> getSource());
 
     switch(((Packet *)msg) -> getPacketType())
     {
@@ -219,7 +218,7 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
         {
             if ((((Packet *)msg) -> getSource()) == 1000)
             {
-                ev << "RelaySlave£º receives REGISTER_REPLY packet from master node, process it\n";
+                ev << "RelaySlave: receives REGISTER_REPLY packet from master node, process it\n";
                 myMasterAddress = (((Packet *)msg) -> getSource());
                 ev << "RelaySlave: my master's address is updated to "<< myMasterAddress << " according to the the REGPREPLY packet. \n";
                 break;

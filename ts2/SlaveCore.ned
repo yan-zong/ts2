@@ -21,7 +21,7 @@
 
 package ts2;
 
-simple SlaveCore like IPtpCore
+simple SlaveCore like ICore
 {
    	parameters:
        	@class("SlaveCore");

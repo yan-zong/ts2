@@ -38,7 +38,7 @@ module MasterCC2420 extends HostCC2420a
       	// nicType = "Nic802154_TI_CC2420";	// for NIC without hardware time stamp, and also for CSMA
  		nicType = "Nic_CC2420_TimeStamp";	// for NIC with hardware timie stamp, and also for CSMA
 		
-        ptpCoreType = default("MasterCore");
+        CoreType = default("MasterCore");
         
         @display("bgb=273,307,white;i=misc/node;i2=status/battery;b=40,40,rect;is=s");
 

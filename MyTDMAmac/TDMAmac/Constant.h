@@ -27,7 +27,7 @@
 // netwl.headerLength = 8 x 0 bit (0 bytes)
 // timestamp.Length = 8 x 2 bit (2 bytes)
 
-/* Packet length */
+/* timestamp length */
 #define TIMESTAMP_BYTE 2
 
 /* Broadcast and Null address for packet

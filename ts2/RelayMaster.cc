@@ -53,16 +53,16 @@ void RelayMaster::initialize()
         pClock = (PCOClock *)getParentModule() -> getParentModule() -> getSubmodule("clock");
         if (pClock == NULL)
         {
-            error("RelayMaster: No clock module is found in the module");
+            error("RelayMaster: No clock module is found in the network. ");
         }
 
         // find relay node, and index
         cModule *RelayModule = findHost() -> getParentModule();
-        ev<<"RelayMaster: RelayModule: findHost() -> getParentModule returns: "<< RelayModule -> getName() <<endl;
-        //RelayMaster: findHost()->getParentModule returns: Network
+        ev << "RelayMaster: RelayModule: findHost() -> getParentModule returns: "<< RelayModule -> getName() <<endl;
+        // RelayMaster: findHost()->getParentModule returns: Network
 
-        RelayModule = RelayModule->getSubmodule("rnode", (findHost() -> getIndex()));
-        ev<<"RelayMaster: RelayModule: findHost() -> getSubmodule returns: "<< RelayModule->getSubmodule("rnode", (findHost() -> getIndex())) <<endl;
+        RelayModule = RelayModule -> getSubmodule("rnode", (findHost() -> getIndex()));
+        ev << "RelayMaster: RelayModule: findHost() -> getSubmodule returns: "<< RelayModule->getSubmodule("rnode", (findHost() -> getIndex())) <<endl;
 
   }
 
@@ -85,17 +85,17 @@ void RelayMaster::handleMessage(cMessage* msg)
 
         if (dynamic_cast<Packet *>(msg) != NULL)
         {
-            EV << "RelayMaster: this is a Packet packet, Relay Master now is processing it " <<endl;
+            EV << "RelayMaster: this is a Packet packet, RelayMaster now is processing it " <<endl;
             Packet *pck = static_cast<Packet *>(msg);
             if((pck -> getSource() != myAddress) &
                     ((pck -> getDestination() == myAddress) | (pck -> getDestination() == PACKET_BROADCAST_ADDR)))
              {
-                EV << "the packet is for me, process it \n";
+                EV << "RelayMaster: the packet is for me, process it \n";
                 handleSlaveMessage(pck);   // handelSlaveMessage() does not delete msg
              }
              else
              {
-                 EV << "the packet is not for me, ignore it, do nothing \n";
+                 EV << "RelayMaster: the packet is not for me, ignore it, do nothing \n";
              }
 
              delete msg;
@@ -157,7 +157,6 @@ void RelayMaster::handleSelfMessage(cMessage *msg)
 void RelayMaster::handleSlaveMessage(Packet *msg)
 {
     mySlaveAddress = msg -> getSource();
-    ev << "RelayMaster: mySlaveAddress = " << mySlaveAddress <<".\n";
 
     switch (msg -> getPacketType())
     {
@@ -186,7 +185,7 @@ void RelayMaster::handleSlaveMessage(Packet *msg)
                 NetwControlInfo::setControlInfo(rplPkt, LAddress::L3Type(rplPkt -> getDestination()));
                 send(rplPkt, "lowerGateOut");
 
-                ev << "RelayMaster: REPLY_REGISGER packet is transmitted. \n";
+                ev << "RelayMaster: REPLY_REGISGER packet is transmitted to relay. \n";
                 break;
             }
             else if (mySlaveAddress >= 3000)
@@ -206,7 +205,7 @@ void RelayMaster::handleSlaveMessage(Packet *msg)
                 NetwControlInfo::setControlInfo(rplPkt, LAddress::L3Type(rplPkt -> getDestination()));
                 send(rplPkt, "lowerGateOut");
 
-                ev << "RelayMaster: REPLY_REGISGER packet is transmitted. \n";
+                ev << "RelayMaster: REPLY_REGISGER packet is transmitted to slave. \n";
                 break;
             }
             else
@@ -220,16 +219,17 @@ void RelayMaster::handleSlaveMessage(Packet *msg)
         {
             if (mySlaveAddress == 1000)
             {
-                ev << "RelayMaster: Received register_reply packet to the relay node, RelayMaster ignore it. \n";
+                ev << "RelayMaster: Received register_reply packet is from master, RelayMaster ignore it. \n";
+                break;
             }
             else if ((mySlaveAddress >= 2000) & (mySlaveAddress < 3000))
             {
-                ev << "RelayMaster: Received register_reply packet to the relay node, RelayMaster ignore it. \n";
+                ev << "RelayMaster: Received register_reply packet is from relay, RelayMaster ignore it. \n";
                 break;
             }
             else if (mySlaveAddress >= 3000)
             {
-                ev << "RelayMaster: Received register_reply packet to the slave node, RelayMaster ignore it. \n";
+                ev << "RelayMaster: Received register_reply packet is from slave, RelayMaster ignore it. \n";
                 break;
             }
         }

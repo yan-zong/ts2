@@ -27,8 +27,7 @@ simple RelayMaster
        @class(RelayMaster);
        
     	double Tsync = default(1);	// Todo: no use in the PCO model
-        int masterAddrOffset;
-        double RandomValue;
+        int masterAddrOffset;       
             
     gates:
         input lowerGateIn; // from net layer

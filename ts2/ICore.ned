@@ -22,7 +22,7 @@
 package ts2;
 
 // Interface for application layer modules
-moduleinterface IPtpCore
+moduleinterface ICore
 {
     gates:
         input upperGateIn; // from net layer

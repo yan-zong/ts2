@@ -28,7 +28,7 @@ Define_Module(PCOClock);
 void PCOClock::initialize()
 {
     // ---------------------------------------------------------------------------
-    // Initialise variable for saving output data
+    // Initialize variable for saving output data
     // ---------------------------------------------------------------------------
     driftVec.setName("drift");
     offsetVec.setName("offset");
@@ -45,7 +45,7 @@ void PCOClock::initialize()
     PCOfireTimeVec.setName("PCOfiretime");
 
     // ---------------------------------------------------------------------------
-    // Initialise variable
+    // Initialize variable
     // ---------------------------------------------------------------------------
     offset = par("offset"); // the clock offset
     drift =  par("drift");  // the clock skew (the variation of clock frequency)
@@ -63,7 +63,6 @@ void PCOClock::initialize()
     CorrectionAlgorithm = par("CorrectionAlgorithm");    // correction algorithm
                                 // 1 is for classic PCO by using constant value, 2 is for classic PCO by using offset value
     varepsilon = par("varepsilon"); // the coupling strength of PCO model
-    numRelay = par("numRelay"); // the number of relay nodes in the simulated network
 
     ClassicClock = 0;
     PCOClockState = 0;
@@ -81,23 +80,31 @@ void PCOClock::initialize()
     // id of master should be 0;
     // id of relay[0] should be 1; id of relay[1] should be 2;
 
-    // EV << "yan: findHost()->getIndex() is " << findHost()->getIndex() << endl ;
-    // EV << "yan: findHost()->getId() is " << findHost()->getId() << endl ;
+    EV << "yan: findHost()->getIndex() is " << findHost()->getIndex() << endl ;
+    EV << "yan: findHost()->getId() is " << findHost()->getId() << endl ;
 
     if(ev.isGUI())
     {
         updateDisplay();
     }
 
+    cModule* RelayNode = NULL;
+    numRelay = 0;
+    do{
+        numRelay++;
+        RelayNode = findHost() -> getParentModule() -> getSubmodule("rnode", numRelay);
+    }while(RelayNode);
+    EV<< "PCOClock: the number of relay node is " << numRelay << endl;
+
     // the desynchronisation technology should be implemented into the master and relay nodes,
     // the desynchronisation cannot be implemented into the slave nodes, because slave nodes cannot
     // transmit the packet, they just can receipt the packet from other nodes.
 
-    if (NodeId <= numRelay)   // the sensor node is the master or relay nodes
+    if (NodeId <= numRelay)   // the sensor node is the master or relay node
     {
         scheduleAt(simTime() + ScheduleOffset + NodeId * pulseDuration ,new cMessage("CLTimer"));
         LastUpdateTime = ScheduleOffset + NodeId * pulseDuration;
-        EV << "PCOClock: Master/Relay clock starts at " << (simTime() + ScheduleOffset + NodeId * pulseDuration) << endl;
+        EV << "PCOClock: Clock starts at " << (simTime() + ScheduleOffset + NodeId * pulseDuration) << endl;
     }
     else    // the sensor node is the slave node, no need to implement the desynchronisation
     {
@@ -110,7 +117,7 @@ void PCOClock::initialize()
 
 void PCOClock::handleMessage(cMessage *msg)
 {
-    if(msg->isSelfMessage())
+    if(msg -> isSelfMessage())
     {
         ClockUpdate();   // key function -- update PCO clock state
         EV << "PCOClock: PCO Clock State is " << PCOClockState << endl;
@@ -131,7 +138,7 @@ void PCOClock::handleMessage(cMessage *msg)
 
     else
     {
-        error("Clock module receipts a packet from node. It does not receive packet from sensor node.\n");
+        error("Clock module receipts a packet from other modules. It does not receive packet from sensor node.\n");
     }
 
     delete msg;
@@ -258,7 +265,7 @@ void PCOClock::generateSYNC()
     Packet *pck = new Packet("SYNC");
     pck -> setPacketType(SYNC);
     pck -> setByteLength(TIMESTAMP_BYTE);
-    send(pck,"outclock");
+    send(pck, "outclock");
 
     EV << "PCOClock: PCOClock transmits SYNC packet to Core module" << endl;
 }

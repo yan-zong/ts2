@@ -41,7 +41,7 @@ module SlaveCC2420 extends HostCC2420a
         // set useGlobalRefClock = true to use simTime() for time stamping
         // set useGlobalRefClock = false to use clock module for time stamping if a node has a clock module
 
-        ptpCoreType = default("SlaveCore");
+        CoreType = default("SlaveCore");
 
         @display("bgb=271,307,white;i=misc/node;i2=status/battery;b=40,40,rect;is=s");
 

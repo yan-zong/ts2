@@ -48,7 +48,7 @@ void TDMAmac::initialize(int stage)
         slotDuration = par("slotDuration");
         bitrate = par("bitrate");
         headerLength = par("headerLength");
-        coreEV << "headerLength is: " << headerLength << endl;
+        EV << "headerLength is: " << headerLength << endl;
         txPower = par("txPower");
 
         /* For dropped packets if required */
@@ -103,7 +103,7 @@ void TDMAmac::initialize(int stage)
             delayTimer = new cMessage( "delay-timer", 0 );
 
             /* Schedule a self-message to start superFrame */
-            EV<< "TDMAmac: I will start at " << simTime() + NodeId * slotDuration << " s every " << numNodes * slotDuration << " s" << endl;
+            EV<< "TDMAmac: mac starts at " << simTime() + NodeId * slotDuration << " s every " << numNodes * slotDuration << " s" << endl;
             EV<< "TDMAmac: And my node ID is " << NodeId << endl;
             scheduleAt(simTime() + NodeId * slotDuration, delayTimer);
         }
@@ -216,7 +216,8 @@ void TDMAmac::handleSelfMsg(cMessage* msg)
           /* SETUP phase enters to start the MAC protocol */
           case 0:
           {
-          	  /* Start listening as a starting procedure !aaks */
+              EV << "TDMAmac: mac works in mode 2. " << endl;
+
               scheduleAt(simTime() + numNodes * slotDuration, delayTimer);
 
               if(macPktQueue.empty())
@@ -233,6 +234,8 @@ void TDMAmac::handleSelfMsg(cMessage* msg)
 
           case 1:
           {
+              EV << "TDMAmac: mac works in mode 1. " << endl;
+
               if(macPktQueue.empty())
                   break;
 
@@ -301,10 +304,10 @@ void TDMAmac::handleLowerMsg(cMessage* msg)
      */
 
     /* Check if the packet is a broadcast or addressed to this node */
-    EV << "TDMAmac: I have received a data packet.\n";
+    EV << "TDMAmac: mac receives a packet.\n";
     if(dest == myMacAddr || LAddress::isL2Broadcast(dest))
     {
-        EV << "TDMAmac: sending pkt to upper...\n";
+        EV << "TDMAmac: sending packet to upper...\n";
         sendUp(decapsMsg(mac));
     }
     else {

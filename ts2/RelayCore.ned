@@ -23,7 +23,7 @@ package ts2;
 
 import ts2.im.Manager;
 
-module RelayCore like IPtpCore
+module RelayCore like ICore
 {
     gates:
         input upperGateIn;	// from net layer

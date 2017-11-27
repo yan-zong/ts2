@@ -22,7 +22,7 @@
 
 package ts2;
 
-simple MasterCore like IPtpCore
+simple MasterCore like ICore
 {
     parameters:
         @class("MasterCore");

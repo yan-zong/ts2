@@ -37,20 +37,19 @@ void TimeStamp::initialize()
     if (pClk == NULL) // no clock is found, force to use simTime() as the node's clock
     {
         useReferenceClock = true;
-        ev<<"TimeStamp: No clock module is found. set useReferenceClock = true, use simTime() for time stamping\n";
+        ev << "TimeStamp: No clock module is found. set useReferenceClock = true, use simTime() for time stamping\n";
     }
     else    // we have clock module, select time source
     {
         if (hasPar("useReferenceClock"))
         {
             useReferenceClock = par("useReferenceClock");
-            ev<<"TimeStamp: useReferenceClock = "<<useReferenceClock;
-            ev<<" , use parameter to determine clock source or time stamping\n";
+            ev << "TimeStamp: useReferenceClock = "<< useReferenceClock << ", use parameter to determine clock source or time stamping. \n";
         }
         else    //find clock module, but no parameter useReferenceClock is specified,
         {
             useReferenceClock = false;
-            ev<<"TimeStamp: useReferenceClock = false\n";
+            ev << "TimeStamp: useReferenceClock = false. \n";
          }
     }
 }
@@ -66,7 +65,7 @@ void TimeStamp::handleMessage(cMessage *msg)
     // Tx packet
     if(msg -> arrivedOn("upperGateIn"))   // Tx packet from upper layer, all nodes should be a sub module of the simulation which has no parent module!!!
     {
-        ev<<"Timestamp: TX packet ";
+        ev << "Timestamp: TX packet";
         while(pck -> getEncapsulatedPacket() != NULL )
         {
              pck = pck -> getEncapsulatedPacket();
@@ -75,26 +74,25 @@ void TimeStamp::handleMessage(cMessage *msg)
         // check if it is Packet
         if (dynamic_cast<Packet *>(pck) != NULL)
         {
-            EV<<"is a Packet.";
+            EV << "Timestamp: it is a Packet. \n";
             // set new timestamp
-            EV<<"timestamp Pkt->Data was " << ((Packet*)pck) -> getData() <<endl;
+            EV << "Timestamp: timestamp Pkt->Data was " << ((Packet*)pck) -> getData() <<endl;
             if (useReferenceClock)
             {
                 ((Packet*)pck) -> setTsTx(SIMTIME_DBL(simTime()));
-                EV<<", New timestamp (by simTime()) is " << ((Packet*)pck) -> getTsTx()<<endl;
+                EV << "Timestamp: New timestamp (by simTime()) is " << ((Packet*)pck) -> getTsTx()<<endl;
             }
             else
             {
                 ((Packet*)pck) -> setTsTx(pClk -> getTimestamp());
-                ev<<", New timestamp (by clock module " << pClk -> getName() << ") is ";
-                ev<< ((Packet*)pck) -> getTsTx() <<endl;
+                ev << "Timestamp: New timestamp (by clock module " << pClk -> getName() << ") is " << ((Packet*)pck) -> getTsTx() << endl;
             }
         }
         else
         {
-            ev<<" is NOT a packet.Forward down to lower layer without time stamping."<<endl;
+            ev << "Timestamp: it is NOT a packet. Forward down to lower layer without time stamping."<<endl;
         }
-        send(msg,"lowerGateOut");
+        send(msg, "lowerGateOut");
         return;
     }
 
@@ -107,32 +105,33 @@ void TimeStamp::handleMessage(cMessage *msg)
         {
             pck = pck->getEncapsulatedPacket();
         }
+
         if (dynamic_cast<Packet *>(pck) != NULL)
         {
 
             // the encapsulated packet is a Packet, put a time stamp
             double rxTimeStamp;
-            ev<<" is a Packet, its timestamp was "<< ((Packet*)pck) -> getTsRx() <<endl;
+            ev << "Timestamp: the received packet is a Packet, its timestamp was "<< ((Packet*)pck) -> getTsRx() <<endl;
             if (useReferenceClock)
             {
                 rxTimeStamp = SIMTIME_DBL(simTime());
-                ev << " Now using simTime() for new time stamp";
+                ev << "Timestamp: Now using simTime() for new time stamp";
             }
             else
             {
                 rxTimeStamp = pClk -> getTimestamp();
-                ev << " Now using clock module for new time stamp";
+                ev << "Timestamp: Now using clock module for new time stamp";
             }
 
             ((Packet*)pck) -> setTsRx(rxTimeStamp);
-            ev << ", and new time stamp is "<<((Packet*)pck) -> getTsRx()<<endl;
+            ev << "Timestamp: and new time stamp is "<<((Packet*)pck) -> getTsRx()<<endl;
 
         }
         else
         {
-            ev<<"  is NOT a Packet, forward it to upper layer without time stamping"<<endl;
+            ev << "Timestamp: it is NOT a Packet, forward it to upper layer without time stamping"<<endl;
         }
-        send(msg,"upperGateOut");
+        send(msg, "upperGateOut");
         return;
     }
 }
@@ -144,9 +143,9 @@ cModule *TimeStamp::findHost(void)
     cModule *node = this;
 
     // all nodes should be a sub module of the simulation which has no parent module!!!
-    while( parent->getParentModule() != NULL ){
+    while( parent -> getParentModule() != NULL ){
     node = parent;
-    parent = node->getParentModule();
+    parent = node -> getParentModule();
     }
 
     return node;

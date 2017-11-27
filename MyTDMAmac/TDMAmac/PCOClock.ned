@@ -39,8 +39,7 @@ simple PCOClock
     	double tau @unit(s) = default(0ms);	// transmission delay
     	int CorrectionAlgorithm;	// correction algorithm, 0 is for null
     								// 1 is for classic PCO by using constant value, 2 is for classic PCO by using offset value
-    	double varepsilon = default(0);
-    	int numRelay = default(0);      
+    	double varepsilon = default(0);    
     	    	
     gates:
         input inclock;

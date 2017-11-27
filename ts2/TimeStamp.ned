@@ -26,8 +26,8 @@ simple TimeStamp
     parameters:
         @class(TimeStamp);
         bool useReferenceClock = default(true); 
-		// true, accurate clock that uses the simTime() as the clock source
-        // false, inaccurate clock that uses the clock module as the clock source
+						// true, accurate clock that uses the simTime() as the clock source
+        				// false, inaccurate clock that uses the clock module as the clock source
            
     gates:
         input upperGateIn;	// from mac layer

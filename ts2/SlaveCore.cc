@@ -62,13 +62,13 @@ void SlaveCore::initialize()
 
 	/* Find the master node and its address. */
 	cModule *masterModule = findHost() -> getParentModule();
-	ev<<"SlaveCore: findHost() -> getParentModule returns: "<< masterModule -> getName() <<endl;
 	masterModule = masterModule -> getSubmodule("mnode");
+	ev<<"SlaveCore: findHost() -> getParentModule returns: "<< masterModule -> getName() <<endl;
 
 	/* Find the relay node and its address. */
 	cModule *relayModule = findHost() -> getParentModule();
-	ev<<"SlaveCore: findHost() -> getParentModule returns: "<< relayModule -> getName() <<endl;
 	relayModule = relayModule -> getSubmodule("rnode", (findHost() -> getIndex()));
+	ev<<"SlaveCore: findHost() -> getParentModule returns: "<< relayModule -> getName() <<endl;
 
     if ((masterModule == NULL) & (relayModule == NULL))
     {
@@ -76,19 +76,19 @@ void SlaveCore::initialize()
     }
 
 	Packet * temp = new Packet("REGISTER");
-    temp->setSource(address);
-    temp->setDestination(PACKET_BROADCAST_ADDR);
-    temp->setPacketType(REG);
-    temp->setByteLength(0);
+    temp -> setSource(address);
+    temp -> setDestination(PACKET_BROADCAST_ADDR);
+    temp -> setPacketType(REG);
+    temp -> setByteLength(0);
 
-    temp->setDestAddr(LAddress::L3BROADCAST);
-    temp->setSrcAddr(address);
+    temp -> setDestAddr(LAddress::L3BROADCAST);
+    temp -> setSrcAddr(address);
 
     // set the control info to tell the network layer the layer 3 address
     NetwControlInfo::setControlInfo(temp, LAddress::L3BROADCAST );
 
-    send(temp,"lowerGateOut");
-	ev << "SlaveCore: Slave Node " << getId() << " : Initialization finished. Send Register packet. \n";
+    send(temp, "lowerGateOut");
+	ev << "SlaveCore: Slave Node " << getId() << ": Initialization finished. Send Register packet. \n";
 }
 
 void SlaveCore::handleMessage(cMessage *msg)
@@ -120,26 +120,26 @@ void SlaveCore::handleMessage(cMessage *msg)
                      (((((Packet*)msg) -> getDestination() == address) |
                              (((Packet*)msg) -> getDestination() == PACKET_BROADCAST_ADDR))))
              {
-                 EV << "the Packet is for me, process it. \n";
+                 EV << "SlaveCore: the Packet is for me, process it. \n";
                  handleMasterMessage(msg);
              }
              else
              {
-                 EV << "the Packet is not for me, ignore it. \n";
+                 EV << "SlaveCore: the Packet is not for me, ignore it. \n";
              }
 
              delete msg;
         }
         else
         {
-            EV << " this Packet is not a Packet, send it up to higher layer"<<endl;
-            send(((Packet *)msg) -> dup(),"upperGateOut");
+            EV << "SlaveCore: this Packet is not a Packet, send it up to higher layer. "<<endl;
+            send(((Packet *)msg) -> dup(), "upperGateOut");
          }
 	}
 
     if (msg -> arrivedOn("upperGateIn"))   // data packet from upper layer
     {
-         EV << "receive a Packet from higher layer"<<endl;
+         EV << "SlaveCore: receive a Packet from higher layer"<<endl;
          send(msg, "lowerGateOut");
     }
 
@@ -173,7 +173,7 @@ void SlaveCore::handleSelfMessage(cMessage *msg)
     // set the control info to tell the network layer (layer 3) address
     NetwControlInfo::setControlInfo(pck, LAddress::L3Type(pck -> getDestination()));
 
-    send((cMessage *)pck,"lowerGateOut");
+    send((cMessage *)pck, "lowerGateOut");
     EV << "SlaveCore: broadcasts SYNC packet" << endl;
 }
 
@@ -208,8 +208,26 @@ void SlaveCore::handleMasterMessage(cMessage *msg)
     {
         case REG:
         {
-            ev<<"SlaveCore: receive Register package, slave node does nothing. \n";
-            break;
+            if ((((Packet *)msg) -> getSource()) == 1000)
+            {
+                ev<<"SlaveCore: receive Register package from master node, slave node does nothing. \n";
+                break;
+            }
+            else if ( ((((Packet *)msg) -> getSource()) >= 2000) & ((((Packet *)msg) -> getSource()) < 3000))
+            {
+                ev<<"SlaveCore: receive Register package from relay node, slave node does nothing. \n";
+                break;
+            }
+            else if ((((Packet *)msg) -> getSource()) >= 3000)
+            {
+                ev<<"SlaveCore: receive Register package from slave node, slave node does nothing. \n";
+                break;
+            }
+            else
+            {
+                ev << "SlaveCore: the received Register packet is invalid, ignore it \n";
+                break;
+            }
         }
 
         case REGREP:
@@ -218,19 +236,19 @@ void SlaveCore::handleMasterMessage(cMessage *msg)
             {
                 ev << "Relay Slave receives REGISTER_REPLY packet from master node, process it. \n";
                 myMasterAddress = (((Packet *)msg) -> getSource());
-                ev<<"SlaveCore: my master's address is updated to "<< myMasterAddress << " according to the the REGPREPLY packet)\n";
+                ev << "SlaveCore: my master's address is updated to "<< myMasterAddress << " according to the the REGPREPLY packet. \n";
                 break;
             }
-            else if ( ((((Packet *)msg) -> getSource()) >= 2000) & ((((Packet *)msg) -> getSource()) < 3000))
+            else if (((((Packet *)msg) -> getSource()) >= 2000) & ((((Packet *)msg) -> getSource()) < 3000))
             {
-                ev << "Relay Slave receives REGISTER_REPLY packet from Relay node, process it. \n";
+                ev << "Relay Slave receives REGISTER_REPLY packet from relay node, process it. \n";
                 myRelayAddress = (((Packet *)msg) -> getSource());
-                ev<<"SlaveCore: my relay's address is updated to "<< myRelayAddress << " according to the the REGPREPLY packet)\n";
+                ev << "SlaveCore: my relay's address is updated to "<< myRelayAddress << " according to the the REGPREPLY packet. \n";
                 break;
             }
             else if ((((Packet *)msg) -> getSource()) >= 3000)
              {
-                 ev << "Relay Slave receives REGISTER_REPLY packet from slave node,ignore it. \n";
+                 ev << "SlaveCore: receives REGISTER_REPLY packet from slave node, ignore it. \n";
                  break;
              }
             else

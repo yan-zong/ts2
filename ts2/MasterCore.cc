@@ -51,18 +51,18 @@ void MasterCore::initialize()
 
         Packet * temp = new Packet("REGISTER");
         // we use the host modules findHost() as a appl address
-        temp->setDestination(PACKET_BROADCAST_ADDR);
-        temp->setSource(address);
-        temp->setPacketType(REG);
+        temp -> setDestination(PACKET_BROADCAST_ADDR);
+        temp -> setSource(address);
+        temp -> setPacketType(REG);
 
-        temp->setDestAddr(LAddress::L3BROADCAST);
-        temp->setSrcAddr( LAddress::L3Type(address));
-        temp->setByteLength(0);
+        temp -> setDestAddr(LAddress::L3BROADCAST);
+        temp -> setSrcAddr( LAddress::L3Type(address));
+        temp -> setByteLength(0);
 
         NetwControlInfo::setControlInfo(temp, LAddress::L3BROADCAST);
 
         EV << "MasterCore: Core broadcasts REGISTER packet" << endl;
-        send(temp,"lowerGateOut");
+        send(temp, "lowerGateOut");
   }
 
 void MasterCore::handleMessage(cMessage* msg)
@@ -81,7 +81,7 @@ void MasterCore::handleMessage(cMessage* msg)
 
     if(whichGate == upperGateIn)
     {
-        send(msg,"lowerGateOut");
+        send(msg, "lowerGateOut");
     }
 
     else if (whichGate == lowerGateIn)
@@ -90,23 +90,23 @@ void MasterCore::handleMessage(cMessage* msg)
 
         if (dynamic_cast<Packet *>(msg) != NULL)
         {
-            EV<< "MasterCore: This is a Packet, MasterCore is processing it now, "<<endl;
+            EV<< "MasterCore: this is a Packet, MasterCore is processing it now, "<<endl;
             Packet *pck = static_cast<Packet *>(msg);
             if((pck -> getSource() != address) &
                ((pck -> getDestination() == address) | (pck -> getDestination() == PACKET_BROADCAST_ADDR)))
              {
-                EV << "the packet is for me, process it\n";
+                EV << "MasterCore: the packet is for me, process it\n";
                 handleSlaveMessage(pck); // handelSlaveMessage() does not delete msg
              }
              else
-                EV << "the packet is not for me, ignore it\n";
+                EV << "MasterCore: the packet is not for me, ignore it\n";
 
              delete msg;
         }
         else
         {
-            EV << "MasterCore: This is not a Packet, send it up to higher layer"<<endl;
-            send(msg,"upperGateOut");
+            EV << "MasterCore: this is not a Packet, send it up to higher layer"<<endl;
+            send(msg, "upperGateOut");
         }
     }
 
@@ -160,7 +160,7 @@ void MasterCore::handleSelfMessage(cMessage *msg)
     NetwControlInfo::setControlInfo(pck, LAddress::L3BROADCAST);
 
     EV << "MasterCore: Master broadcasts SYNC packet" << endl;
-    send(pck,"lowerGateOut");
+    send(pck, "lowerGateOut");
 
 }
 
@@ -194,7 +194,7 @@ void MasterCore::handleSlaveMessage(Packet *msg)
                 NetwControlInfo::setControlInfo(rplPkt, LAddress::L3Type(rplPkt -> getDestination()));
                 send(rplPkt, "lowerGateOut");
 
-                ev << "MasterCore: REPLY_REGISGER packet is transmitted. \n";
+                ev << "MasterCore: REPLY_REGISGER packet is transmitted to relay node. \n";
                 break;
             }
 
@@ -216,7 +216,7 @@ void MasterCore::handleSlaveMessage(Packet *msg)
             NetwControlInfo::setControlInfo(rplPkt, LAddress::L3Type(rplPkt -> getDestination()));
             send(rplPkt, "lowerGateOut");
 
-            ev << "MasterCore: REPLY_REGISGER packet is transmitted. \n";
+            ev << "MasterCore: REPLY_REGISGER packet is transmitted to the slave node. \n";
             break;
             }
         }

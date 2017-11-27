@@ -37,7 +37,7 @@ module MasterNode extends HostNode
 		
 		nicType = "Nic_Timestamp_TDMA";	// for NIC with hardware timie stamp, and also for TDMA
 		
-        ptpCoreType = default("MasterCore");
+        CoreType = default("MasterCore");
         
         @display("bgb=273,307,white;i=misc/node;i2=status/battery;b=40,40,rect;is=s");
 

@@ -34,7 +34,7 @@ module HostCC2420a
         string mobilityType = default("StationaryMobility");	// type of the mobility module
         string arpType = default("ArpHost");
         string nicType;
-        string ptpCoreType;
+        string CoreType;
         @display("bgb=276,311,white;i=device/palm;b=40,40,rect");
         @node();
 
@@ -61,7 +61,7 @@ module HostCC2420a
             @display("p=61,184;i=block/layer");
         }
         
-        core: <ptpCoreType> like IPtpCore 
+        core: <CoreType> like ICore 
         {
             @display("p=127,102;i=block/layer");
         }

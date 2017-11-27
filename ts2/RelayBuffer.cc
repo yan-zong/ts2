@@ -93,7 +93,7 @@ void RelayBuffer::handleRelayMessage(cMessage *msg)
         if (isPacket == FALSE)
         {
             // Forward non-packet packet to upper layer (network layer)
-            send(msg,"out", 0); // relay slave (upper gate)
+            send(msg, "out", 0); // relay slave (upper gate)
         }
         else
         {
@@ -102,14 +102,14 @@ void RelayBuffer::handleRelayMessage(cMessage *msg)
                 send(msg,"out",0); // RelaySlave
                 send((pkt)->dup(),"out",1);   // RelayMaster
             }
-            else if ( (pkt -> getDestination() >= 2000) & (pkt -> getDestination() < 3000) )
+            else if ((pkt -> getDestination() >= 2000) & (pkt -> getDestination() < 3000))
             {
                 send(msg,"out",0);  // RelaySlave
                 send((pkt) -> dup(),"out",1);  // RelayMaster
             }
             else if (pkt -> getDestination() >= 3000)
             {
-                error("RelayBuffer: the address of received packet should be less than 3000.");
+                error("RelayBuffer: the received packet is to the slave, rather than relay node.");
             }
             else
             {
@@ -123,11 +123,11 @@ void RelayBuffer::handleRelayMessage(cMessage *msg)
         if (isPacket == FALSE)
         {
             // Forward non-Packet packet to lower layer
-            send(msg,"out", 2); // lower gate
+            send(msg, "out", 2); // lower gate
         }
         else
         {
-            send(msg,"out",2);
+            send(msg, "out", 2);
         }
     }
 
@@ -136,11 +136,11 @@ void RelayBuffer::handleRelayMessage(cMessage *msg)
         if (isPacket == FALSE)
         {
             // Forward non-Packet packet to lower layer
-            send(msg,"out", 2); // lower gate
+            send(msg, "out", 2); // lower gate
         }
         else
         {
-            send(msg,"out",2);
+            send(msg, "out", 2);
         }
     }
 

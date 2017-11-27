@@ -37,7 +37,7 @@ module RelayNode extends HostCC2420a
 		
 		nicType = "Nic_Timestamp_TDMA";	// for NIC with hardware timie stamp, and also for TDMA
 
-        ptpCoreType = default("RelayCore");
+        CoreType = default("RelayCore");
         
         @display("bgb=271,307,white;i=misc/node;i2=status/battery;b=40,40,rect;is=s");
         
@@ -56,7 +56,7 @@ module RelayNode extends HostCC2420a
         
         clock: PCOClock 
         {
-                @display("p=215,101;i=device/clock");
+            @display("p=215,101;i=device/clock");
         }
 
     connections allowunconnected:

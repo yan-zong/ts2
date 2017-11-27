@@ -25,6 +25,8 @@ cplusplus {{
 
 class LAddress::L3Type extends void;
 
+// this message is developed based on the network layer (l3)
+
 // A basic network layer packet definition
 //
 // subclass if you want to create your own network layer packet class

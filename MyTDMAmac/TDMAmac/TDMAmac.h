@@ -110,7 +110,7 @@ protected:
     /*@brief length of the queue #LMAC */
     unsigned queueLength;
 
-    /* Self messages for TDMA slot timer callbacks */
+    /* Self messages for TDMA mac slot timer callbacks */
     cMessage* delayTimer;
     
     int numNodes;
