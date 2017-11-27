@@ -54,6 +54,8 @@ class MIXIM_API TDMAmac : public BaseMacLayer
      */
 
     public:TDMAmac():BaseMacLayer()
+        , slotDuration(0)
+        , numSlots(0)
         , bitrate(0)
         , macPktQueue()
         , txPower(0)
@@ -99,12 +101,19 @@ protected:
     /* Mac packet queue to store incoming packets from upper layer !aaks */
 
     typedef std::list<TDMAMacPkt*> MacPktQueue;
+    
+    /* @brief Duration of a slot #LMAC */
+    double slotDuration;
+    /* @brief how many slots are there #LMAC */
+    int numSlots;
 
     /*@brief length of the queue #LMAC */
     unsigned queueLength;
 
-    /* Self messages for TDMA Frame timer */
-    // cMessage* FrameTimer;
+    /* Self messages for TDMA slot timer callbacks */
+    cMessage* delayTimer;
+    
+    int numNodes;
 
     /* @brief the bit rate at which we transmit #LMAC */
     double bitrate;
@@ -131,10 +140,11 @@ protected:
 
     /* two modes will be used, first mode is the TimeSyncMode
      * (only synchronization in this mode), and second mode is the
-     * Synchronized TDMA Data transmission mode (both data transmission
-     * and synchronization in this mode)
+     * data transmission mode (only data, including REGISTER,
+     * REGISTER_REPLY, is transmitted in this mode).
+     *
      * TRUE == mode 1 (synchronization)
-     * FALSE == mode 2 (Synchronized TDMA Data transmission mode )
+     * FALSE == mode 2 (data transmission)
      */
     bool SyncStatus;
 

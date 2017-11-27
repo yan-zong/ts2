@@ -27,6 +27,9 @@
 
 Define_Module(TDMAmac);
 
+/* To set the nodeId #LMAC !aaks */
+#define NodeId (getParentModule()->getParentModule()->getId()-4)
+
 /* Initialize the mac using omnetpp.ini variables and initializing other necessary variables */
 
 void TDMAmac::initialize(int stage)
@@ -42,6 +45,7 @@ void TDMAmac::initialize(int stage)
 
         /* Getting parameters from ini file and setting MAC variables #LMAC */
         queueLength = par("queueLength");
+        slotDuration = par("slotDuration");
         bitrate = par("bitrate");
         headerLength = par("headerLength");
         coreEV << "headerLength is: " << headerLength << endl;
@@ -50,7 +54,7 @@ void TDMAmac::initialize(int stage)
         /* For dropped packets if required */
         droppedPacket.setReason(DroppedPacket::NONE);
 
-        SyncStatus = true;
+        SyncStatus = false;
 
         trace = par("trace").boolValue();
         stats = par("stats").boolValue();
@@ -68,19 +72,33 @@ void TDMAmac::initialize(int stage)
     {
 
         EV << "queueLength = " << queueLength
+        << " slotDuration = " << slotDuration
         << " bitrate = " << bitrate << endl;
 
         // Initialise the pointer to clock module
-        pClock2 = (PCOClock *)findHost()->getSubmodule("clock");
+        pClock2 = (PCOClock *)findHost() -> getSubmodule("clock");
         if (pClock2 == NULL)
             error("No clock module is found in the module");
 
+        numNodes = 5;
+            
+        if (SyncStatus == false)
+        {
+            delayTimer = new cMessage( "delay-timer", 0 );
+
+            /* Schedule a self-message to start superFrame */
+            EV<< "TDMAmac: I will start at " << simTime() + NodeId * slotDuration << " s every " << numNodes * slotDuration << " s" << endl;
+            EV<< "TDMAmac: And my node ID is " << NodeId << endl;
+            scheduleAt(simTime() + NodeId * slotDuration, delayTimer);
+        }
     }
 }
 
 /* Module destructor */
 TDMAmac::~TDMAmac()
 {
+    cancelAndDelete(delayTimer);
+
     MacPktQueue::iterator it;
        for(it = macPktQueue.begin(); it != macPktQueue.end(); ++it) {
            delete (*it);
@@ -115,10 +133,14 @@ void TDMAmac::handleUpperMsg(cMessage* msg){
     /* Casting upper layer message to mac packet format */
     TDMAMacPkt *mac = static_cast<TDMAMacPkt *>(encapsMsg(static_cast<cPacket*>(msg)));
 
-    /* check the synchronisation state (mode 1 or mode 2) */
-    if (SyncStatus == TRUE)
+	if (simTime() >= 0.8)
+		SyncStatus = true;
+
+
+    /* check the state (mode 1 or mode 2) */
+    if (SyncStatus == true)
     {
-        EV << "TDMAmac: in mode 1, send SYNC packet directly " << endl;
+        EV << "TDMAmac: in mode 1, send SYNC packet directly. " << endl;
 
         phy -> setRadioState(MiximRadio::TX);
         TDMAMacPkt* data = mac -> dup();
@@ -131,6 +153,8 @@ void TDMAmac::handleUpperMsg(cMessage* msg){
 
     else
     {
+    	EV << "TDMAmac: in mode 2, put the packet into Queue. " << endl;
+        
         /* Queue is not full, put packet at the end of list */
         if (macPktQueue.size() <= queueLength)
         {
@@ -164,12 +188,23 @@ void TDMAmac::handleUpperMsg(cMessage* msg){
 /* Handles the messages sent to self-mainly timers */
 void TDMAmac::handleSelfMsg(cMessage* msg)
 {
-      switch (msg->getKind())
+      switch (msg -> getKind())
       {
           /* SETUP phase enters to start the MAC protocol */
           case 0:
           {
-              ;
+          	  /* Start listening as a starting procedure !aaks */
+              scheduleAt(simTime() + numNodes * slotDuration, delayTimer);
+
+              if(macPktQueue.empty())
+                  break;
+
+              phy -> setRadioState(MiximRadio::TX);
+              TDMAMacPkt* data = macPktQueue.front() -> dup();
+              data -> setKind(0);
+              attachSignal(data);
+              coreEV << "TDMAmac: Sending down data packet\n";
+              sendDown(data);
           }
           break;
 
@@ -178,11 +213,11 @@ void TDMAmac::handleSelfMsg(cMessage* msg)
               if(macPktQueue.empty())
                   break;
 
-              phy->setRadioState(MiximRadio::TX);
-              TDMAMacPkt* data = macPktQueue.front()->dup();
-              data->setKind(1);
+              phy -> setRadioState(MiximRadio::TX);
+              TDMAMacPkt* data = macPktQueue.front() -> dup();
+              data -> setKind(1);
               attachSignal(data);
-              coreEV << "Sending down data packet\n";
+              coreEV << "TDMAmac: Sending down data packet\n";
               sendDown(data);
           }
           break;
@@ -262,7 +297,7 @@ void TDMAmac::handleLowerControl(cMessage* msg)
            debugEV << "TDMAmac: PHY indicated transmission over" << endl;
            phy -> setRadioState(MiximRadio::RX);
 
-           if (SyncStatus == TRUE)
+           if (SyncStatus == true)
            {
                delete msg;
            }

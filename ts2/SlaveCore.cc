@@ -217,14 +217,14 @@ void SlaveCore::handleMasterMessage(cMessage *msg)
             if ((((Packet *)msg) -> getSource()) == 1000)
             {
                 ev << "Relay Slave receives REGISTER_REPLY packet from master node, process it. \n";
-                myMasterAddress == (((Packet *)msg) -> getSource());
+                myMasterAddress = (((Packet *)msg) -> getSource());
                 ev<<"SlaveCore: my master's address is updated to "<< myMasterAddress << " according to the the REGPREPLY packet)\n";
                 break;
             }
             else if ( ((((Packet *)msg) -> getSource()) >= 2000) & ((((Packet *)msg) -> getSource()) < 3000))
             {
                 ev << "Relay Slave receives REGISTER_REPLY packet from Relay node, process it. \n";
-                myRelayAddress == (((Packet *)msg) -> getSource());
+                myRelayAddress = (((Packet *)msg) -> getSource());
                 ev<<"SlaveCore: my relay's address is updated to "<< myRelayAddress << " according to the the REGPREPLY packet)\n";
                 break;
             }
