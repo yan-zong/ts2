@@ -61,14 +61,12 @@ void SlaveCore::initialize()
 	ev<<"SlaveCore: my address is "<< address << endl;
 
 	/* Find the master node and its address. */
-	cModule *masterModule = findHost() -> getParentModule();
-	masterModule = masterModule -> getSubmodule("mnode");
-	ev<<"SlaveCore: findHost() -> getParentModule returns: "<< masterModule -> getName() <<endl;
+	cModule *masterModule = findHost() -> getParentModule() -> getSubmodule("mnode");
+	ev << "SlaveCore: masterModule is "<< masterModule <<endl;
 
 	/* Find the relay node and its address. */
-	cModule *relayModule = findHost() -> getParentModule();
-	relayModule = relayModule -> getSubmodule("rnode", (findHost() -> getIndex()));
-	ev<<"SlaveCore: findHost() -> getParentModule returns: "<< relayModule -> getName() <<endl;
+	cModule *relayModule = findHost() -> getParentModule() -> getSubmodule("rnode", (findHost() -> getIndex()));
+	ev << "SlaveCore: relayModule is "<< relayModule <<endl;
 
     if ((masterModule == NULL) & (relayModule == NULL))
     {

@@ -94,7 +94,7 @@ void PCOClock::initialize()
         numRelay++;
         RelayNode = findHost() -> getParentModule() -> getSubmodule("rnode", numRelay);
     }while(RelayNode);
-    EV<< "PCOClock: the number of relay node is " << numRelay << endl;
+    EV << "PCOClock: the number of relay node is " << numRelay << endl;
 
     // the desynchronisation technology should be implemented into the master and relay nodes,
     // the desynchronisation cannot be implemented into the slave nodes, because slave nodes cannot

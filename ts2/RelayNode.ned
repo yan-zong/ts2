@@ -26,7 +26,7 @@ import org.mixim.modules.power.battery.SimpleBattery;
 import org.mixim.modules.node.WirelessNode;
 import mytdmamac.TDMAmac.PCOClock;
 
-module RelayNode extends HostCC2420a
+module RelayNode extends HostNode
 {
     parameters:
         applicationType = default("BurstApplLayerBattery");	// type of the application layer
