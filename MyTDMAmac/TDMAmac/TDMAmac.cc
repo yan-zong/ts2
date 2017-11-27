@@ -80,7 +80,23 @@ void TDMAmac::initialize(int stage)
         if (pClock2 == NULL)
             error("No clock module is found in the module");
 
-        numNodes = 5;
+        // count the number of total nodes in the simulated network
+        cModule* RelayNode = NULL;
+        numNodes = 1;
+        do{
+            numNodes++;
+            RelayNode = findHost() -> getParentModule() -> getSubmodule("rnode", (numNodes - 1));
+        }while(RelayNode);
+        EV<< "TDMAmac: the number of master and relay node is " << numNodes << endl;
+
+        int temp_numNodes = numNodes;
+        cModule* SlaveNode = NULL;
+
+        do{
+            numNodes++;
+            SlaveNode = findHost() -> getParentModule() -> getSubmodule("snode", (numNodes - temp_numNodes));
+        }while(SlaveNode);
+        EV<< "TDMAmac: the number of master, relay and slave nodes is " << numNodes << endl;
             
         if (SyncStatus == false)
         {
@@ -133,9 +149,16 @@ void TDMAmac::handleUpperMsg(cMessage* msg){
     /* Casting upper layer message to mac packet format */
     TDMAMacPkt *mac = static_cast<TDMAMacPkt *>(encapsMsg(static_cast<cPacket*>(msg)));
 
-	if (simTime() >= 0.8)
-		SyncStatus = true;
-
+	if (simTime() < 0.8)
+	{
+		SyncStatus = false;
+		EV << "TDMAmac: mac works in mode 2 now. " << endl;
+	}
+	else if (simTime() >= 0.8)
+	{
+        SyncStatus = true;
+        EV << "TDMAmac: mac works in mode 1 now. " << endl;
+	}
 
     /* check the state (mode 1 or mode 2) */
     if (SyncStatus == true)
