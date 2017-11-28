@@ -272,7 +272,8 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
                 ev << "RelaySlave: receives SYNC packet from relay node, process it\n";
 
                 ev << "RelaySlave: get the offset and skew...\n";
-                AddressOffset = myMasterAddress - myAddress;
+                AddressOffset = (((Packet *)msg) -> getSource()) - myAddress;
+                ev << "RelaySlave: the address offset is " << AddressOffset << endl;
 
                 pClock -> setReceivedSYNCTime((((Packet *)msg) -> getTsRx()));
 

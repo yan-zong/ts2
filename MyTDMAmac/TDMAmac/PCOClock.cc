@@ -105,12 +105,13 @@ void PCOClock::initialize()
         scheduleAt(simTime() + ScheduleOffset + NodeId * pulseDuration ,new cMessage("CLTimer"));
         LastUpdateTime = ScheduleOffset + NodeId * pulseDuration;
         EV << "PCOClock: Clock starts at " << (simTime() + ScheduleOffset + NodeId * pulseDuration) << endl;
+        EV << "PCOClock: the LastUpdateTime is " << LastUpdateTime <<endl;
     }
     else    // the sensor node is the slave node, no need to implement the desynchronisation
     {
         scheduleAt(simTime(),new cMessage("CLTimer"));
         LastUpdateTime = 0;
-        EV << "PCOClock: Slave clock starts at " << simTime() << endl;
+        EV << "PCOClock: Slave clock starts at " << simTime() << ", and LastUpdateTime is "<< LastUpdateTime << endl;
     }
 
 }
@@ -157,7 +158,7 @@ double PCOClock::ClockUpdate()
     noise2 =  normal(0, sigma2, 1);
     offset = offset + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + noise2;
     offset_present = drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + noise2;
-    ev << "PCOClock: the UPDATED offset is "<< offset << endl;
+    ev << "PCOClock: the UPDATED offset is "<< offset << ", and noise2 is " << noise2 <<endl;
     ev << "PCOClock: the PRESENT offset is "<< offset_present << ", and (SIMTIME_DBL(simTime()) - LastUpdateTime) should be tau_0, and it actually is "<< (SIMTIME_DBL(simTime()) - LastUpdateTime) << endl;
 
     ev << "PCOClock: the PREVIOUS drift is "<< drift <<endl;
@@ -276,69 +277,49 @@ double PCOClock::getMeasurementOffset(int MeasurmentAlgorithm, int AddressOffset
 
     double MeasuredOffset;
 
-    // Note: 2.176E-3 (tau) means the time for receiver to receipt the SYNC packet from the sender,
-    // 1.82E-4 is for physical layer to check the SYNC packet
-    // 2.176E-3 = 2.368E-3 - 1.82E-4
-
     if (MeasurmentAlgorithm == 1)   // receive the SYNC from master node, the received node is the relay node.
     {
-        if (ReceivedSYNCTime < (Threshold/2))
-        {
-            MeasuredOffset = (ReceivedSYNCTime - tau) - 0 + (ScheduleOffset + pulseDuration * NodeId);
-        }
-        else if (ReceivedSYNCTime >= (Threshold/2))
-        {
+
+        MeasuredOffset = (ReceivedSYNCTime - tau) - 0 + (ScheduleOffset + pulseDuration * NodeId);
+
+        if (MeasuredOffset > (Threshold/2))
             MeasuredOffset = (ReceivedSYNCTime - tau) - Threshold + (ScheduleOffset + pulseDuration * NodeId);
-        }
     }
 
     else if (MeasurmentAlgorithm == 2)  // node i receives the SYNC from node j (node i fires before node j)
     {
-        if (ReceivedSYNCTime < (Threshold/2))
-        {
-            MeasuredOffset = (ReceivedSYNCTime - tau) - 0 - (pulseDuration * AddressOffset);
-        }
-        else if ((ReceivedSYNCTime >= (Threshold/2)))
-        {
+        MeasuredOffset = (ReceivedSYNCTime - tau) - 0 - (pulseDuration * AddressOffset);
+
+        if (MeasuredOffset > (Threshold/2))
             MeasuredOffset = (ReceivedSYNCTime - tau) - Threshold - (pulseDuration * AddressOffset);
-        }
+
     }
 
     else if (MeasurmentAlgorithm == 3)  // node j receives the SYNC from node i (node i fires before node j)
     {
-        if (ReceivedSYNCTime < (Threshold/2))
-        {
-            MeasuredOffset = (ReceivedSYNCTime - tau) - 0 + (pulseDuration * AddressOffset);
-        }
-        else if ((ReceivedSYNCTime >= (Threshold/2)))
-        {
+        MeasuredOffset = (ReceivedSYNCTime - tau) - 0 + (pulseDuration * AddressOffset);
+
+        if (MeasuredOffset > (Threshold/2))
             MeasuredOffset = (ReceivedSYNCTime - tau) - Threshold + (pulseDuration * AddressOffset);
-        }
+
     }
 
     else if (MeasurmentAlgorithm == 4)  // receive the SYNC from relay node, and the received node is the slave node.
     {
-        if (ReceivedSYNCTime < (Threshold/2))
-        {
-            MeasuredOffset = (ReceivedSYNCTime - tau) - 0 - (ScheduleOffset + pulseDuration * AddressOffset);
-        }
-        else if ((ReceivedSYNCTime >= (Threshold/2)))
-        {
+
+        MeasuredOffset = (ReceivedSYNCTime - tau) - 0 - (ScheduleOffset + pulseDuration * AddressOffset);
+
+        if (MeasuredOffset > (Threshold/2))
             MeasuredOffset = (ReceivedSYNCTime - tau) - Threshold - (ScheduleOffset + pulseDuration * AddressOffset);
-        }
 
     }
 
     else if (MeasurmentAlgorithm == 5)  // receive SYNC from master node, and the received node is the slave node.
     {
-        if (ReceivedSYNCTime < (Threshold/2))
-        {
-            MeasuredOffset = (ReceivedSYNCTime - tau) - 0;
-        }
-        else if ((ReceivedSYNCTime >= (Threshold/2)))
-        {
+        MeasuredOffset = (ReceivedSYNCTime - tau) - 0;
+
+        if (MeasuredOffset > (Threshold/2))
             MeasuredOffset = (ReceivedSYNCTime - tau) - Threshold;
-        }
 
     }
 
@@ -402,7 +383,7 @@ void PCOClock::adjustClock(double estimatedOffset, double estimatedSkew)
         {
             ev << "PCOClock: the PREVIOUS 'PCOClockState' is "<< PCOClockState <<endl;
             PCOClockState = PCOClockState + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + varepsilon - Threshold ;
-            ev << "PCOClock: the UPDATED 'PCOClockState' is "<< PCOClockState <<endl;
+            ev << "PCOClock: the UPDATED 'PCOClockState' is "<< PCOClockState << ", due to the varepsilon is " << varepsilon <<endl;
             ev << "PCOClock: the presented updated PCO clock state 'drift * (SIMTIME_DBL(simTime()) - LastUpdateTime)' is " << drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) << endl;
 
             generateSYNC();
@@ -417,7 +398,7 @@ void PCOClock::adjustClock(double estimatedOffset, double estimatedSkew)
         {
             ev << "PCOClock: the PREVIOUS 'PCOClockState' is "<< PCOClockState <<endl;
             PCOClockState = PCOClockState + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + varepsilon;
-            ev << "PCOClock: the UPDATED 'PCOClockState' is "<< PCOClockState <<endl;
+            ev << "PCOClock: the UPDATED 'PCOClockState' is "<< PCOClockState << ", due to the varepsilon is " << varepsilon <<endl;
             ev << "PCOClock: the presented updated PCO clock state 'drift * (SIMTIME_DBL(simTime()) - LastUpdateTime)' is " << drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) << endl;
         }
         else

@@ -275,6 +275,7 @@ void SlaveCore::handleMasterMessage(cMessage *msg)
 
                 ev << "SlaveCore: get the offset and skew...\n";
                 AddressOffset = (((Packet *)msg) -> getSource()) - (2000 - 1);
+                ev << "SlaveCore: the address offset is " << AddressOffset << endl;
 
                 pClock -> setReceivedSYNCTime((((Packet *)msg) -> getTsRx()));
 
