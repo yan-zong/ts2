@@ -59,7 +59,7 @@ void RelayBuffer::handleMessage(cMessage *msg)
 
 	    handleRelayMessage(msg);
 
-	    ev << "RelayBuffer: forwards message to RelayMaster or RelaySlave\n";
+	    ev << "RelayBuffer: the message is transmitted. \n";
 	}
 
 	if(ev.isGUI())

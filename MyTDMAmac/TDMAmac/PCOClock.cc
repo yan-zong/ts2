@@ -80,8 +80,8 @@ void PCOClock::initialize()
     // id of master should be 0;
     // id of relay[0] should be 1; id of relay[1] should be 2;
 
-    EV << "yan: findHost()->getIndex() is " << findHost()->getIndex() << endl ;
-    EV << "yan: findHost()->getId() is " << findHost()->getId() << endl ;
+    // EV << "yan: findHost()->getIndex() is " << findHost()->getIndex() << endl ;
+    // EV << "yan: findHost()->getId() is " << findHost()->getId() << endl ;
 
     if(ev.isGUI())
     {
@@ -123,11 +123,11 @@ void PCOClock::handleMessage(cMessage *msg)
         EV << "PCOClock: PCO Clock State is " << PCOClockState << endl;
 
         i = i + 1;
-        ev << "i = "<< i << endl;
+        ev << "PCOClock: i = "<< i << endl;
 
         if(i % 100 == 0)
         {
-            ev << "record the offset and drift of clock"<<endl;
+            ev << "PCOClock: record the offset and drift of clock"<<endl;
             recordResult();
             driftStd.collect(drift);
             offsetStd.collect(offset);
@@ -228,7 +228,7 @@ double PCOClock::getTimestamp()
     ev << "PCOClock: the timestamp noise 'noise3' is " << noise3 << endl;
 
     ev << "PCOClock: simTime = " << SIMTIME_DBL(simTime()) << ", LastUpdateTime = "<< LastUpdateTime << endl;
-    ev << ", and (SIMTIME_DBL(simTime()) - LastUpdateTime) = "<< (SIMTIME_DBL(simTime()) - LastUpdateTime) << endl;;
+    ev << "PCOClock: (SIMTIME_DBL(simTime()) - LastUpdateTime) = "<< (SIMTIME_DBL(simTime()) - LastUpdateTime) << endl;;
 
     Timestamp = PCOClockState + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + noise3;
     ev << "PCOClock: 'Timestamp' is " << Timestamp << endl;

@@ -115,12 +115,12 @@ void TimeStamp::handleMessage(cMessage *msg)
             if (useReferenceClock)
             {
                 rxTimeStamp = SIMTIME_DBL(simTime());
-                ev << "Timestamp: Now using simTime() for new time stamp";
+                ev << "Timestamp: Now using simTime() for new time stamp. \n";
             }
             else
             {
                 rxTimeStamp = pClk -> getTimestamp();
-                ev << "Timestamp: Now using clock module for new time stamp";
+                ev << "Timestamp: Now using clock module for new time stamp. \n";
             }
 
             ((Packet*)pck) -> setTsRx(rxTimeStamp);

@@ -56,14 +56,6 @@ void RelayMaster::initialize()
             error("RelayMaster: No clock module is found in the network. ");
         }
 
-        // find relay node, and index
-        cModule *RelayModule = findHost() -> getParentModule();
-        ev << "RelayMaster: RelayModule: findHost() -> getParentModule returns: "<< RelayModule -> getName() <<endl;
-        // RelayMaster: findHost()->getParentModule returns: Network
-
-        RelayModule = RelayModule -> getSubmodule("rnode", (findHost() -> getIndex()));
-        ev << "RelayMaster: RelayModule: findHost() -> getSubmodule returns: "<< RelayModule->getSubmodule("rnode", (findHost() -> getIndex())) <<endl;
-
   }
 
 void RelayMaster::handleMessage(cMessage* msg)
