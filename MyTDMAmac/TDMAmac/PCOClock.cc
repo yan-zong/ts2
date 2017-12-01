@@ -65,7 +65,7 @@ void PCOClock::initialize()
     varepsilon = par("varepsilon"); // the coupling strength of PCO model
 
     ClassicClock = 0;
-    PCOClockState = 0;
+    PCOClockState = offset;
     Timestamp = 0;   // timestamp based on the reception of SYNC packet
     LastUpdateTime = 0;
     ReceivedSYNCTime = 0;   // the reception time of SYNC packet
@@ -180,7 +180,8 @@ double PCOClock::ClockUpdate()
     if ((PCOClockStateTemp) >= Threshold)
     {
         ev << "PCOClock: the PREVIOUS 'PCOClockState' is "<< PCOClockState <<endl;
-        PCOClockState = PCOClockState + tau_0 + offset_present - Threshold;;
+        PCOClockState = 0;
+        // PCOClockState = PCOClockState + tau_0 + offset_present - Threshold;
         ev << "PCOClock: the UPDATED 'PCOClockState' is "<< PCOClockState <<endl;
 
         generateSYNC();
@@ -382,7 +383,8 @@ void PCOClock::adjustClock(double estimatedOffset, double estimatedSkew)
         if ((PCOClockStateTemp) >= Threshold)
         {
             ev << "PCOClock: the PREVIOUS 'PCOClockState' is "<< PCOClockState <<endl;
-            PCOClockState = PCOClockState + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + varepsilon - Threshold ;
+            PCOClockState = 0
+            // PCOClockState = PCOClockState + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + varepsilon - Threshold ;
             ev << "PCOClock: the UPDATED 'PCOClockState' is "<< PCOClockState << ", due to the varepsilon is " << varepsilon <<endl;
             ev << "PCOClock: the presented updated PCO clock state 'drift * (SIMTIME_DBL(simTime()) - LastUpdateTime)' is " << drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) << endl;
 
