@@ -63,6 +63,7 @@ void PCOClock::initialize()
     CorrectionAlgorithm = par("CorrectionAlgorithm");    // correction algorithm
                                 // 1 is for classic PCO by using constant value, 2 is for classic PCO by using offset value
     varepsilon = par("varepsilon"); // the coupling strength of PCO model
+    refractory = par("refractory"); // refractory period
 
     ClassicClock = 0;
     PCOClockState = offset;
@@ -71,7 +72,7 @@ void PCOClock::initialize()
     ReceivedSYNCTime = 0;   // the reception time of SYNC packet
     offset_present = 0; // the present clock offset
     drift_present = 0;  // the present clock skew
-    PCOfireTime = 0;
+    LastFireTime = 0;
 
     i = 0;
 
@@ -186,8 +187,8 @@ double PCOClock::ClockUpdate()
 
         generateSYNC();
 
-        PCOfireTime = SIMTIME_DBL(simTime());
-        PCOfireTimeVec.record(PCOfireTime);
+        LastFireTime = SIMTIME_DBL(simTime());
+        PCOfireTimeVec.record(LastFireTime);
 
         EV << "PCOClock: generate and sent SYNC packet to Core module. " << endl;
 
@@ -376,39 +377,50 @@ void PCOClock::adjustClock(double estimatedOffset, double estimatedSkew)
 
     else if (CorrectionAlgorithm == 1)   // correct PCO state by using constant value, i.e., classic PCO
     {
-        PCOClockStateTemp = PCOClockState + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + varepsilon;
-
-        ev << "PCOClock: the TEMP 'PCOClockState' is "<< PCOClockStateTemp <<endl;
-
-        if ((PCOClockStateTemp) >= Threshold)
+        if ((SIMTIME_DBL(simTime()) - LastFireTime) <= refractory)
         {
-            ev << "PCOClock: the PREVIOUS 'PCOClockState' is "<< PCOClockState <<endl;
-            PCOClockState = 0
-            // PCOClockState = PCOClockState + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + varepsilon - Threshold ;
-            ev << "PCOClock: the UPDATED 'PCOClockState' is "<< PCOClockState << ", due to the varepsilon is " << varepsilon <<endl;
-            ev << "PCOClock: the presented updated PCO clock state 'drift * (SIMTIME_DBL(simTime()) - LastUpdateTime)' is " << drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) << endl;
-
-            generateSYNC();
-
-            PCOfireTime = SIMTIME_DBL(simTime());
-            PCOfireTimeVec.record(PCOfireTime);
-
-            EV << "PCOClock: generate and sent SYNC packet to Core module. " << endl;
+            ev << "PCOClock: during the refractory, no adjustment in the PCO clock state. "<< endl;
+            return;
 
         }
-        else if ((PCOClockStateTemp) < Threshold)
+        else if ((SIMTIME_DBL(simTime()) - LastFireTime) > refractory)
         {
-            ev << "PCOClock: the PREVIOUS 'PCOClockState' is "<< PCOClockState <<endl;
-            PCOClockState = PCOClockState + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + varepsilon;
-            ev << "PCOClock: the UPDATED 'PCOClockState' is "<< PCOClockState << ", due to the varepsilon is " << varepsilon <<endl;
-            ev << "PCOClock: the presented updated PCO clock state 'drift * (SIMTIME_DBL(simTime()) - LastUpdateTime)' is " << drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) << endl;
-        }
-        else
-        {
-            error("PCOClock: error in the PCO clock adjustment function");
-        }
+            ev << "PCOClock: out the refractory, no adjustment in the PCO clock state. "<< endl;
 
-        ev << "PCOClock: the PCO clock state is adjusted to " << PCOClockState << endl;
+            PCOClockStateTemp = PCOClockState + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + varepsilon;
+
+            ev << "PCOClock: the TEMP 'PCOClockState' is "<< PCOClockStateTemp <<endl;
+
+            if ((PCOClockStateTemp) >= Threshold)
+            {
+                ev << "PCOClock: the PREVIOUS 'PCOClockState' is "<< PCOClockState <<endl;
+                PCOClockState = 0;
+                // PCOClockState = PCOClockState + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + varepsilon - Threshold ;
+                ev << "PCOClock: the UPDATED 'PCOClockState' is "<< PCOClockState << ", due to the varepsilon is " << varepsilon <<endl;
+                ev << "PCOClock: the presented updated PCO clock state 'drift * (SIMTIME_DBL(simTime()) - LastUpdateTime)' is " << drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) << endl;
+
+                generateSYNC();
+
+                LastFireTime = SIMTIME_DBL(simTime());
+                PCOfireTimeVec.record(LastFireTime);
+
+                EV << "PCOClock: generate and sent SYNC packet to Core module. " << endl;
+
+            }
+            else if ((PCOClockStateTemp) < Threshold)
+            {
+                ev << "PCOClock: the PREVIOUS 'PCOClockState' is "<< PCOClockState <<endl;
+                PCOClockState = PCOClockState + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + varepsilon;
+                ev << "PCOClock: the UPDATED 'PCOClockState' is "<< PCOClockState << ", due to the varepsilon is " << varepsilon <<endl;
+                ev << "PCOClock: the presented updated PCO clock state 'drift * (SIMTIME_DBL(simTime()) - LastUpdateTime)' is " << drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) << endl;
+            }
+            else
+            {
+                error("PCOClock: error in the PCO clock adjustment function");
+            }
+
+            ev << "PCOClock: the PCO clock state is adjusted to " << PCOClockState << endl;
+        }
     }
 
     else if (CorrectionAlgorithm == 2)  // correct PCO state by using measurement offset
@@ -428,8 +440,8 @@ void PCOClock::adjustClock(double estimatedOffset, double estimatedSkew)
 
             generateSYNC();
 
-            PCOfireTime = SIMTIME_DBL(simTime());
-            PCOfireTimeVec.record(PCOfireTime);
+            LastFireTime = SIMTIME_DBL(simTime());
+            PCOfireTimeVec.record(LastFireTime);
 
             EV << "PCOClock: generate and sent SYNC packet to Core module. " << endl;
 

@@ -40,6 +40,7 @@ simple PCOClock
     	int CorrectionAlgorithm;	// correction algorithm, 0 is for null
     								// 1 is for classic PCO by using constant value, 2 is for classic PCO by using offset value
     	double varepsilon = default(0);    
+    	double refractory = default(0);	// refractory period
     	    	
     gates:
         input inclock;

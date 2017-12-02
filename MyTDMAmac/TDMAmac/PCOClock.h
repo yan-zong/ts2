@@ -74,6 +74,8 @@ class PCOClock:public cSimpleModule
                                     // 1 is for classic PCO by using constant value, 2 is for classic PCO by using offset value
         double varepsilon;  // the coupling strength of PCO model
         int numRelay;
+        double LastFireTime;
+        double refractory;
 
         /* @brief the id of node */
         int NodeId;
@@ -85,7 +87,7 @@ class PCOClock:public cSimpleModule
         double ScheduleOffset;
 
         int i;
-        double PCOfireTime;
+
 
 
         std::ofstream outFile;

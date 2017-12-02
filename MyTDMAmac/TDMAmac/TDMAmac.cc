@@ -149,12 +149,12 @@ void TDMAmac::handleUpperMsg(cMessage* msg){
     /* Casting upper layer message to mac packet format */
     TDMAMacPkt *mac = static_cast<TDMAMacPkt *>(encapsMsg(static_cast<cPacket*>(msg)));
 
-	if (simTime() < 0.8)
+	if (simTime() < 0.5)
 	{
 		SyncStatus = false;
 		EV << "TDMAmac: mac works in mode 2 now. " << endl;
 	}
-	else if (simTime() >= 0.8)
+	else if (simTime() >= 0.5)
 	{
         SyncStatus = true;
         EV << "TDMAmac: mac works in mode 1 now. " << endl;

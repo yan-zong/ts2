@@ -292,7 +292,25 @@ void SlaveCore::handleMasterMessage(cMessage *msg)
             }
             else if ((((Packet *)msg) -> getSource()) >= 3000)
             {
-                ev << "SlaveCore: receives SYNC packet from slave node, ignore it\n";
+                //todo: need to modify the address offset calculation
+                ev << "SlaveCore: receives SYNC packet from slave node, process it\n";
+
+                ev << "SlaveCore: get the offset and skew...\n";
+                // AddressOffset = (((Packet *)msg) -> getSource()) - (2000 - 1);
+                ev << "SlaveCore: the address offset is " << AddressOffset << endl;
+
+                pClock -> setReceivedSYNCTime((((Packet *)msg) -> getTsRx()));
+
+                ev << "SlaveCore: timestamp is "<< (((Packet *)msg) -> getTsRx()) << endl;
+
+                // EstimatedOffset = pClock -> getMeasurementOffset(4, AddressOffset);
+                // EstimatedSkew = pClock -> getMeasurementSkew(EstimatedOffset);
+
+                ev << "SlaveCore: adjust clock...\n";
+                pClock -> adjustClock(0, 0);
+
+                ev << "SlaveCore: Done.\n";
+
                 break;
 
             }
