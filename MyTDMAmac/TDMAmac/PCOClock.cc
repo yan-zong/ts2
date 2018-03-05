@@ -279,13 +279,20 @@ double PCOClock::getMeasurementOffset(int MeasurmentAlgorithm, int AddressOffset
 
     double MeasuredOffset;
 
+    double NormalisedSYNCTime = 0;    // Normalise ReceivedSYNCTime
+
     if (MeasurmentAlgorithm == 1)   // receive the SYNC from master node, the received node is the relay node.
     {
 
-        MeasuredOffset = (ReceivedSYNCTime - tau) - 0 + (ScheduleOffset + pulseDuration * NodeId);
+        NormalisedSYNCTime = ReceivedSYNCTime / Threshold;
 
-        if (MeasuredOffset > (Threshold/2))
-            MeasuredOffset = (ReceivedSYNCTime - tau) - Threshold + (ScheduleOffset + pulseDuration * NodeId);
+        MeasuredOffset = (NormalisedSYNCTime - tau) - 0 + (ScheduleOffset + pulseDuration * NodeId);
+
+        if (MeasuredOffset > 0.5)
+            MeasuredOffset = (NormalisedSYNCTime - tau) - 1 + (ScheduleOffset + pulseDuration * NodeId);
+
+        // if (MeasuredOffset > (Threshold/2))
+        //        MeasuredOffset = (NormalisedSYNCTime - tau) - (Threshold / Threshold) + (ScheduleOffset + pulseDuration * NodeId);
     }
 
     else if (MeasurmentAlgorithm == 2)  // node i receives the SYNC from node j (node i fires before node j)
@@ -462,8 +469,17 @@ void PCOClock::adjustClock(double estimatedOffset, double estimatedSkew)
 
     }
 
-    else if (CorrectionAlgorithm == 3)
+    else if (CorrectionAlgorithm == 3)  // correct PCO state threshold and skew by using the PkCOs with P controller
     {
+        // correct the PCO threshold
+        // Threshold = Threshold + alpha * estimatedOffset;
+        Threshold = Threshold + alpha * estimatedOffset * Threshold;    // denormalize estimated the offset and adjust the threshold
+        // correct the PCO skew
+        // drift = drift + beta * estimatedSkew;
+        drift = drift + beta * estimatedSkew * Threshold;   // denormalize estimated the skew and adjust the skew
+
+        ev << "PCOClock: the PCO clock threshold is adjusted to " << Threshold << endl;
+        ev << "PCOClock: the PCO clock skew is adjusted to " << drift << endl;
 
     }
 
