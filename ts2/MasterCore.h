@@ -32,6 +32,7 @@ class MasterCore : public cSimpleModule
 {
 private:
     int address;
+    double TxThold;
 
 protected:
     int upperGateIn;

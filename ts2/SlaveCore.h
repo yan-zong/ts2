@@ -42,6 +42,8 @@ class SlaveCore: public cSimpleModule
         double EstimatedOffset; // the measurement offset
         double EstimatedSkew; // the measurement skew
         int AddressOffset;
+        double TxThold;
+        double RxThold;
 
         PCOClock *pClock; // pointer to my clock module
 

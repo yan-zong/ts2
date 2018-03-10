@@ -55,6 +55,9 @@ class RelaySlave: public cSimpleModule
 	    double EstimatedSkew; // the measurement skew
 	    int AddressOffset;
 
+	    double TxThold;   // for PI controller
+	    double RxThold;   // for PI controller
+
 	    RelayMaster *pRelayMaster; // a pointer to the Relay Master module in my nodes (a boundary clock)
 	    PCOClock *pClock; // pointer to my clock module
 

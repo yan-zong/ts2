@@ -88,7 +88,15 @@ class PCOClock:public cSimpleModule
 
         int i;
 
+        /* @brief parameters in PI controller */
+        double offsetOutPContr = 0; // for P controller
+        double skewOutPContr = 0;   // for P controller
 
+        double offsetOutIContr = 0; // for I controller
+        double skewOutIContr = 0;   // for I controller
+
+        double offsetOutPIContr = 0;    // for PI controller
+        double skewOutPIContr = 0;  // for PI controller
 
         std::ofstream outFile;
         cOutVector noise1Vec;

@@ -60,6 +60,10 @@ void SlaveCore::initialize()
 	    address = findHost() -> getIndex();
 	ev<<"SlaveCore: my address is "<< address << endl;
 
+	// for PI controller
+	TxThold = 0;
+	RxThold = 0;
+
 	Packet * temp = new Packet("REGISTER");
     temp -> setSource(address);
     temp -> setDestination(PACKET_BROADCAST_ADDR);
@@ -88,10 +92,13 @@ void SlaveCore::handleMessage(cMessage *msg)
 
     if (msg -> arrivedOn("inclock"))
 	{
-	    EV << "SlaveCore: receives a SYNC packet from clock module, delete it and re-generate a full SYNC packet.\n";
+	    EV << "SlaveCore: receives a SYNC packet from clock module, delete the SYNC packet.\n";
+	    TxThold = ((Packet*)msg) -> getData();
 	    delete msg;
 
-	    scheduleAt(simTime(), new cMessage("FireTimer"));
+	    EV << "SlaveCore: the threshold from 'PCOClock' module is " << TxThold <<endl;
+
+	    // scheduleAt(simTime(), new cMessage("FireTimer"));
 	}
 
     if (msg -> arrivedOn("lowerGateIn"))  // data packet from lower layer
@@ -147,6 +154,7 @@ void SlaveCore::handleSelfMessage(cMessage *msg)
     pck -> setSource(address);
     pck -> setDestination(PACKET_BROADCAST_ADDR);
 
+    pck -> setData(TxThold);
     // pck -> setData(SIMTIME_DBL(simTime()));
 
     // set SrcAddr, DestAddr with LAddress::L3Type values for MiXiM
@@ -157,6 +165,7 @@ void SlaveCore::handleSelfMessage(cMessage *msg)
     NetwControlInfo::setControlInfo(pck, LAddress::L3Type(pck -> getDestination()));
 
     send((cMessage *)pck, "lowerGateOut");
+    EV << "SlaveCore: the threshold in SYNC packet is " << pck -> getData() <<endl;
     EV << "SlaveCore: broadcasts SYNC packet" << endl;
 }
 
@@ -248,6 +257,9 @@ void SlaveCore::handleMasterMessage(cMessage *msg)
             {
                 ev << "SlaveCore: receives SYNC packet from master node, process it\n";
 
+                RxThold = ((Packet *)msg) -> getData();
+                EV << "SlaveCore: the threshold in received SYNC packet is " << RxThold <<endl;
+
                 // get the measurement offset based on the reception of SYNC from master,
                 // and no need to use the 'AddressOffset'
                 ev << "SlaveCore: get the offset and skew...\n";
@@ -270,6 +282,9 @@ void SlaveCore::handleMasterMessage(cMessage *msg)
             else if ( ((((Packet *)msg) -> getSource()) >= 2000) || ((((Packet *)msg) -> getSource()) < 3000) )
             {
                 ev << "SlaveCore: receives SYNC packet from relay node, process it\n";
+
+                RxThold = ((Packet *)msg) -> getData();
+                EV << "SlaveCore: the threshold in received SYNC packet is " << RxThold <<endl;
 
                 ev << "SlaveCore: get the offset and skew...\n";
                 AddressOffset = (((Packet *)msg) -> getSource()) - (2000 - 1);
@@ -294,6 +309,9 @@ void SlaveCore::handleMasterMessage(cMessage *msg)
             {
                 //todo: need to modify the address offset calculation
                 ev << "SlaveCore: receives SYNC packet from slave node, process it\n";
+
+                RxThold = ((Packet *)msg) -> getData();
+                EV << "SlaveCore: the threshold in received SYNC packet is " << RxThold <<endl;
 
                 ev << "SlaveCore: get the offset and skew...\n";
                 // AddressOffset = (((Packet *)msg) -> getSource()) - (2000 - 1);

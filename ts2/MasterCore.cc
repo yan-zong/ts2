@@ -49,6 +49,9 @@ void MasterCore::initialize()
 
         ev<<"MasterCore: my address is "<< address << endl;
 
+        // for PI controller
+        TxThold = 0;
+
         Packet * temp = new Packet("REGISTER");
         // we use the host modules findHost() as a appl address
         temp -> setDestination(PACKET_BROADCAST_ADDR);
@@ -113,7 +116,10 @@ void MasterCore::handleMessage(cMessage* msg)
     else if (whichGate == inclock)
     {
         EV << "MasterCore: Master receives a SYNC packet from clock module, delete it and re-generate a full SYNC packet \n";
+        TxThold = ((Packet*)msg) -> getData();
         delete msg;
+
+        EV << "MasterCore: the threshold from 'PCOClock' module is " << TxThold <<endl;
 
         scheduleAt(simTime(), new cMessage("FireTimer"));
 
@@ -151,6 +157,7 @@ void MasterCore::handleSelfMessage(cMessage *msg)
     pck -> setSource(address);
     pck -> setDestination(PACKET_BROADCAST_ADDR);
 
+    pck -> setData(TxThold);
     // pck->setData(SIMTIME_DBL(simTime()));
 
     // set SrcAddr, DestAddr with LAddress::L3Type values for MiXiM
@@ -159,6 +166,7 @@ void MasterCore::handleSelfMessage(cMessage *msg)
 
     NetwControlInfo::setControlInfo(pck, LAddress::L3BROADCAST);
 
+    EV << "MasterCore: the threshold in SYNC packet is " << pck -> getData() <<endl;
     EV << "MasterCore: Master broadcasts SYNC packet" << endl;
     send(pck, "lowerGateOut");
 

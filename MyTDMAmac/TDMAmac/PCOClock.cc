@@ -76,6 +76,15 @@ void PCOClock::initialize()
 
     i = 0;
 
+    offsetOutPContr = 0; // for P controller
+    skewOutPContr = 0;   // for P controller
+
+    offsetOutIContr = 0; // for I controller
+    skewOutIContr = 0;   // for I controller
+
+    offsetOutPIContr = 0;    // for PI controller
+    skewOutPIContr = 0;  // for PI controller
+
     NodeId = (findHost()->getId() - 4);
     EV << "PCOClock: the node id is " << NodeId << endl ;
     // id of master should be 0;
@@ -268,8 +277,10 @@ void PCOClock::generateSYNC()
     Packet *pck = new Packet("SYNC");
     pck -> setPacketType(SYNC);
     pck -> setByteLength(TIMESTAMP_BYTE);
+    pck -> setData(Threshold);  // for PI controller
     send(pck, "outclock");
 
+    EV << "PCOClock: the threshold transmitted by packet is " << pck -> getData() <<endl;
     EV << "PCOClock: PCOClock transmits SYNC packet to Core module" << endl;
 }
 
@@ -297,38 +308,67 @@ double PCOClock::getMeasurementOffset(int MeasurmentAlgorithm, int AddressOffset
 
     else if (MeasurmentAlgorithm == 2)  // node i receives the SYNC from node j (node i fires before node j)
     {
-        MeasuredOffset = (ReceivedSYNCTime - tau) - 0 - (pulseDuration * AddressOffset);
+        NormalisedSYNCTime = ReceivedSYNCTime / Threshold;
 
-        if (MeasuredOffset > (Threshold/2))
-            MeasuredOffset = (ReceivedSYNCTime - tau) - Threshold - (pulseDuration * AddressOffset);
+        MeasuredOffset = (NormalisedSYNCTime - tau) - 0 - (pulseDuration * AddressOffset);
+
+        if (MeasuredOffset > 0.5)
+            MeasuredOffset = (NormalisedSYNCTime - tau) - 1 - (pulseDuration * AddressOffset);
+
+        // MeasuredOffset = (ReceivedSYNCTime - tau) - 0 - (pulseDuration * AddressOffset);
+
+        // if (MeasuredOffset > (Threshold/2))
+        //     MeasuredOffset = (ReceivedSYNCTime - tau) - Threshold - (pulseDuration * AddressOffset);
 
     }
 
     else if (MeasurmentAlgorithm == 3)  // node j receives the SYNC from node i (node i fires before node j)
     {
-        MeasuredOffset = (ReceivedSYNCTime - tau) - 0 + (pulseDuration * AddressOffset);
+        NormalisedSYNCTime = ReceivedSYNCTime / Threshold;
 
-        if (MeasuredOffset > (Threshold/2))
-            MeasuredOffset = (ReceivedSYNCTime - tau) - Threshold + (pulseDuration * AddressOffset);
+        MeasuredOffset = (NormalisedSYNCTime - tau) - 0 + (pulseDuration * AddressOffset);
+
+        if (MeasuredOffset > 0.5)
+            MeasuredOffset = (NormalisedSYNCTime - tau) - 1 + (pulseDuration * AddressOffset);
+
+        // MeasuredOffset = (ReceivedSYNCTime - tau) - 0 + (pulseDuration * AddressOffset);
+
+        // if (MeasuredOffset > (Threshold/2))
+        //    MeasuredOffset = (ReceivedSYNCTime - tau) - Threshold + (pulseDuration * AddressOffset);
 
     }
 
     else if (MeasurmentAlgorithm == 4)  // receive the SYNC from relay node, and the received node is the slave node.
     {
+        // todo: this 'else-if' loop needs to be updated to fix the bug.
+        NormalisedSYNCTime = ReceivedSYNCTime / Threshold;
 
-        MeasuredOffset = (ReceivedSYNCTime - tau) - 0 - (ScheduleOffset + pulseDuration * AddressOffset);
+        MeasuredOffset = (NormalisedSYNCTime - tau) - 0 + (pulseDuration * AddressOffset);
 
-        if (MeasuredOffset > (Threshold/2))
-            MeasuredOffset = (ReceivedSYNCTime - tau) - Threshold - (ScheduleOffset + pulseDuration * AddressOffset);
+        if (MeasuredOffset > 0.5)
+            MeasuredOffset = (NormalisedSYNCTime - tau) - 1 + (pulseDuration * AddressOffset);
+
+
+        // MeasuredOffset = (ReceivedSYNCTime - tau) - 0 - (ScheduleOffset + pulseDuration * AddressOffset);
+
+        // if (MeasuredOffset > (Threshold/2))
+        //    MeasuredOffset = (ReceivedSYNCTime - tau) - Threshold - (ScheduleOffset + pulseDuration * AddressOffset);
 
     }
 
     else if (MeasurmentAlgorithm == 5)  // receive SYNC from master node, and the received node is the slave node.
     {
-        MeasuredOffset = (ReceivedSYNCTime - tau) - 0;
+        NormalisedSYNCTime = ReceivedSYNCTime / Threshold;
 
-        if (MeasuredOffset > (Threshold/2))
-            MeasuredOffset = (ReceivedSYNCTime - tau) - Threshold;
+        MeasuredOffset = (NormalisedSYNCTime - tau) - 0 + (ScheduleOffset + pulseDuration * NodeId);
+
+        if (MeasuredOffset > 0.5)
+            MeasuredOffset = (NormalisedSYNCTime - tau) - 1 + (ScheduleOffset + pulseDuration * NodeId);
+
+        // MeasuredOffset = (ReceivedSYNCTime - tau) - 0;
+
+        // if (MeasuredOffset > (Threshold/2))
+        //  MeasuredOffset = (ReceivedSYNCTime - tau) - Threshold;
 
     }
 
@@ -483,12 +523,79 @@ void PCOClock::adjustClock(double estimatedOffset, double estimatedSkew)
 
     }
 
-    else if (CorrectionAlgorithm == 4)
+    else if (CorrectionAlgorithm == 4)  // correct PCO state threshold and skew by using the PkCOs with PI controller
     {
+        // for P controller
+        // offsetOutPContr = alpha * estimatedOffset;
+        // skewOutPContr = beta * estimatedSkew;
+        offsetOutPContr = alpha * estimatedOffset * Threshold;  // denormalize the estimated offset
+        skewOutPContr = beta * estimatedSkew * Threshold;   // denormalize the estimated skew
 
+        ev << "PCOClock: the output of P controller for offset is " << offsetOutPContr << endl;
+        ev << "PCOClock: the output of P controller for skew is " << skewOutPContr << endl;
+
+        // for I controller
+        ev << "PCOClock: the output of I controller for offset WAS " << offsetOutIContr << endl;
+        ev << "PCOClock: the output of I controller for skew WAS " << skewOutIContr << endl;
+
+        // offsetOutIContr = offsetOutIContr + alpha * estimatedOffset;
+        // skewOutIContr = skewOutIContr + beta * estimatedSkew;
+
+        offsetOutIContr = offsetOutIContr + alpha * estimatedOffset * Threshold;    // denormalize the estimated offset
+        skewOutIContr = skewOutIContr + beta * estimatedSkew * Threshold;   // denormalize the estimated skew
+
+        ev << "PCOClock: the output of I controller for offset IS " << offsetOutIContr << endl;
+        ev << "PCOClock: the output of I controller for skew IS " << skewOutIContr << endl;
+
+        // sum the P controller and I controller
+        offsetOutPIContr = offsetOutPContr + offsetOutIContr;
+        skewOutPIContr = skewOutPContr + skewOutIContr;
+
+        Threshold = Threshold + offsetOutPIContr;   // correct the PCO threshold
+        drift = drift + skewOutPIContr; // correct the PCO skew
+
+        ev << "PCOClock: the PCO clock threshold is adjusted to " << Threshold << endl;
+        ev << "PCOClock: the PCO clock skew is adjusted to " << drift << endl;
     }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 cModule *PCOClock::findHost(void)
 {

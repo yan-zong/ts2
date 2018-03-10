@@ -54,6 +54,10 @@ void RelaySlave::initialize()
 
     ev << "RelaySlave: my address is "<< myAddress <<endl;
 
+    // variable inatilization
+    TxThold = 0;
+    RxThold = 0;
+
 	// Find the Relay Master, and Relay Master pointer
 	pRelayMaster = (RelayMaster *)getParentModule() -> getSubmodule("RelayMaster");
 	ev<<"RelaySlave: RelayMaster pointer is "<< pRelayMaster <<endl;
@@ -96,7 +100,10 @@ void RelaySlave::handleMessage(cMessage *msg)
 	if (msg -> arrivedOn("inclock"))
 	{
 	    EV << "RelaySlave: receives a SYNC packet from clock module, delete it and re-generate a full SYNC packet \n";
+	    TxThold = ((Packet*)msg) -> getData();
 	    delete msg;
+
+	    EV << "RelaySlave: the threshold from 'PCOClock' module is " << TxThold <<endl;
 
 	    scheduleAt(simTime(), new cMessage("FireTimer"));
 	    // handleClockMessage(msg);
@@ -153,6 +160,7 @@ void RelaySlave::handleSelfMessage(cMessage *msg)
     pck -> setSource(myAddress);
     pck -> setDestination(PACKET_BROADCAST_ADDR);
 
+    pck -> setData(TxThold);
     // pck -> setData(SIMTIME_DBL(simTime()));
 
     // set SrcAddr, DestAddr with LAddress::L3Type values for MiXiM
@@ -162,6 +170,7 @@ void RelaySlave::handleSelfMessage(cMessage *msg)
     // set the control info to tell the network layer (layer 3) address
     NetwControlInfo::setControlInfo(pck, LAddress::L3BROADCAST );
 
+    EV << "RelaySlave: the threshold in SYNC packet is " << pck -> getData() <<endl;
     EV << "RelaySlave: broadcasts a SYNC packet. " << endl;
     send(pck,"out");
 
@@ -248,6 +257,9 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
             {
                 ev << "RelaySlave: receives SYNC packet from master node, process it\n";
 
+                RxThold = ((Packet *)msg) -> getData();
+                EV << "RelaySlave: the threshold in received SYNC packet is " << RxThold <<endl;
+
                 // get the measurement offset based on the reception of SYNC from master,
                 // and no need to use the 'AddressOffset.#
                 ev << "RelaySlave: get the offset and skew...\n";
@@ -270,6 +282,9 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
             else if (((((Packet *)msg) -> getSource()) >= 2000) & ((((Packet *)msg) -> getSource()) < 3000))
             {
                 ev << "RelaySlave: receives SYNC packet from relay node, process it\n";
+
+                RxThold = ((Packet *)msg) -> getData();
+                EV << "RelaySlave: the threshold in received SYNC packet is " << RxThold <<endl;
 
                 ev << "RelaySlave: get the offset and skew...\n";
                 AddressOffset = (((Packet *)msg) -> getSource()) - myAddress;
