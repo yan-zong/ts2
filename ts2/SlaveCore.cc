@@ -308,8 +308,9 @@ void SlaveCore::handleMasterMessage(cMessage *msg)
             else if ((((Packet *)msg) -> getSource()) >= 3000)
             {
                 //todo: need to modify the address offset calculation
-                ev << "SlaveCore: receives SYNC packet from slave node, process it\n";
+                ev << "SlaveCore: receives SYNC packet from slave node, ingonre it\n";
 
+                /*
                 RxThold = ((Packet *)msg) -> getData();
                 EV << "SlaveCore: the threshold in received SYNC packet is " << RxThold <<endl;
 
@@ -326,6 +327,7 @@ void SlaveCore::handleMasterMessage(cMessage *msg)
 
                 ev << "SlaveCore: adjust clock...\n";
                 pClock -> adjustClock(0, 0);
+                */
 
                 ev << "SlaveCore: Done.\n";
 

@@ -299,11 +299,15 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
                     EstimatedOffset = pClock -> getMeasurementOffset(2, AddressOffset);
                     EstimatedSkew = pClock -> getMeasurementSkew(EstimatedOffset);
                 }
-                if (AddressOffset < 0)
+                else if (AddressOffset < 0)
                 {
                     AddressOffset = - AddressOffset;
                     EstimatedOffset = pClock -> getMeasurementOffset(3, AddressOffset);
                     EstimatedSkew = pClock -> getMeasurementSkew(EstimatedOffset);
+                }
+                else if (AddressOffset == 0)
+                {
+                    error("clock estimation error in 'RelaySlave' module of rnode node");
                 }
 
                 ev << "RelaySlave: adjust clock...\n";

@@ -100,10 +100,17 @@ void PCOClock::initialize()
 
     cModule* RelayNode = NULL;
     numRelay = 0;
+    /*
     do{
         numRelay++;
         RelayNode = findHost() -> getParentModule() -> getSubmodule("rnode", numRelay);
     }while(RelayNode);
+    */
+    while(RelayNode)
+    {
+        numRelay++;
+        RelayNode = findHost() -> getParentModule() -> getSubmodule("rnode", numRelay);
+    }
     EV << "PCOClock: the number of relay node is " << numRelay << endl;
 
     // the desynchronisation technology should be implemented into the master and relay nodes,
@@ -117,11 +124,18 @@ void PCOClock::initialize()
         EV << "PCOClock: Clock starts at " << (simTime() + ScheduleOffset + NodeId * pulseDuration) << endl;
         EV << "PCOClock: the LastUpdateTime is " << LastUpdateTime <<endl;
     }
-    else    // the sensor node is the slave node, no need to implement the desynchronisation
+    else    // the sensor node is the slave node
     {
-        scheduleAt(simTime(),new cMessage("CLTimer"));
-        LastUpdateTime = 0;
-        EV << "PCOClock: Slave clock starts at " << simTime() << ", and LastUpdateTime is "<< LastUpdateTime << endl;
+        // implementation of desynchronisation
+        scheduleAt(simTime() + ScheduleOffset + (NodeId - numRelay) * pulseDuration ,new cMessage("CLTimer"));
+        LastUpdateTime = ScheduleOffset + (NodeId - numRelay) * pulseDuration;
+        EV << "PCOClock: Clock starts at " << (simTime() + ScheduleOffset + (NodeId - numRelay) * pulseDuration) << endl;
+        EV << "PCOClock: the LastUpdateTime is " << LastUpdateTime <<endl;
+
+        // no implementation of desynchronisation
+        // scheduleAt(simTime(),new cMessage("CLTimer"));
+        // LastUpdateTime = 0;
+        // EV << "PCOClock: Slave clock starts at " << simTime() << ", and LastUpdateTime is "<< LastUpdateTime << endl;
     }
 
 }
@@ -292,7 +306,7 @@ double PCOClock::getMeasurementOffset(int MeasurmentAlgorithm, int AddressOffset
 
     double NormalisedSYNCTime = 0;    // Normalise ReceivedSYNCTime
 
-    if (MeasurmentAlgorithm == 1)   // receive the SYNC from master node, the received node is the relay node.
+    if (MeasurmentAlgorithm == 1)   // relay node receive the SYNC from master node.
     {
 
         NormalisedSYNCTime = ReceivedSYNCTime / Threshold;
@@ -306,7 +320,7 @@ double PCOClock::getMeasurementOffset(int MeasurmentAlgorithm, int AddressOffset
         //        MeasuredOffset = (NormalisedSYNCTime - tau) - (Threshold / Threshold) + (ScheduleOffset + pulseDuration * NodeId);
     }
 
-    else if (MeasurmentAlgorithm == 2)  // node i receives the SYNC from node j (node i fires before node j)
+    else if (MeasurmentAlgorithm == 2)  // relay node i receives the SYNC from relay node j (node i fires before node j)
     {
         NormalisedSYNCTime = ReceivedSYNCTime / Threshold;
 
@@ -322,7 +336,7 @@ double PCOClock::getMeasurementOffset(int MeasurmentAlgorithm, int AddressOffset
 
     }
 
-    else if (MeasurmentAlgorithm == 3)  // node j receives the SYNC from node i (node i fires before node j)
+    else if (MeasurmentAlgorithm == 3)  // relay node j receives the SYNC from relay node i (node i fires before node j)
     {
         NormalisedSYNCTime = ReceivedSYNCTime / Threshold;
 
@@ -338,7 +352,7 @@ double PCOClock::getMeasurementOffset(int MeasurmentAlgorithm, int AddressOffset
 
     }
 
-    else if (MeasurmentAlgorithm == 4)  // receive the SYNC from relay node, and the received node is the slave node.
+    else if (MeasurmentAlgorithm == 4)  // slave node receive the SYNC from relay node.
     {
         // todo: this 'else-if' loop needs to be updated to fix the bug.
         NormalisedSYNCTime = ReceivedSYNCTime / Threshold;
@@ -356,14 +370,14 @@ double PCOClock::getMeasurementOffset(int MeasurmentAlgorithm, int AddressOffset
 
     }
 
-    else if (MeasurmentAlgorithm == 5)  // receive SYNC from master node, and the received node is the slave node.
+    else if (MeasurmentAlgorithm == 5)  // slave receive SYNC from master node.
     {
         NormalisedSYNCTime = ReceivedSYNCTime / Threshold;
 
-        MeasuredOffset = (NormalisedSYNCTime - tau) - 0 + (ScheduleOffset + pulseDuration * NodeId);
+        MeasuredOffset = (NormalisedSYNCTime - tau) - 0 + (ScheduleOffset + pulseDuration * (NodeId - numRelay));
 
         if (MeasuredOffset > 0.5)
-            MeasuredOffset = (NormalisedSYNCTime - tau) - 1 + (ScheduleOffset + pulseDuration * NodeId);
+            MeasuredOffset = (NormalisedSYNCTime - tau) - 1 + (ScheduleOffset + pulseDuration * (NodeId - numRelay));
 
         // MeasuredOffset = (ReceivedSYNCTime - tau) - 0;
 
