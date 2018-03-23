@@ -51,7 +51,6 @@ class PCOClock:public cSimpleModule
 
         double offset;  // the clock offset
         double drift;   // the clock skew (the variation of clock frequency)
-        double offset_present; // the present clock offset
         double drift_present;  // the present clock skew
         double sigma1;  // the standard deviation of clock skew noise
         double sigma2;  // the standard deviation of clock offset noise
@@ -61,6 +60,7 @@ class PCOClock:public cSimpleModule
         double noise2;  // clock offset noise
         double noise3;  // timestamp (meausmrenet) noise
         double tau_0;   // clock update period
+        // double ReferenceClock;    // the classic clock time
         double ClassicClock;    // the classic clock time
         double PCOClockState;    // the PCO clock state
         double Threshold;   // PCO clock threshold
@@ -76,6 +76,7 @@ class PCOClock:public cSimpleModule
         int numRelay;
         double LastFireTime;
         double refractory;
+        double SumThreshold;
 
         /* @brief the id of node */
         int NodeId;

@@ -66,13 +66,11 @@ void PCOClock::initialize()
     refractory = par("refractory"); // refractory period
 
     ClassicClock = 0;
-    PCOClockState = offset;
     Timestamp = 0;   // timestamp based on the reception of SYNC packet
     LastUpdateTime = 0;
     ReceivedSYNCTime = 0;   // the reception time of SYNC packet
-    offset_present = 0; // the present clock offset
-    drift_present = 0;  // the present clock skew
     LastFireTime = 0;
+    SumThreshold = 0;
 
     i = 0;
 
@@ -100,12 +98,6 @@ void PCOClock::initialize()
 
     cModule* RelayNode = NULL;
     numRelay = 0;
-    /*
-    do{
-        numRelay++;
-        RelayNode = findHost() -> getParentModule() -> getSubmodule("rnode", numRelay);
-    }while(RelayNode);
-    */
     while(RelayNode)
     {
         numRelay++;
@@ -113,9 +105,7 @@ void PCOClock::initialize()
     }
     EV << "PCOClock: the number of relay node is " << numRelay << endl;
 
-    // the desynchronisation technology should be implemented into the master and relay nodes,
-    // the desynchronisation cannot be implemented into the slave nodes, because slave nodes cannot
-    // transmit the packet, they just can receipt the packet from other nodes.
+    // the desynchronisation technology should be implemented into the master, relay and slave nodes,
 
     if (NodeId <= numRelay)   // the sensor node is the master or relay node
     {
@@ -180,32 +170,35 @@ double PCOClock::ClockUpdate()
 
     ev << "PCOClock: the PREVIOUS offset is "<< offset << endl;
     noise2 =  normal(0, sigma2, 1);
-    offset = offset + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + noise2;
-    offset_present = drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + noise2;
+    offset = offset + drift * (SIMTIME_DBL(simTime()) - LastUpdateTime) + noise2;   // update the clock offset
+    // offset = offset + drift * tau_0 + noise2;   // update the clock offset
     ev << "PCOClock: the UPDATED offset is "<< offset << ", and noise2 is " << noise2 <<endl;
-    ev << "PCOClock: the PRESENT offset is "<< offset_present << ", and (SIMTIME_DBL(simTime()) - LastUpdateTime) should be tau_0, and it actually is "<< (SIMTIME_DBL(simTime()) - LastUpdateTime) << endl;
 
     ev << "PCOClock: the PREVIOUS drift is "<< drift <<endl;
     noise1 =  normal(0,sigma1,1);
-    drift = drift + noise1;
-    drift_present = noise1;
+    drift = drift + noise1; // update the clock drift
     ev << "PCOClock: the UPDATED drift is "<< drift <<endl;
-    ev << "PCOClock: the PRESENT drift is "<< drift_present << endl;
 
     ev << "PCOClock: the PREVIOUS classic clock is "<< ClassicClock <<endl;
-    // update the classic clock
-    ClassicClock = ClassicClock + tau_0 + offset_present;
+    ClassicClock = SIMTIME_DBL(simTime()) + offset; // update the classic clock
     ev << "PCOClock: the UPDATED classic clock is "<< ClassicClock <<endl;
 
     // update the PCO clock
-    PCOClockStateTemp = PCOClockState + tau_0 + offset_present;
+    PCOClockStateTemp = ClassicClock - SumThreshold;
     ev << "PCOClock: the TEMP 'PCOClockState' is "<< PCOClockStateTemp <<endl;
 
-    if ((PCOClockStateTemp) >= Threshold)
+    if ((PCOClockStateTemp) < Threshold)
     {
         ev << "PCOClock: the PREVIOUS 'PCOClockState' is "<< PCOClockState <<endl;
-        PCOClockState = 0;
-        // PCOClockState = PCOClockState + tau_0 + offset_present - Threshold;
+        PCOClockState = ClassicClock - SumThreshold;
+        ev << "PCOClock: the UPDATED 'PCOClockState' is "<< PCOClockState <<endl;
+    }
+    else if ((PCOClockStateTemp) >= Threshold)
+    {
+        SumThreshold = SumThreshold + Threshold;
+
+        ev << "PCOClock: the PREVIOUS 'PCOClockState' is "<< PCOClockState <<endl;
+        PCOClockState = ClassicClock - SumThreshold;
         ev << "PCOClock: the UPDATED 'PCOClockState' is "<< PCOClockState <<endl;
 
         generateSYNC();
@@ -214,13 +207,6 @@ double PCOClock::ClockUpdate()
         PCOfireTimeVec.record(LastFireTime);
 
         EV << "PCOClock: generate and sent SYNC packet to Core module. " << endl;
-
-    }
-    else if ((PCOClockStateTemp) < Threshold)
-    {
-        ev << "PCOClock: the PREVIOUS 'PCOClockState' is "<< PCOClockState <<endl;
-        PCOClockState = PCOClockState + tau_0 + offset_present;
-        ev << "PCOClock: the UPDATED 'PCOClockState' is "<< PCOClockState <<endl;
     }
     else
     {
@@ -304,17 +290,13 @@ double PCOClock::getMeasurementOffset(int MeasurmentAlgorithm, int AddressOffset
 
     double MeasuredOffset;
 
-    double NormalisedSYNCTime = 0;    // Normalise ReceivedSYNCTime
-
     if (MeasurmentAlgorithm == 1)   // relay node receive the SYNC from master node.
     {
 
-        NormalisedSYNCTime = ReceivedSYNCTime / Threshold;
+        MeasuredOffset = (ReceivedSYNCTime - tau) - 0 + (ScheduleOffset + pulseDuration * NodeId);
 
-        MeasuredOffset = (NormalisedSYNCTime - tau) - 0 + (ScheduleOffset + pulseDuration * NodeId);
-
-        if (MeasuredOffset > 0.5)
-            MeasuredOffset = (NormalisedSYNCTime - tau) - 1 + (ScheduleOffset + pulseDuration * NodeId);
+        if (MeasuredOffset > (Threshold/2))
+            MeasuredOffset = (ReceivedSYNCTime - tau) - Threshold + (ScheduleOffset + pulseDuration * NodeId);
 
         // if (MeasuredOffset > (Threshold/2))
         //        MeasuredOffset = (NormalisedSYNCTime - tau) - (Threshold / Threshold) + (ScheduleOffset + pulseDuration * NodeId);
@@ -322,12 +304,12 @@ double PCOClock::getMeasurementOffset(int MeasurmentAlgorithm, int AddressOffset
 
     else if (MeasurmentAlgorithm == 2)  // relay node i receives the SYNC from relay node j (node i fires before node j)
     {
-        NormalisedSYNCTime = ReceivedSYNCTime / Threshold;
+        // NormalisedSYNCTime = ReceivedSYNCTime / Threshold;
 
-        MeasuredOffset = (NormalisedSYNCTime - tau) - 0 - (pulseDuration * AddressOffset);
+        MeasuredOffset = (ReceivedSYNCTime - tau) - 0 - (pulseDuration * AddressOffset);
 
         if (MeasuredOffset > 0.5)
-            MeasuredOffset = (NormalisedSYNCTime - tau) - 1 - (pulseDuration * AddressOffset);
+            MeasuredOffset = (ReceivedSYNCTime - tau) - 1 - (pulseDuration * AddressOffset);
 
         // MeasuredOffset = (ReceivedSYNCTime - tau) - 0 - (pulseDuration * AddressOffset);
 
@@ -338,12 +320,12 @@ double PCOClock::getMeasurementOffset(int MeasurmentAlgorithm, int AddressOffset
 
     else if (MeasurmentAlgorithm == 3)  // relay node j receives the SYNC from relay node i (node i fires before node j)
     {
-        NormalisedSYNCTime = ReceivedSYNCTime / Threshold;
+        // NormalisedSYNCTime = ReceivedSYNCTime / Threshold;
 
-        MeasuredOffset = (NormalisedSYNCTime - tau) - 0 + (pulseDuration * AddressOffset);
+        MeasuredOffset = (ReceivedSYNCTime - tau) - 0 + (pulseDuration * AddressOffset);
 
         if (MeasuredOffset > 0.5)
-            MeasuredOffset = (NormalisedSYNCTime - tau) - 1 + (pulseDuration * AddressOffset);
+            MeasuredOffset = (ReceivedSYNCTime - tau) - 1 + (pulseDuration * AddressOffset);
 
         // MeasuredOffset = (ReceivedSYNCTime - tau) - 0 + (pulseDuration * AddressOffset);
 
@@ -355,12 +337,12 @@ double PCOClock::getMeasurementOffset(int MeasurmentAlgorithm, int AddressOffset
     else if (MeasurmentAlgorithm == 4)  // slave node receive the SYNC from relay node.
     {
         // todo: this 'else-if' loop needs to be updated to fix the bug.
-        NormalisedSYNCTime = ReceivedSYNCTime / Threshold;
+        // NormalisedSYNCTime = ReceivedSYNCTime / Threshold;
 
-        MeasuredOffset = (NormalisedSYNCTime - tau) - 0 + (pulseDuration * AddressOffset);
+        MeasuredOffset = (ReceivedSYNCTime - tau) - 0 + (pulseDuration * AddressOffset);
 
         if (MeasuredOffset > 0.5)
-            MeasuredOffset = (NormalisedSYNCTime - tau) - 1 + (pulseDuration * AddressOffset);
+            MeasuredOffset = (ReceivedSYNCTime - tau) - 1 + (pulseDuration * AddressOffset);
 
 
         // MeasuredOffset = (ReceivedSYNCTime - tau) - 0 - (ScheduleOffset + pulseDuration * AddressOffset);
@@ -372,12 +354,11 @@ double PCOClock::getMeasurementOffset(int MeasurmentAlgorithm, int AddressOffset
 
     else if (MeasurmentAlgorithm == 5)  // slave receive SYNC from master node.
     {
-        NormalisedSYNCTime = ReceivedSYNCTime / Threshold;
 
-        MeasuredOffset = (NormalisedSYNCTime - tau) - 0 + (ScheduleOffset + pulseDuration * (NodeId - numRelay));
+        MeasuredOffset = (ReceivedSYNCTime - tau) - 0 + (ScheduleOffset + pulseDuration * (NodeId - numRelay));
 
-        if (MeasuredOffset > 0.5)
-            MeasuredOffset = (NormalisedSYNCTime - tau) - 1 + (ScheduleOffset + pulseDuration * (NodeId - numRelay));
+        if (MeasuredOffset > (Threshold/2))
+            MeasuredOffset = (ReceivedSYNCTime - tau) - Threshold + (ScheduleOffset + pulseDuration * (NodeId - numRelay));
 
         // MeasuredOffset = (ReceivedSYNCTime - tau) - 0;
 
@@ -523,16 +504,50 @@ void PCOClock::adjustClock(double estimatedOffset, double estimatedSkew)
 
     }
 
-    else if (CorrectionAlgorithm == 3)  // correct PCO state threshold and skew by using the PkCOs with P controller
+    else if (CorrectionAlgorithm == 3)  // correct PCO clock state and skew by using the PkCOs with P controller
     {
-        // correct the PCO threshold
-        // Threshold = Threshold + alpha * estimatedOffset;
-        Threshold = Threshold + alpha * estimatedOffset * Threshold;    // denormalize estimated the offset and adjust the threshold
-        // correct the PCO skew
-        // drift = drift + beta * estimatedSkew;
-        drift = drift + beta * estimatedSkew * Threshold;   // denormalize estimated the skew and adjust the skew
+        double PCOClockStateTemp = 0;
 
-        ev << "PCOClock: the PCO clock threshold is adjusted to " << Threshold << endl;
+        // correct the classic/PCO clock offset
+        offset = offset - alpha * estimatedOffset;
+
+        // correct the classic clock
+        ClassicClock = SIMTIME_DBL(simTime()) + offset;
+
+        // correct the PCO clock
+        PCOClockStateTemp = ClassicClock - SumThreshold;
+        ev << "PCOClock: the TEMP 'PCOClockState' is "<< PCOClockStateTemp <<endl;
+
+        if ((PCOClockStateTemp) < Threshold)
+        {
+            ev << "PCOClock: the PREVIOUS 'PCOClockState' is "<< PCOClockState <<endl;
+            PCOClockState = ClassicClock - SumThreshold;
+            ev << "PCOClock: the UPDATED 'PCOClockState' is "<< PCOClockState <<endl;
+        }
+        else if ((PCOClockStateTemp) >= Threshold)
+        {
+            SumThreshold = SumThreshold + Threshold;
+
+            ev << "PCOClock: the PREVIOUS 'PCOClockState' is "<< PCOClockState <<endl;
+            PCOClockState = ClassicClock - SumThreshold;
+            ev << "PCOClock: the UPDATED 'PCOClockState' is "<< PCOClockState <<endl;
+
+            generateSYNC();
+
+            LastFireTime = SIMTIME_DBL(simTime());
+            PCOfireTimeVec.record(LastFireTime);
+
+            EV << "PCOClock: generate and sent SYNC packet to Core module. " << endl;
+        }
+        else
+        {
+            error("PCOClock: error in the PCO clock correction of method 3");
+        }
+
+        // correct the PCO skew
+        drift = drift - beta * estimatedSkew;
+
+        ev << "PCOClock: the PCO clock state is adjusted to " << PCOClockState << endl;
         ev << "PCOClock: the PCO clock skew is adjusted to " << drift << endl;
 
     }
@@ -573,43 +588,6 @@ void PCOClock::adjustClock(double estimatedOffset, double estimatedSkew)
     }
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 cModule *PCOClock::findHost(void)
 {
