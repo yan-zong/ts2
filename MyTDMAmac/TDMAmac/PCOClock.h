@@ -113,6 +113,8 @@ class PCOClock:public cSimpleModule
         cOutVector pcoclockVec;
         cOutVector timestampVec;
         cOutVector PCOfireTimeVec;
+        cOutVector measuredoffset;
+        cOutVector measuredskew;
 
         cStdDev    driftStd;    // standard deviation of skew
         cStdDev    offsetStd;   // standard deviation of offset

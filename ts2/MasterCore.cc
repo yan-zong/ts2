@@ -51,7 +51,7 @@ void MasterCore::initialize()
 
         // for PI controller
         TxThold = 0;
-
+/*
         Packet * temp = new Packet("REGISTER");
         // we use the host modules findHost() as a appl address
         temp -> setDestination(PACKET_BROADCAST_ADDR);
@@ -66,6 +66,7 @@ void MasterCore::initialize()
 
         EV << "MasterCore: Core broadcasts REGISTER packet" << endl;
         send(temp, "lowerGateOut");
+*/
   }
 
 void MasterCore::handleMessage(cMessage* msg)

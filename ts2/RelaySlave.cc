@@ -65,7 +65,7 @@ void RelaySlave::initialize()
     {
         error("RelaySlave: could not find RelayMaster module in a Relay node (boundary clock node). ");
     }
-
+/*
     Packet * temp = new Packet("REGISTER");
 	temp -> setPacketType(REG);
 	temp -> setByteLength(0);
@@ -82,6 +82,7 @@ void RelaySlave::initialize()
     NetwControlInfo::setControlInfo(temp, LAddress::L3BROADCAST );
 
     send(temp, "out");
+*/
 	ev << "RelaySlave: initialization finished, send REGISTER \n";
 }
 

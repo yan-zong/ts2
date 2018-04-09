@@ -43,6 +43,8 @@ void PCOClock::initialize()
     measuredoffsetrelayVec.setName("measuredoffsetRelay");
     timestampVec.setName("timestamp");
     PCOfireTimeVec.setName("PCOfiretime");
+    measuredoffset.setName("measuredoffset");
+    measuredskew.setName("measuredskew");
 
     // ---------------------------------------------------------------------------
     // Initialize variable
@@ -205,6 +207,8 @@ double PCOClock::ClockUpdate()
 
         LastFireTime = SIMTIME_DBL(simTime());
         PCOfireTimeVec.record(LastFireTime);
+        measuredoffset.record(offset);
+        measuredskew.record(drift);
 
         EV << "PCOClock: generate and sent SYNC packet to Core module. " << endl;
     }
@@ -304,12 +308,11 @@ double PCOClock::getMeasurementOffset(int MeasurmentAlgorithm, int AddressOffset
 
     else if (MeasurmentAlgorithm == 2)  // relay node i receives the SYNC from relay node j (node i fires before node j)
     {
-        // NormalisedSYNCTime = ReceivedSYNCTime / Threshold;
 
         MeasuredOffset = (ReceivedSYNCTime - tau) - 0 - (pulseDuration * AddressOffset);
 
-        if (MeasuredOffset > 0.5)
-            MeasuredOffset = (ReceivedSYNCTime - tau) - 1 - (pulseDuration * AddressOffset);
+        if (MeasuredOffset > (Threshold/2))
+            MeasuredOffset = (ReceivedSYNCTime - tau) - Threshold - (pulseDuration * AddressOffset);
 
         // MeasuredOffset = (ReceivedSYNCTime - tau) - 0 - (pulseDuration * AddressOffset);
 
@@ -320,12 +323,11 @@ double PCOClock::getMeasurementOffset(int MeasurmentAlgorithm, int AddressOffset
 
     else if (MeasurmentAlgorithm == 3)  // relay node j receives the SYNC from relay node i (node i fires before node j)
     {
-        // NormalisedSYNCTime = ReceivedSYNCTime / Threshold;
 
         MeasuredOffset = (ReceivedSYNCTime - tau) - 0 + (pulseDuration * AddressOffset);
 
-        if (MeasuredOffset > 0.5)
-            MeasuredOffset = (ReceivedSYNCTime - tau) - 1 + (pulseDuration * AddressOffset);
+        if (MeasuredOffset > (Threshold/2))
+            MeasuredOffset = (ReceivedSYNCTime - tau) - Threshold + (pulseDuration * AddressOffset);
 
         // MeasuredOffset = (ReceivedSYNCTime - tau) - 0 + (pulseDuration * AddressOffset);
 
@@ -445,6 +447,8 @@ void PCOClock::adjustClock(double estimatedOffset, double estimatedSkew)
 
                 LastFireTime = SIMTIME_DBL(simTime());
                 PCOfireTimeVec.record(LastFireTime);
+                measuredoffset.record(offset);
+                measuredskew.record(drift);
 
                 EV << "PCOClock: generate and sent SYNC packet to Core module. " << endl;
 
@@ -484,6 +488,8 @@ void PCOClock::adjustClock(double estimatedOffset, double estimatedSkew)
 
             LastFireTime = SIMTIME_DBL(simTime());
             PCOfireTimeVec.record(LastFireTime);
+            measuredoffset.record(offset);
+            measuredskew.record(drift);
 
             EV << "PCOClock: generate and sent SYNC packet to Core module. " << endl;
 
@@ -536,6 +542,8 @@ void PCOClock::adjustClock(double estimatedOffset, double estimatedSkew)
 
             LastFireTime = SIMTIME_DBL(simTime());
             PCOfireTimeVec.record(LastFireTime);
+            measuredoffset.record(offset);
+            measuredskew.record(drift);
 
             EV << "PCOClock: generate and sent SYNC packet to Core module. " << endl;
         }
