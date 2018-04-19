@@ -182,7 +182,17 @@ double PCOClock::ClockUpdate()
     ev << "PCOClock: the UPDATED drift is "<< drift <<endl;
 
     ev << "PCOClock: the PREVIOUS classic clock is "<< ClassicClock <<endl;
-    ClassicClock = SIMTIME_DBL(simTime()) + offset; // update the classic clock
+
+    if (NodeId <= numRelay)   // the sensor node is the master or relay node
+    {
+        ClassicClock = SIMTIME_DBL(simTime()) + offset - (ScheduleOffset + NodeId * pulseDuration); // update the classic clock
+    }
+    else    // the sensor node is the slave node
+    {
+        // implementation of desynchronisation
+        ClassicClock = SIMTIME_DBL(simTime()) + offset - (ScheduleOffset + (NodeId - numRelay) * pulseDuration); // update the classic clock
+    }
+
     ev << "PCOClock: the UPDATED classic clock is "<< ClassicClock <<endl;
 
     // update the PCO clock
@@ -518,7 +528,15 @@ void PCOClock::adjustClock(double estimatedOffset, double estimatedSkew)
         offset = offset - alpha * estimatedOffset;
 
         // correct the classic clock
-        ClassicClock = SIMTIME_DBL(simTime()) + offset;
+        if (NodeId <= numRelay)   // the sensor node is the master or relay node
+        {
+            ClassicClock = SIMTIME_DBL(simTime()) + offset - (ScheduleOffset + NodeId * pulseDuration); // update the classic clock
+        }
+        else    // the sensor node is the slave node
+        {
+            // implementation of desynchronisation
+            ClassicClock = SIMTIME_DBL(simTime()) + offset - (ScheduleOffset + (NodeId - numRelay) * pulseDuration); // update the classic clock
+        }
 
         // correct the PCO clock
         PCOClockStateTemp = ClassicClock - SumThreshold;
