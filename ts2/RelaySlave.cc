@@ -295,21 +295,21 @@ void RelaySlave::handleMasterMessage(cMessage *msg)
 
                 ev << "RelaySlave: timestamp is "<< (((Packet *)msg) -> getTsRx()) << endl;
 
-                if (AddressOffset > 0)
+      /*          if (AddressOffset > 0)
                 {
                     EstimatedOffset = pClock -> getMeasurementOffset(2, AddressOffset);
                     EstimatedSkew = pClock -> getMeasurementSkew(EstimatedOffset);
                 }
-                else if (AddressOffset < 0)
+                else */if (AddressOffset < 0)
                 {
                     AddressOffset = - AddressOffset;
                     EstimatedOffset = pClock -> getMeasurementOffset(3, AddressOffset);
                     EstimatedSkew = pClock -> getMeasurementSkew(EstimatedOffset);
-                }
+                }/*
                 else if (AddressOffset == 0)
                 {
                     error("clock estimation error in 'RelaySlave' module of rnode node");
-                }
+                }*/
 
                 ev << "RelaySlave: adjust clock...\n";
                 pClock -> adjustClock(EstimatedOffset, EstimatedSkew);
